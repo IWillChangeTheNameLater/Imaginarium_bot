@@ -29,8 +29,7 @@ class NoAnyPosts(Exception):
     pass
 class EnvironmentError(Exception):
     pass
-class GameOver(Exception):
-    pass
+
 
 class player:
     def __init__(self, id, name):
@@ -56,17 +55,22 @@ class player:
     choosed_card = None
     
 
+
+class Sourse:
+    pass
+
 vk_requests = vk_api.VkApi(token=game_configuration.VK_TOKEN).get_api()
 
-class vk:
+class vk(Sourse):
     def __init__(self, link):
         self.link = link
         self.domain = link[link.rfind(r'/')+1:]
         self.included_types = {y for i in included_types if (y := vk.types.get(i))}
         self.excluded_types = {y for i in excluded_types if (y := vk.types.get(i))}
     def __eq__(self, other):
-        if self.link == other: return True
-        return False
+        return self.link == other
+    def __ne__(self, other):
+        return self.link != other
     def __str__(self):
         return self.link
     def __hash__(self):
@@ -76,11 +80,11 @@ class vk:
     types = {'photo':'photo', 
              'video':'video'}
     
-    def get_cards_num(self):
+    def get_cards_quantity(self):
         return vk_requests.wall.get(domain=self.domain, count=1)['count']
     
-    def set_cards_num(self):
-        self.cards_num = self.get_cards_num()
+    def set_cards_quantity(self):
+        self.cards_num = self.get_cards_quantity()
 
     def get_random_card(self):
         def exctact_content_from_attachment(attachment):
@@ -91,7 +95,7 @@ class vk:
                 video_id += '_' + str(attachment[attachment['type']]['id'])
                 return vk_requests.video.get(videos=video_id)['items'][0]['player']
                     
-        self.set_cards_num()
+        self.set_cards_quantity()
         if self.cards_num == 0: 
             raise NoAnyPosts
             
@@ -120,30 +124,19 @@ class link:
 
 
 def all_elements_true(iterable, function=lambda x: x):
+    """Return True if all the elements processed by the function are True."""
     for i in iterable:
         if not function(i): return False
     return True
 
-async def iterate_sourses(ctx, message, function):
-    async def iterate_lines(text):
-        for sourse in text.replace('\r', '').split('\n'):
-            await function(sourse)
-            
-    await iterate_lines(message)
-    
-    for attachment in ctx.message.attachments:
-        filetype = game.extract_file_extension(attachment.filename)
-        
-        if filetype == 'txt':
-            text = await attachment.read()
-            await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
-        else:
-            await ctx.send('Sorry, the "' + filetype + '" filetype is not supproted.')
-            
 def extract_file_extension(filename):
     return filename[filename.rfind('.')+1:]
 
 def create_sourse_object(sourse):
+    """Return an object of class "Sourse". 
+    
+    Process the link to the sourse (email, url, etc.) and create a "Sourse" 
+    object that can be used to get some cards."""
     if validators.url(sourse):
         domain_name = sourse[sourse.find('/')+2:]
         domain_name = domain_name[:domain_name.find('/')]
@@ -190,6 +183,7 @@ def start_game(at_start=empty_function,
     if len(players) <= 1: raise TypeError('There are not enough players to start.')
     
     global leader
+    global circle_number
     global round_number
     global discarded_cards
     global votes_for_card
@@ -204,6 +198,7 @@ def start_game(at_start=empty_function,
     
     at_start()
     
+    circle_number = 1
     while True:
         if not game_started: break
         
@@ -225,6 +220,7 @@ def start_game(at_start=empty_function,
             votes_for_card = collections.defaultdict(int)
             discarded_cards = list()
             round_association = None 
+            # Add missed cards
             if len(players) == 2:
                 for player in players:
                     player.cards = [get_random_card() for i in range(cards_one_player_has)]
@@ -232,8 +228,9 @@ def start_game(at_start=empty_function,
                 for player in players:
                     player.cards.append(get_random_card())
             
+            # Each player discards cards to the common deck
             if len(players) == 2:
-                # Discard the nobody's card
+                # Discard the bot's card
                 discarded_cards.append((get_random_card(), None))
                 request_association()
                 show_association()
@@ -251,12 +248,14 @@ def start_game(at_start=empty_function,
             
             random.shuffle(discarded_cards)
             
+            # Each player votes for the target card
             show_discarded_cards()
             if len(players) == 2:
                 vote_for_target_card_2()
             else:
                 vote_for_target_card()
             
+            # Score
             if len(players) == 2:
                 if votes_for_card[None] == 2:
                     players_score += 2
@@ -281,7 +280,9 @@ def start_game(at_start=empty_function,
             
         at_circle_end()
         
-        # Check for win
+        circle_number += 1
+        
+        # Check for victory
         if len(players) == 2:
             if max(bot_score, players_score) >= winning_score:
                 game_started = False

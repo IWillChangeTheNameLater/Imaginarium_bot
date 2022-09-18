@@ -24,16 +24,37 @@ class player(player):
         await self.user.send(message, components=components)
 
 
+async def iterate_sourses(ctx, message, function):
+    """Extract sourses from attachments and process them.
+    
+    Extract separated by break sourses from the file and the message and 
+    process them by the function."""
+    async def iterate_lines(text):
+        for sourse in text.replace('\r', '').split('\n'):
+            await function(sourse)
+            
+    await iterate_lines(message)
+    
+    for attachment in ctx.message.attachments:
+        filetype = game.extract_file_extension(attachment.filename)
+        
+        if filetype == 'txt':
+            text = await attachment.read()
+            await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
+        else:
+            await ctx.send('Sorry, the "' + filetype + '" filetype is not supproted.')
+    
 def filled_iter(iterator, filling=None):
     for i in iterator:
         yield i 
     while True:
         yield filling
-    
+
 def generate_buttons(labels, styles=filled_iter((), 2), 
                              urls=filled_iter(()), 
                              disableds=filled_iter((), False), 
                              emojis=filled_iter(())):
+    """Return generated list of DiscordComponents.Button."""
     labels = iter(labels)
     styles = iter(styles)
     urls = iter(urls)
@@ -56,8 +77,8 @@ def generate_buttons(labels, styles=filled_iter((), 2),
                 return buttons
         buttons.append(row)
     return buttons
-                    
-async def wait_for_answer(recipient, message=None, reactions=(), components=None, message_check=None, reaction_check=None, button_check=None, timeout=None, on_TimeoutError=None):
+
+async def wait_for_answer(recipient, message=None, reactions=(), components=None, message_check=None, reaction_check=None, button_check=None, timeout=None):
     answer = None
     msg = await recipient.send(message, components=components)
     for r in reactions:
@@ -124,7 +145,7 @@ async def set_winning_score(ctx, score):
     else:
         await ctx.author.send('Score is supposed to be a number.')
 
-@bot.command()п
+@bot.command()
 async def get_used_cards(ctx):
     await ctx.author.send('\n'.join(used_cards))
 
@@ -159,7 +180,7 @@ async def add_sourses(ctx, *, message=''):
             except UnexpectedSourse:
                 await ctx.send('Sorry, there is somthing wrong with sourse: ' + sourse)
             
-    await game.iterate_sourses(ctx, message, move_sourse)
+    await iterate_sourses(ctx, message, move_sourse)
 
 @bot.command()
 async def remove_sourse(ctx, *, message=''):
@@ -170,7 +191,7 @@ async def remove_sourse(ctx, *, message=''):
             except KeyError:
                 await ctx.send('Sorry, there is no the sourse: ' + sourse)
     
-    await game.iterate_sourses(ctx, message, move_sourse)
+    await iterate_sourses(ctx, message, move_sourse)
 
 @bot.command()
 async def get_players(ctx):
@@ -182,7 +203,7 @@ async def get_players(ctx):
 @bot.command()
 async def join(ctx):
     #TODO add person to queue for joining and move it to game.py
-    if game_started:
+    if game.game_started:
         await ctx.send('You can\'t join right now, the game is started.')
     elif ctx.author.id in players:
         await ctx.send('You have already joined')
@@ -192,7 +213,7 @@ async def join(ctx):
     
 @bot.command()
 async def leave(ctx):
-    if game_started:
+    if game.game_started:
         await ctx.send('You can\'t leave the game now, it is started.')
     else:
         try:
@@ -202,7 +223,7 @@ async def leave(ctx):
             ctx.send('You have already left.')
 
 @bot.command()
-async def shuffle_players(ctx):
+async def shuffle_players_order(ctx):
     random.shuffle(players)
     if players:
         await ctx.send('Now you walk in the following order: ' + '\n' + '\n'.join(str(player) for player in players))
@@ -450,12 +471,6 @@ async def pause_game(ctx):
 @bot.command(name='continue')
 async def continue_game(ctx):
     pass
-
-@bot.command()
-async def test(ctx):
-    for i in (0, 1, 2, 22, 25, 27):
-        coms = generate_buttons(range(i))
-        await ctx.send('lol', components=coms)
 
 
 bot.run(discord_bot_configuration.TOKEN)
