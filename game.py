@@ -7,7 +7,7 @@ import validators
 import vk_api
 
 import game_configuration
-import exceptions
+import game_exceptions
 
 
 include_used_cards = False
@@ -90,7 +90,7 @@ class vk(Sourse):
                     
         self.set_cards_quantity()
         if self.cards_num == 0: 
-            raise exceptions.NoAnyPosts
+            raise game_exceptions.NoAnyPosts
             
         try:
             attachments = vk_requests.wall.get(domain=self.domain, 
@@ -145,12 +145,12 @@ def create_sourse_object(sourse):
             pass
     elif validators.email(sourse):
         pass
-    raise exceptions.UnexpectedSourse('The link format is not supported or an unavailable link is specified.')
+    raise game_exceptions.UnexpectedSourse('The link format is not supported or an unavailable link is specified.')
 
 def get_random_card(): 
     try:
         return random.choice(list(sourses)).get_random_card()
-    except exceptions.NoAnyPosts:
+    except game_exceptions.NoAnyPosts:
         return get_random_card()
 
 
@@ -181,6 +181,8 @@ def start_game(at_start=empty_function,
     global discarded_cards
     global votes_for_card
     global game_started_at
+    global bot_score
+    global players_score
     
     game_started_at = time.time()
     bot_score = 0

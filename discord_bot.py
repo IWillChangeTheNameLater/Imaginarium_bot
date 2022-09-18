@@ -11,7 +11,7 @@ import time
 
 from game import *
 import game
-import exceptions
+import game_exceptions
 import discord_bot_configuration
 
 
@@ -178,7 +178,7 @@ async def add_sourses(ctx, *, message=''):
         if sourse:
             try:
                 sourses.add(create_sourse_object(sourse))
-            except exceptions.UnexpectedSourse:
+            except game_exceptions.UnexpectedSourse:
                 await ctx.send('Sorry, there is somthing wrong with sourse: ' + sourse)
             
     await iterate_sourses(ctx, message, move_sourse)
