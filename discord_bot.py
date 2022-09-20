@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 import asyncio
-import threading
 import chardet
 import time
 
@@ -132,6 +131,11 @@ async def on_command_error(ctx, error):
     else:
         raise error
 
+@bot.event
+async def on_button_click(interaction):
+    if not interaction.responded:
+        await interaction.respond(type=6)
+    
 
 @bot.command()
 async def help(ctx):
@@ -145,6 +149,13 @@ async def set_winning_score(ctx, score):
         winning_score = int(score)
     else:
         await ctx.author.send('Score is supposed to be a number.')
+        
+@bot.command()
+async def get_players_score(ctx):
+    if players:
+        await ctx.send('Players score:\n' + '\n'.join((str(player) + ': ' + str(player.score) for player in players)))
+    else:
+        await ctx.send('There are no players.')
 
 @bot.command()
 async def get_used_cards(ctx):
@@ -348,14 +359,15 @@ def request_players_cards():
         
         
     for player in players:
-        try:
-            card = int(asyncio.run(wait_for_answer(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, cards_one_player_has+1)), timeout=game.step_timeout)))
-            asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
-        except asyncio.TimeoutError:
-            card = random.randrange(cards_one_player_has)
-            asyncio.run(player.send('You was thinking too much. The card ' + player.cards[card-1] + ' was automatically selected for you.'))
-            
-        game.discarded_cards.append((player.cards.pop(card-1), player.id))
+        if player != game.leader:
+            try:
+                card = int(asyncio.run(wait_for_answer(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, cards_one_player_has+1)), timeout=game.step_timeout)))
+                asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
+            except asyncio.TimeoutError:
+                card = random.randrange(cards_one_player_has)
+                asyncio.run(player.send('You was thinking too much. The card ' + player.cards[card-1] + ' was automatically selected for you.'))
+                
+            game.discarded_cards.append((player.cards.pop(card-1), player.id))
 
 def vote_for_target_card_2():
     def message_check(message):
@@ -458,7 +470,7 @@ async def start(ctx):
                         vote_for_target_card_2=vote_for_target_card_2, 
                         vote_for_target_card=vote_for_target_card, 
                         at_end=at_end)
-    except TypeError as error:
+    except TypeError:
         await ctx.send('The game cannot start yet. Specify all data and start the game again.')
 
 @bot.command()
@@ -472,6 +484,11 @@ async def pause_game(ctx):
 @bot.command(name='continue')
 async def continue_game(ctx):
     pass
+
+
+@bot.command()
+async def test(ctx):
+    msg = await ctx.send('Click', components=[Button(label='this')])
 
 
 bot.run(discord_bot_configuration.TOKEN)

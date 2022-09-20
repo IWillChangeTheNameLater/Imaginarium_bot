@@ -172,8 +172,10 @@ def start_game(at_start=empty_function,
                at_round_end=empty_function, 
                at_circle_end=empty_function, 
                at_end=empty_function):
-    if not sourses: raise TypeError('Sources are not specified.')
-    if len(players) <= 1: raise TypeError('There are not enough players to start.')
+    if not sourses: 
+        raise TypeError('Sources are not specified.')
+    if len(players) < 2: 
+        raise TypeError('There are not enough players to start.')
     
     global leader
     global circle_number
@@ -227,6 +229,7 @@ def start_game(at_start=empty_function,
             if len(players) == 2:
                 # Discard the bot's card
                 discarded_cards.append((get_random_card(), None))
+                
                 request_association()
                 show_association()
                 show_players_cards()
@@ -235,6 +238,7 @@ def start_game(at_start=empty_function,
                 if len(players) == 3:
                     for i in range(2):
                         discarded_cards.append((get_random_card(), None))
+                        
                 show_players_cards()
                 request_leader_card()
                 request_association()
@@ -250,7 +254,7 @@ def start_game(at_start=empty_function,
             else:
                 vote_for_target_card()
             
-            # Score
+            # Scoring
             if len(players) == 2:
                 if votes_for_card[None] == 2:
                     players_score += 2
@@ -260,14 +264,16 @@ def start_game(at_start=empty_function,
                 elif votes_for_card[None] == 0:
                     bot_score += 3 
             else:
-                if votes_for_card[leader.id] not in (0, len(players)):
-                    leader.score += 3
-                    for player in players:
-                        if player != leader:
-                            if discarded_cards[player.choosed_card - 1][0] == leader.id:
-                                player.score += 3
+                if votes_for_card[leader.id] == 0:
                     for player in players:
                         player.score += votes_for_card[player.id]
+                else:
+                    if votes_for_card[leader.id] != len(players):
+                        leader.score += 3
+                    for player in player:
+                        if player != leader:
+                            if discarded_cards[player.choosed_card - 1][1] == leader.id:
+                                player.score += 3
             
             at_round_end()
             
@@ -282,7 +288,7 @@ def start_game(at_start=empty_function,
             if max(bot_score, players_score) >= winning_score:
                 game_started = False
         else:
-            if all_elements_true(players, lambda p: not p.score < winning_score):
+            if not all_elements_true(players, lambda p: p.score < winning_score):
                 game_started = False
     
     at_end()
