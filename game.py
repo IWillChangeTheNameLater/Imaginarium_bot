@@ -4,24 +4,17 @@ import time
 import math
 
 import validators
-import vk_api
 
 import game_configuration
+import game_rules
 import game_exceptions
 
 
-include_used_cards = False
 game_started = False
-step_timeout = 60
 used_cards = set()
 unused_cards = list()
-cards_one_player_has = 6
 sourses = set()
 players = list()
-winning_score = 5
-turn = 0
-included_types = ('photo', )
-excluded_types = ()
 
 
 class player:
@@ -46,74 +39,6 @@ class player:
     
     score = 0
     choosed_card = None
-    
-
-
-class Sourse:
-    pass
-
-vk_requests = vk_api.VkApi(token=game_configuration.VK_TOKEN).get_api()
-
-class vk(Sourse):
-    def __init__(self, link):
-        self.link = link
-        self.domain = link[link.rfind(r'/')+1:]
-        self.included_types = {y for i in included_types if (y := vk.types.get(i))}
-        self.excluded_types = {y for i in excluded_types if (y := vk.types.get(i))}
-    def __eq__(self, other):
-        return self.link == other
-    def __ne__(self, other):
-        return self.link != other
-    def __str__(self):
-        return self.link
-    def __hash__(self):
-        return hash(self.link)
-    
-    # Change specified types to vk attachment types
-    types = {'photo':'photo', 
-             'video':'video'}
-    
-    def get_cards_quantity(self):
-        return vk_requests.wall.get(domain=self.domain, count=1)['count']
-    
-    def set_cards_quantity(self):
-        self.cards_num = self.get_cards_quantity()
-
-    def get_random_card(self):
-        def exctact_content_from_attachment(attachment):
-            if attachment['type'] == 'photo':
-                return attachment[attachment['type']]['sizes'][-1]['url']
-            elif attachment['type'] == 'video':
-                video_id = str(attachment[attachment['type']]['owner_id'])
-                video_id += '_' + str(attachment[attachment['type']]['id'])
-                return vk_requests.video.get(videos=video_id)['items'][0]['player']
-                    
-        self.set_cards_quantity()
-        if self.cards_num == 0: 
-            raise game_exceptions.NoAnyPosts
-            
-        try:
-            attachments = vk_requests.wall.get(domain=self.domain, 
-                                               offset=random.randrange(self.cards_num), 
-                                               count=1)['items'][0]['attachments']
-        except KeyError:
-            return self.get_random_card()
-        
-        # If attachments are found, then get the random one
-        random.shuffle(attachments)
-        for attachment in attachments:
-            if attachment['type'] not in self.excluded_types:
-                if self.included_types: 
-                    if attachment['type'] not in self.included_types:
-                        continue
-                return exctact_content_from_attachment(attachment)
-        
-        return self.get_random_card()
-
-class link:
-    def __init__(self, link):
-        # return what link takes to
-        pass
 
 
 def all_elements_true(iterable, function=lambda x: x):
@@ -121,31 +46,6 @@ def all_elements_true(iterable, function=lambda x: x):
     for i in iterable:
         if not function(i): return False
     return True
-
-def extract_file_extension(filename):
-    return filename[filename.rfind('.')+1:]
-
-def create_sourse_object(sourse):
-    """Return an object of class "Sourse". 
-    
-    Process the link to the sourse (email, url, etc.) and create a "Sourse" 
-    object that can be used to get some cards."""
-    if validators.url(sourse):
-        domain_name = sourse[sourse.find('/')+2:]
-        domain_name = domain_name[:domain_name.find('/')]
-        domain_name = (domain_name := domain_name.split('.'))[math.ceil(len(domain_name)/2)-1]
-        
-        if domain_name == 'vk':
-            return vk(sourse) 
-        elif domain_name == 'discord':
-            pass
-        elif domain_name == 'instagram':
-            pass
-        elif domain_name == 'tiktok':
-            pass
-    elif validators.email(sourse):
-        pass
-    raise game_exceptions.UnexpectedSourse('The link format is not supported or an unavailable link is specified.')
 
 def get_random_card(): 
     try:
@@ -205,7 +105,7 @@ def start_game(at_start=empty_function,
         if len(players) >= 3:
             for player in players:
                 player.cards = list()
-                for i in range(cards_one_player_has-1):
+                for i in range(game_rules.cards_one_player_has-1):
                     player.cards.append(get_random_card())
                 
         round_number = 1
@@ -220,7 +120,7 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [get_random_card() for i in range(cards_one_player_has)]
+                    player.cards = [get_random_card() for i in range(game_rules.cards_one_player_has)]
             else:
                 for player in players:
                     player.cards.append(get_random_card())
@@ -285,10 +185,10 @@ def start_game(at_start=empty_function,
         
         # Check for victory
         if len(players) == 2:
-            if max(bot_score, players_score) >= winning_score:
+            if max(bot_score, players_score) >= game_rules.winning_score:
                 game_started = False
         else:
-            if not all_elements_true(players, lambda p: p.score < winning_score):
+            if not all_elements_true(players, lambda p: p.score < game_rules.winning_score):
                 game_started = False
     
     at_end()

@@ -8,10 +8,12 @@ import asyncio
 import chardet
 import time
 
+import discord_bot_configuration
 from game import *
 import game
+import game_rules
 import game_exceptions
-import discord_bot_configuration
+import cards_parsing
 
 
 class player(player):
@@ -23,7 +25,9 @@ class player(player):
     async def send(self, message, components=None):
         await self.user.send(message, components=components)
 
-
+def extract_file_extension(filename):
+    return filename[filename.rfind('.')+1:]
+    
 async def iterate_sourses(ctx, message, function):
     """Extract sourses from attachments and process them.
     
@@ -36,7 +40,7 @@ async def iterate_sourses(ctx, message, function):
     await iterate_lines(message)
     
     for attachment in ctx.message.attachments:
-        filetype = game.extract_file_extension(attachment.filename)
+        filetype = extract_file_extension(attachment.filename)
         
         if filetype == 'txt':
             text = await attachment.read()
@@ -146,7 +150,7 @@ async def help(ctx):
 @bot.command()
 async def set_winning_score(ctx, score):
     if score.isdigit():
-        winning_score = int(score)
+        game_rules.winning_score = int(score)
     else:
         await ctx.author.send('Score is supposed to be a number.')
         
@@ -168,7 +172,7 @@ async def reset_used_cards(ctx):
 @bot.command()
 async def set_step_minutes(ctx, minutes):
     if minutes.isdigit():
-        game.step_timeout = float(minutes)*60
+        game_rules.step_timeout = float(minutes)*60
     else:
         await ctx.author.send('"Score" supposed to be a number.')
 
@@ -188,7 +192,7 @@ async def add_sourses(ctx, *, message=''):
     async def move_sourse(sourse):
         if sourse:
             try:
-                sourses.add(create_sourse_object(sourse))
+                sourses.add(cards_parsing.create_sourse_object(sourse))
             except game_exceptions.UnexpectedSourse:
                 await ctx.send('Sorry, there is somthing wrong with sourse: ' + sourse)
             
@@ -276,7 +280,7 @@ def request_players_cards_2():
             return False
         if all((not message.author.bot, 
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 number != discarded_card)): return True
         return False
                         
@@ -287,7 +291,7 @@ def request_players_cards_2():
             return False
         if all((not interaction.user.bot, 
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 number != discarded_card)): return True
         return False
         
@@ -296,10 +300,10 @@ def request_players_cards_2():
         for line in ('Choose the first card you want to... choose?..', 
                      'Choose the second card you want to... choose?..'):
             try:
-                card = int(asyncio.run(wait_for_answer(player, message=line +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, cards_one_player_has+1)), timeout=game.step_timeout)))
+                card = int(asyncio.run(wait_for_answer(player, message=line +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
             except asyncio.TimeoutError:
-                card = random.randrange(cards_one_player_has)
+                card = random.randrange(game_rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[card-1] + ' was automatically selected for you.'))
     
             game.discarded_cards.append((player.cards[card-1], player.id))
@@ -313,7 +317,7 @@ def request_leader_card():
             return False
         if all((not message.author.bot, 
                 number >= 1, 
-                number <= cards_one_player_has)): return True
+                number <= game_rules.cards_one_player_has)): return True
         return False
         
     def button_check(interaction):
@@ -323,15 +327,15 @@ def request_leader_card():
             return False
         if all((not interaction.user.bot, 
                 number >= 1, 
-                number <= cards_one_player_has)): return True
+                number <= game_rules.cards_one_player_has)): return True
         return False
         
         
     try:
-        card = int(asyncio.run(wait_for_answer(game.leader, message='You are a leader now. Choose number of one of your cards:\n' +  '\n'.join(str(c) for c in game.leader.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, cards_one_player_has+1)), timeout=game.step_timeout)))
+        card = int(asyncio.run(wait_for_answer(game.leader, message='You are a leader now. Choose number of one of your cards:\n' +  '\n'.join(str(c) for c in game.leader.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
         asyncio.run(game.leader.send('You has choosed the card ' + game.leader.cards[card-1] + '.'))
     except asyncio.TimeoutError:
-        card = random.randrange(cards_one_player_has)
+        card = random.randrange(game_rules.cards_one_player_has)
         asyncio.run(game.leader.send('You was thinking too much. The card ' + game.leader.cards[card-1] + ' was automatically selected for you.'))
         
     game.discarded_cards.append((game.leader.cards.pop(card-1), game.leader.id))
@@ -344,7 +348,7 @@ def request_players_cards():
             return False
         if all((not message.author.bot, 
                 number >= 1, 
-                number <= cards_one_player_has)): return True
+                number <= game_rules.cards_one_player_has)): return True
         return False
                         
     def button_check(interaction):
@@ -354,17 +358,17 @@ def request_players_cards():
             return False
         if all((not interaction.user.bot, 
                 number >= 1, 
-                number <= cards_one_player_has)): return True
+                number <= game_rules.cards_one_player_has)): return True
         return False
         
         
     for player in players:
         if player != game.leader:
             try:
-                card = int(asyncio.run(wait_for_answer(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, cards_one_player_has+1)), timeout=game.step_timeout)))
+                card = int(asyncio.run(wait_for_answer(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
             except asyncio.TimeoutError:
-                card = random.randrange(cards_one_player_has)
+                card = random.randrange(game_rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[card-1] + ' was automatically selected for you.'))
                 
             game.discarded_cards.append((player.cards.pop(card-1), player.id))
@@ -377,7 +381,7 @@ def vote_for_target_card_2():
             return False
         if all((not message.author.bot,  
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
         return False
         
@@ -388,14 +392,14 @@ def vote_for_target_card_2():
             return False
         if all((not interaction.user.bot, 
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
         return False
         
     
     for player in players:
         try:
-            card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=step_timeout)))
+            card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
             asyncio.run(player.send('You has choosed the card ' + game.discarded_cards[card-1][0] + '.'))
         except asyncio.TimeoutError:
             card = random.randint(1, len(players))
@@ -412,7 +416,7 @@ def vote_for_target_card():
             return False
         if all((not message.author.bot,  
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
         return False
         
@@ -423,7 +427,7 @@ def vote_for_target_card():
             return False
         if all((not interaction.user.bot, 
                 number >= 1, 
-                number <= cards_one_player_has, 
+                number <= game_rules.cards_one_player_has, 
                 game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
         return False
         
@@ -431,7 +435,7 @@ def vote_for_target_card():
     for player in players:
         if player != game.leader:
             try:
-                card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=step_timeout)))
+                card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + game.discarded_cards[card-1][0] + '.'))
             except asyncio.TimeoutError:
                 card = random.randint(1, len(players))
