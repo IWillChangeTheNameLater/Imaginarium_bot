@@ -14,6 +14,7 @@ class link:
 class Sourse:
     pass
 
+
 class Vk(Sourse):
     def __init__(self, link):
         self.link = link

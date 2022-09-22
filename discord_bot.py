@@ -25,6 +25,7 @@ class player(player):
     async def send(self, message, components=None):
         await self.user.send(message, components=components)
 
+
 def extract_file_extension(filename):
     return filename[filename.rfind('.')+1:]
     
@@ -53,7 +54,7 @@ def filled_iter(iterator, filling=None):
         yield i 
     while True:
         yield filling
-
+        
 def generate_buttons(labels, styles=filled_iter((), 2), 
                              urls=filled_iter(()), 
                              disableds=filled_iter((), False), 
@@ -82,24 +83,24 @@ def generate_buttons(labels, styles=filled_iter((), 2),
         buttons.append(row)
     return buttons
 
-async def wait_for_answer(recipient, message=None, reactions=(), components=None, message_check=None, reaction_check=None, button_check=None, timeout=None):
-    answer = None
+async def wait_for_reply(recipient, message=None, reactions=(), components=None, message_check=None, reaction_check=None, button_check=None, timeout=None):
+    reply = None
     msg = await recipient.send(message, components=components)
     for r in reactions:
         await msg.add_reaction(r)
     
     async def wait_for_message():
-        nonlocal answer
+        nonlocal reply
         message = await bot.wait_for('message', check=message_check)
-        answer = message.content
+        reply = message.content
     async def wait_for_reaction_add():
-        nonlocal answer
+        nonlocal reply
         reaction, _ = await bot.wait_for('reaction_add', check=reaction_check)
-        answer = reaction.emoji
+        reply = reaction.emoji
     async def wait_for_button_click():
-        nonlocal answer 
+        nonlocal reply 
         interaction = await bot.wait_for("button_click", check=button_check)
-        answer = interaction.component.label
+        reply = interaction.component.label
     
     pending_tasks = [wait_for_message(), 
                      wait_for_reaction_add(),
@@ -110,9 +111,9 @@ async def wait_for_answer(recipient, message=None, reactions=(), components=None
     for task in pending_tasks:
         task.cancel()
     
-    if answer:
+    if reply:
         #TODO return not str
-        return str(answer)
+        return str(reply)
         
     raise asyncio.TimeoutError
     
@@ -264,7 +265,7 @@ def request_association():
                 interaction.author.id == game.leader.id)): return True
         return False
     
-    game.round_association = asyncio.run(wait_for_answer(game.leader, message='Did you tell the association of the round? Write it below or confirm it by pressing the button.', components=[Button(style=ButtonStyle.green, label='Yes', emoji='✅')], message_check=message_check, button_check=button_check))
+    game.round_association = asyncio.run(wait_for_reply(game.leader, message='Did you tell the association of the round? Write it below or confirm it by pressing the button.', components=[Button(style=ButtonStyle.green, label='Yes', emoji='✅')], message_check=message_check, button_check=button_check))
 
 def show_association():
     if game.round_association:
@@ -300,7 +301,7 @@ def request_players_cards_2():
         for line in ('Choose the first card you want to... choose?..', 
                      'Choose the second card you want to... choose?..'):
             try:
-                card = int(asyncio.run(wait_for_answer(player, message=line +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
+                card = int(asyncio.run(wait_for_reply(player, message=line +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
             except asyncio.TimeoutError:
                 card = random.randrange(game_rules.cards_one_player_has)
@@ -332,7 +333,7 @@ def request_leader_card():
         
         
     try:
-        card = int(asyncio.run(wait_for_answer(game.leader, message='You are a leader now. Choose number of one of your cards:\n' +  '\n'.join(str(c) for c in game.leader.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
+        card = int(asyncio.run(wait_for_reply(game.leader, message='You are a leader now. Choose number of one of your cards:\n' +  '\n'.join(str(c) for c in game.leader.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
         asyncio.run(game.leader.send('You has choosed the card ' + game.leader.cards[card-1] + '.'))
     except asyncio.TimeoutError:
         card = random.randrange(game_rules.cards_one_player_has)
@@ -365,7 +366,7 @@ def request_players_cards():
     for player in players:
         if player != game.leader:
             try:
-                card = int(asyncio.run(wait_for_answer(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
+                card = int(asyncio.run(wait_for_reply(player, message='Choose the card you want to... Choose?..:\n' +  '\n'.join(str(c) for c in player.cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, game_rules.cards_one_player_has+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + player.cards[card-1] + '.'))
             except asyncio.TimeoutError:
                 card = random.randrange(game_rules.cards_one_player_has)
@@ -399,7 +400,7 @@ def vote_for_target_card_2():
     
     for player in players:
         try:
-            card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
+            card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
             asyncio.run(player.send('You has choosed the card ' + game.discarded_cards[card-1][0] + '.'))
         except asyncio.TimeoutError:
             card = random.randint(1, len(players))
@@ -435,7 +436,7 @@ def vote_for_target_card():
     for player in players:
         if player != game.leader:
             try:
-                card = int(asyncio.run(wait_for_answer(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
+                card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check, components=generate_buttons(range(1, len(game.discarded_cards)+1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has choosed the card ' + game.discarded_cards[card-1][0] + '.'))
             except asyncio.TimeoutError:
                 card = random.randint(1, len(players))
