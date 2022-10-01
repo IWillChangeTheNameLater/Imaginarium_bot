@@ -9,7 +9,6 @@ import asyncio
 import chardet
 
 import discord_bot_configuration
-from game import *
 import game
 import game_rules
 import game_exceptions
@@ -17,7 +16,7 @@ import cards_parsing
 
 
 class Player(game.Player):
-    def __init__(self, user: discord.Member):
+    def __init__(self, user):
         super().__init__(user.id, user.mention)
 
         self.user = user
@@ -170,15 +169,16 @@ async def set_winning_score(ctx, score):
 
 @bot.command()
 async def get_players_score(ctx):
-    if players:
-        await ctx.send('Players score:\n' + '\n'.join((str(player) + ': ' + str(player.score) for player in players)))
+    if game.players:
+        await ctx.send(
+            'Players score:\n' + '\n'.join((str(player) + ': ' + str(player.score) for player in game.players)))
     else:
         await ctx.send('There are no players.')
 
 
 @bot.command()
 async def get_used_cards(ctx):
-    await ctx.author.send('\n'.join(used_cards))
+    await ctx.author.send('\n'.join(game.used_cards))
 
 
 @bot.command()
@@ -196,8 +196,8 @@ async def set_step_minutes(ctx, minutes):
 
 @bot.command()
 async def get_sources(ctx):
-    if sources:
-        await ctx.author.send('\n'.join(str(source) for source in sources))
+    if game.sources:
+        await ctx.author.send('\n'.join(str(source) for source in game.sources))
     else:
         await ctx.author.send('Sorry, there are no sources here yet.')
 
@@ -212,7 +212,7 @@ async def add_sources(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                sources.add(cards_parsing.create_source_object(source))
+                game.sources.add(cards_parsing.create_source_object(source))
             except game_exceptions.UnexpectedSource:
                 await ctx.send('Sorry, there is something wrong with source: ' + source)
 
@@ -224,7 +224,7 @@ async def remove_source(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                sources.remove(source)
+                game.sources.remove(source)
             except KeyError:
                 await ctx.send('Sorry, there is no the source: ' + source)
 
@@ -233,8 +233,8 @@ async def remove_source(ctx, *, message=''):
 
 @bot.command()
 async def get_players(ctx):
-    if players:
-        await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in players))
+    if game.players:
+        await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in game.players))
     else:
         await ctx.send('There are no players.')
 
@@ -244,10 +244,10 @@ async def join(ctx):
     # TODO add person to queue for joining and move it to game.py
     if game.game_started:
         await ctx.send('You can\'t join right now, the game is started.')
-    elif ctx.author.id in players:
+    elif ctx.author.id in game.players:
         await ctx.send('You have already joined')
     else:
-        players.append(Player(ctx.author))
+        game.players.append(Player(ctx.author))
         await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
 
 
@@ -257,7 +257,7 @@ async def leave(ctx):
         await ctx.send('You can\'t leave the game now, it is started.')
     else:
         try:
-            players.remove(ctx.author.id)
+            game.players.remove(ctx.author.id)
             await ctx.send('Players ' + ctx.author.mention + ' have left the game.')
         except ValueError:
             ctx.send('You have already left.')
@@ -265,9 +265,10 @@ async def leave(ctx):
 
 @bot.command()
 async def shuffle_players_order(ctx):
-    random.shuffle(players)
-    if players:
-        await ctx.send('Now you walk in the following order: ' + '\n' + '\n'.join(str(player) for player in players))
+    game.random.shuffle(game.players)
+    if game.players:
+        await ctx.send(
+            'Now you walk in the following order: ' + '\n' + '\n'.join(str(player) for player in game.players))
     else:
         await ctx.send('There are no any players.')
 
@@ -328,7 +329,7 @@ def request_players_cards_2():
                 number != discarded_card)): return True
         return False
 
-    for player in players:
+    for player in game.players:
         for line in ('Choose the first card you want to... choose?..',
                      'Choose the second card you want to... choose?..'):
             try:
@@ -339,7 +340,7 @@ def request_players_cards_2():
                                                       timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
             except asyncio.TimeoutError:
-                card = random.randrange(game_rules.cards_one_player_has)
+                card = game.random.randrange(game_rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[
                     card - 1] + ' was automatically selected for you.'))
 
@@ -376,7 +377,7 @@ def request_leader_card():
                 range(1, game_rules.cards_one_player_has + 1)), timeout=game_rules.step_timeout)))
         asyncio.run(game.leader.send('You has chosen the card ' + game.leader.cards[card - 1] + '.'))
     except asyncio.TimeoutError:
-        card = random.randrange(game_rules.cards_one_player_has)
+        card = game.random.randrange(game_rules.cards_one_player_has)
         asyncio.run(game.leader.send('You was thinking too much. The card ' + game.leader.cards[
             card - 1] + ' was automatically selected for you.'))
 
@@ -404,7 +405,7 @@ def request_players_cards():
                 number <= game_rules.cards_one_player_has)): return True
         return False
 
-    for player in players:
+    for player in game.players:
         if player != game.leader:
             try:
                 card = int(asyncio.run(wait_for_reply(player,
@@ -414,7 +415,7 @@ def request_players_cards():
                         range(1, game_rules.cards_one_player_has + 1)), timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
             except asyncio.TimeoutError:
-                card = random.randrange(game_rules.cards_one_player_has)
+                card = game.random.randrange(game_rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[
                     card - 1] + ' was automatically selected for you.'))
 
@@ -444,7 +445,7 @@ def vote_for_target_card_2():
                 game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
         return False
 
-    for player in players:
+    for player in game.players:
         try:
             card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
                 str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check,
@@ -452,7 +453,7 @@ def vote_for_target_card_2():
                                                   timeout=game_rules.step_timeout)))
             asyncio.run(player.send('You has chosen the card ' + game.discarded_cards[card - 1][0] + '.'))
         except asyncio.TimeoutError:
-            card = random.randint(1, len(players))
+            card = game.random.randint(1, len(game.players))
             asyncio.run(player.send('You was thinking too much. The card ' + game.discarded_cards[
                 card - 1] + ' was automatically selected for you.'))
 
@@ -483,7 +484,7 @@ def vote_for_target_card():
                 game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
         return False
 
-    for player in players:
+    for player in game.players:
         if player != game.leader:
             try:
                 card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
@@ -493,7 +494,7 @@ def vote_for_target_card():
                                                       timeout=game_rules.step_timeout)))
                 asyncio.run(player.send('You has chosen the card ' + game.discarded_cards[card - 1][0] + '.'))
             except asyncio.TimeoutError:
-                card = random.randint(1, len(players))
+                card = game.random.randint(1, len(game.players))
                 asyncio.run(player.send('You was thinking too much. The card ' + game.discarded_cards[
                     card - 1] + ' was automatically selected for you.'))
 
@@ -502,11 +503,11 @@ def vote_for_target_card():
 
 
 def at_end():
-    game_took_time = time.time() - game.game_started_at
+    game_took_time = game.time.time() - game.game_started_at
     asyncio.run(start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
         int(game_took_time % 60)) + ' seconds.'))
 
-    if len(players) == 2:
+    if len(game.players) == 2:
         if game.bot_score > game.players_score:
             asyncio.run(start.ctx.send('You lose with score: ' + str(game.players_score)))
         if game.players_score > game.bot_score:
@@ -516,7 +517,7 @@ def at_end():
     else:
         asyncio.run(start.ctx.send('The winners: \n' +
                                    '\n'.join((str(place) + '. ' + str(player) for place, player in
-                                              enumerate(sorted(players)[:3], start=1)))))
+                                              enumerate(sorted(game.players)[:3], start=1)))))
 
 
 @bot.command()
@@ -540,7 +541,7 @@ async def start(ctx):
 
 @bot.command()
 async def end(ctx):
-    if game_started:
+    if game.game_started:
         game.game_started = False
         await ctx.send('The game will be ended as soon as possible.')
     else:
