@@ -9,13 +9,10 @@ import asyncio
 import chardet
 
 import discord_bot_configuration
-import game
-import game_rules
-import game_exceptions
-import cards_parsing
+import Imaginarium
 
 
-class Player(game.Player):
+class Player(Imaginarium.game.Player):
     def __init__(self, user):
         super().__init__(user.id, user.mention)
 
@@ -162,23 +159,24 @@ async def help(ctx):
 @bot.command()
 async def set_winning_score(ctx, score):
     if score.isdigit():
-        game_rules.winning_score = int(score)
+        Imaginarium.rules.winning_score = int(score)
     else:
         await ctx.author.send('Score is supposed to be a number.')
 
 
 @bot.command()
 async def get_players_score(ctx):
-    if game.players:
+    if Imaginarium.game.players:
         await ctx.send(
-            'Players score:\n' + '\n'.join((str(player) + ': ' + str(player.score) for player in game.players)))
+            'Players score:\n' + '\n'.join(
+                (str(player) + ': ' + str(player.score) for player in Imaginarium.game.players)))
     else:
         await ctx.send('There are no players.')
 
 
 @bot.command()
 async def get_used_cards(ctx):
-    await ctx.author.send('\n'.join(game.used_cards))
+    await ctx.author.send('\n'.join(Imaginarium.game.used_cards))
 
 
 @bot.command()
@@ -189,15 +187,15 @@ async def reset_used_cards(ctx):
 @bot.command()
 async def set_step_minutes(ctx, minutes):
     if minutes.isdigit():
-        game_rules.step_timeout = float(minutes) * 60
+        Imaginarium.rules.step_timeout = float(minutes) * 60
     else:
         await ctx.author.send('"Score" supposed to be a number.')
 
 
 @bot.command()
 async def get_sources(ctx):
-    if game.sources:
-        await ctx.author.send('\n'.join(str(source) for source in game.sources))
+    if Imaginarium.game.sources:
+        await ctx.author.send('\n'.join(str(source) for source in Imaginarium.game.sources))
     else:
         await ctx.author.send('Sorry, there are no sources here yet.')
 
@@ -212,8 +210,8 @@ async def add_sources(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                game.sources.add(cards_parsing.create_source_object(source))
-            except game_exceptions.UnexpectedSource:
+                Imaginarium.game.sources.add(Imaginarium.cards_parsing.create_source_object(source))
+            except Imaginarium.exceptions.UnexpectedSource:
                 await ctx.send('Sorry, there is something wrong with source: ' + source)
 
     await iterate_sources(ctx, message, move_source)
@@ -224,7 +222,7 @@ async def remove_source(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                game.sources.remove(source)
+                Imaginarium.game.sources.remove(source)
             except KeyError:
                 await ctx.send('Sorry, there is no the source: ' + source)
 
@@ -233,42 +231,43 @@ async def remove_source(ctx, *, message=''):
 
 @bot.command()
 async def get_players(ctx):
-    if game.players:
-        await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in game.players))
+    if Imaginarium.game.players:
+        await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in Imaginarium.game.players))
     else:
         await ctx.send('There are no players.')
 
 
 @bot.command()
 async def join(ctx):
-    # TODO add person to queue for joining and move it to game.py
-    if game.game_started:
+    # TODO add person to queue for joining and move it to Imaginarium.game.py
+    if Imaginarium.game.game_started:
         await ctx.send('You can\'t join right now, the game is started.')
-    elif ctx.author.id in game.players:
+    elif ctx.author.id in Imaginarium.game.players:
         await ctx.send('You have already joined')
     else:
-        game.players.append(Player(ctx.author))
-        await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
+        Imaginarium.game.players.append(Player(ctx.author))
+        await ctx.send('Player ' + ctx.author.mention + ' has joined the Imaginarium.game.')
 
 
 @bot.command()
 async def leave(ctx):
-    if game.game_started:
+    if Imaginarium.game.game_started:
         await ctx.send('You can\'t leave the game now, it is started.')
     else:
         try:
-            game.players.remove(ctx.author.id)
-            await ctx.send('Players ' + ctx.author.mention + ' have left the game.')
+            Imaginarium.game.players.remove(ctx.author.id)
+            await ctx.send('Players ' + ctx.author.mention + ' have left the Imaginarium.game.')
         except ValueError:
             ctx.send('You have already left.')
 
 
 @bot.command()
 async def shuffle_players_order(ctx):
-    game.random.shuffle(game.players)
-    if game.players:
+    Imaginarium.game.random.shuffle(Imaginarium.game.players)
+    if Imaginarium.game.players:
         await ctx.send(
-            'Now you walk in the following order: ' + '\n' + '\n'.join(str(player) for player in game.players))
+            'Now you walk in the following order: ' + '\n' + '\n'.join(
+                str(player) for player in Imaginarium.game.players))
     else:
         await ctx.send('There are no any players.')
 
@@ -278,30 +277,33 @@ def at_start():
 
 
 def at_round_start():
-    asyncio.run(start.ctx.channel.send('The round ' + str(game.round_number) + ' has started.'))
+    asyncio.run(start.ctx.channel.send('The round ' + str(Imaginarium.game.round_number) + ' has started.'))
 
 
 def request_association():
     def message_check(message):
         if all((not message.author.bot,
-                message.author == game.leader)): return True
+                message.author == Imaginarium.game.leader)): return True
         return False
 
     def button_check(interaction):
         if all((not interaction.author.bot,
-                interaction.author.id == game.leader.id)): return True
+                interaction.author.id == Imaginarium.game.leader.id)): return True
         return False
 
-    game.round_association = asyncio.run(wait_for_reply(game.leader,
-                                                        message='Did you tell the association of the round? Write it below or confirm it by pressing the button.',
-                                                        components=[
-                                                            Button(style=ButtonStyle.green, label='Yes', emoji='✅')],
-                                                        message_check=message_check, button_check=button_check))
+    Imaginarium.game.round_association = asyncio.run(wait_for_reply(Imaginarium.game.leader,
+                                                                    message='Did you tell the association of the round? Write it below or confirm it by pressing the button.',
+                                                                    components=[
+                                                                        Button(style=ButtonStyle.green, label='Yes',
+                                                                               emoji='✅')],
+                                                                    message_check=message_check,
+                                                                    button_check=button_check))
 
 
 def show_association():
-    if game.round_association:
-        asyncio.run(start.ctx.channel.send('The association of the round is: ' + str(game.round_association)))
+    if Imaginarium.game.round_association:
+        asyncio.run(
+            start.ctx.channel.send('The association of the round is: ' + str(Imaginarium.game.round_association)))
 
 
 def request_players_cards_2():
@@ -314,7 +316,7 @@ def request_players_cards_2():
             return False
         if all((not message.author.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
+                number <= Imaginarium.rules.cards_one_player_has,
                 number != discarded_card)): return True
         return False
 
@@ -325,26 +327,26 @@ def request_players_cards_2():
             return False
         if all((not interaction.user.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
+                number <= Imaginarium.rules.cards_one_player_has,
                 number != discarded_card)): return True
         return False
 
-    for player in game.players:
+    for player in Imaginarium.game.players:
         for line in ('Choose the first card you want to... choose?..',
                      'Choose the second card you want to... choose?..'):
             try:
                 card = int(asyncio.run(wait_for_reply(player, message=line + '\n'.join(str(c) for c in player.cards),
                                                       message_check=message_check, button_check=button_check,
                                                       components=generate_buttons(
-                                                          range(1, game_rules.cards_one_player_has + 1)),
-                                                      timeout=game_rules.step_timeout)))
+                                                          range(1, Imaginarium.rules.cards_one_player_has + 1)),
+                                                      timeout=Imaginarium.rules.step_timeout)))
                 asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
             except asyncio.TimeoutError:
-                card = game.random.randrange(game_rules.cards_one_player_has)
+                card = Imaginarium.game.random.randrange(Imaginarium.rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[
                     card - 1] + ' was automatically selected for you.'))
 
-            game.discarded_cards.append((player.cards[card - 1], player.id))
+            Imaginarium.game.discarded_cards.append((player.cards[card - 1], player.id))
             discarded_card = card
 
 
@@ -356,7 +358,7 @@ def request_leader_card():
             return False
         if all((not message.author.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has)): return True
+                number <= Imaginarium.rules.cards_one_player_has)): return True
         return False
 
     def button_check(interaction):
@@ -366,22 +368,24 @@ def request_leader_card():
             return False
         if all((not interaction.user.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has)): return True
+                number <= Imaginarium.rules.cards_one_player_has)): return True
         return False
 
     try:
-        card = int(asyncio.run(wait_for_reply(game.leader,
+        card = int(asyncio.run(wait_for_reply(Imaginarium.game.leader,
                                               message='You are a leader now. Choose number of one of your cards:\n' + '\n'.join(
-                                                  str(c) for c in game.leader.cards), message_check=message_check,
+                                                  str(c) for c in Imaginarium.game.leader.cards),
+                                              message_check=message_check,
                                               button_check=button_check, components=generate_buttons(
-                range(1, game_rules.cards_one_player_has + 1)), timeout=game_rules.step_timeout)))
-        asyncio.run(game.leader.send('You has chosen the card ' + game.leader.cards[card - 1] + '.'))
+                range(1, Imaginarium.rules.cards_one_player_has + 1)), timeout=Imaginarium.rules.step_timeout)))
+        asyncio.run(
+            Imaginarium.game.leader.send('You has chosen the card ' + Imaginarium.game.leader.cards[card - 1] + '.'))
     except asyncio.TimeoutError:
-        card = game.random.randrange(game_rules.cards_one_player_has)
-        asyncio.run(game.leader.send('You was thinking too much. The card ' + game.leader.cards[
+        card = Imaginarium.game.random.randrange(Imaginarium.rules.cards_one_player_has)
+        asyncio.run(Imaginarium.game.leader.send('You was thinking too much. The card ' + Imaginarium.game.leader.cards[
             card - 1] + ' was automatically selected for you.'))
 
-    game.discarded_cards.append((game.leader.cards.pop(card - 1), game.leader.id))
+    Imaginarium.game.discarded_cards.append((Imaginarium.game.leader.cards.pop(card - 1), Imaginarium.game.leader.id))
 
 
 def request_players_cards():
@@ -392,7 +396,7 @@ def request_players_cards():
             return False
         if all((not message.author.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has)): return True
+                number <= Imaginarium.rules.cards_one_player_has)): return True
         return False
 
     def button_check(interaction):
@@ -402,24 +406,24 @@ def request_players_cards():
             return False
         if all((not interaction.user.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has)): return True
+                number <= Imaginarium.rules.cards_one_player_has)): return True
         return False
 
-    for player in game.players:
-        if player != game.leader:
+    for player in Imaginarium.game.players:
+        if player != Imaginarium.game.leader:
             try:
                 card = int(asyncio.run(wait_for_reply(player,
                                                       message='Choose the card you want to... Choose?..:\n' + '\n'.join(
                                                           str(c) for c in player.cards), message_check=message_check,
                                                       button_check=button_check, components=generate_buttons(
-                        range(1, game_rules.cards_one_player_has + 1)), timeout=game_rules.step_timeout)))
+                        range(1, Imaginarium.rules.cards_one_player_has + 1)), timeout=Imaginarium.rules.step_timeout)))
                 asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
             except asyncio.TimeoutError:
-                card = game.random.randrange(game_rules.cards_one_player_has)
+                card = Imaginarium.game.random.randrange(Imaginarium.rules.cards_one_player_has)
                 asyncio.run(player.send('You was thinking too much. The card ' + player.cards[
                     card - 1] + ' was automatically selected for you.'))
 
-            game.discarded_cards.append((player.cards.pop(card - 1), player.id))
+            Imaginarium.game.discarded_cards.append((player.cards.pop(card - 1), player.id))
 
 
 def vote_for_target_card_2():
@@ -430,8 +434,8 @@ def vote_for_target_card_2():
             return False
         if all((not message.author.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
-                game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
+                number <= Imaginarium.rules.cards_one_player_has,
+                Imaginarium.game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
         return False
 
     def button_check(interaction):
@@ -441,23 +445,26 @@ def vote_for_target_card_2():
             return False
         if all((not interaction.user.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
-                game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
+                number <= Imaginarium.rules.cards_one_player_has,
+                Imaginarium.game.discarded_cards[int(interaction.component.label) - 1][
+                    1] != interaction.user.id)): return True
         return False
 
-    for player in game.players:
+    for player in Imaginarium.game.players:
         try:
             card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
-                str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check,
-                                                  components=generate_buttons(range(1, len(game.discarded_cards) + 1)),
-                                                  timeout=game_rules.step_timeout)))
-            asyncio.run(player.send('You has chosen the card ' + game.discarded_cards[card - 1][0] + '.'))
+                str(c[0]) for c in Imaginarium.game.discarded_cards), message_check=message_check,
+                                                  button_check=button_check,
+                                                  components=generate_buttons(
+                                                      range(1, len(Imaginarium.game.discarded_cards) + 1)),
+                                                  timeout=Imaginarium.rules.step_timeout)))
+            asyncio.run(player.send('You has chosen the card ' + Imaginarium.game.discarded_cards[card - 1][0] + '.'))
         except asyncio.TimeoutError:
-            card = game.random.randint(1, len(game.players))
-            asyncio.run(player.send('You was thinking too much. The card ' + game.discarded_cards[
+            card = Imaginarium.game.random.randint(1, len(Imaginarium.game.players))
+            asyncio.run(player.send('You was thinking too much. The card ' + Imaginarium.game.discarded_cards[
                 card - 1] + ' was automatically selected for you.'))
 
-        game.votes_for_card[game.discarded_cards[card - 1][1]] += 1
+        Imaginarium.game.votes_for_card[Imaginarium.game.discarded_cards[card - 1][1]] += 1
         player.chosen_card = card
 
 
@@ -469,8 +476,8 @@ def vote_for_target_card():
             return False
         if all((not message.author.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
-                game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
+                number <= Imaginarium.rules.cards_one_player_has,
+                Imaginarium.game.discarded_cards[int(message.content) - 1][1] != message.author.id)): return True
         return False
 
     def button_check(interaction):
@@ -480,44 +487,47 @@ def vote_for_target_card():
             return False
         if all((not interaction.user.bot,
                 number >= 1,
-                number <= game_rules.cards_one_player_has,
-                game.discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id)): return True
+                number <= Imaginarium.rules.cards_one_player_has,
+                Imaginarium.game.discarded_cards[int(interaction.component.label) - 1][
+                    1] != interaction.user.id)): return True
         return False
 
-    for player in game.players:
-        if player != game.leader:
+    for player in Imaginarium.game.players:
+        if player != Imaginarium.game.leader:
             try:
                 card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
-                    str(c[0]) for c in game.discarded_cards), message_check=message_check, button_check=button_check,
+                    str(c[0]) for c in Imaginarium.game.discarded_cards), message_check=message_check,
+                                                      button_check=button_check,
                                                       components=generate_buttons(
-                                                          range(1, len(game.discarded_cards) + 1)),
-                                                      timeout=game_rules.step_timeout)))
-                asyncio.run(player.send('You has chosen the card ' + game.discarded_cards[card - 1][0] + '.'))
+                                                          range(1, len(Imaginarium.game.discarded_cards) + 1)),
+                                                      timeout=Imaginarium.rules.step_timeout)))
+                asyncio.run(
+                    player.send('You has chosen the card ' + Imaginarium.game.discarded_cards[card - 1][0] + '.'))
             except asyncio.TimeoutError:
-                card = game.random.randint(1, len(game.players))
-                asyncio.run(player.send('You was thinking too much. The card ' + game.discarded_cards[
+                card = Imaginarium.game.random.randint(1, len(Imaginarium.game.players))
+                asyncio.run(player.send('You was thinking too much. The card ' + Imaginarium.game.discarded_cards[
                     card - 1] + ' was automatically selected for you.'))
 
-            game.votes_for_card[game.discarded_cards[card - 1][1]] += 1
+            Imaginarium.game.votes_for_card[Imaginarium.game.discarded_cards[card - 1][1]] += 1
             player.chosen_card = card
 
 
 def at_end():
-    game_took_time = game.time.time() - game.game_started_at
+    game_took_time = Imaginarium.game.time.time() - Imaginarium.game.game_started_at
     asyncio.run(start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
         int(game_took_time % 60)) + ' seconds.'))
 
-    if len(game.players) == 2:
-        if game.bot_score > game.players_score:
-            asyncio.run(start.ctx.send('You lose with score: ' + str(game.players_score)))
-        if game.players_score > game.bot_score:
-            asyncio.run(start.ctx.send('You win with score: ' + str(game.players_score)))
+    if len(Imaginarium.game.players) == 2:
+        if Imaginarium.game.bot_score > Imaginarium.game.players_score:
+            asyncio.run(start.ctx.send('You lose with score: ' + str(Imaginarium.game.players_score)))
+        if Imaginarium.game.players_score > Imaginarium.game.bot_score:
+            asyncio.run(start.ctx.send('You win with score: ' + str(Imaginarium.game.players_score)))
         else:
             asyncio.run(start.ctx.send('Победила дружба (сырок)!'))
     else:
         asyncio.run(start.ctx.send('The winners: \n' +
                                    '\n'.join((str(place) + '. ' + str(player) for place, player in
-                                              enumerate(sorted(game.players)[:3], start=1)))))
+                                              enumerate(sorted(Imaginarium.game.players)[:3], start=1)))))
 
 
 @bot.command()
@@ -525,24 +535,24 @@ async def start(ctx):
     start.ctx = ctx
 
     try:
-        game.start_game(at_start=at_start,
-                        at_round_start=at_round_start,
-                        request_association=request_association,
-                        show_association=show_association,
-                        request_players_cards_2=request_players_cards_2,
-                        request_leader_card=request_leader_card,
-                        request_players_cards=request_players_cards,
-                        vote_for_target_card_2=vote_for_target_card_2,
-                        vote_for_target_card=vote_for_target_card,
-                        at_end=at_end)
+        Imaginarium.game.start_game(at_start=at_start,
+                                    at_round_start=at_round_start,
+                                    request_association=request_association,
+                                    show_association=show_association,
+                                    request_players_cards_2=request_players_cards_2,
+                                    request_leader_card=request_leader_card,
+                                    request_players_cards=request_players_cards,
+                                    vote_for_target_card_2=vote_for_target_card_2,
+                                    vote_for_target_card=vote_for_target_card,
+                                    at_end=at_end)
     except TypeError:
         await ctx.send('The game cannot start yet. Specify all data and start the game again.')
 
 
 @bot.command()
 async def end(ctx):
-    if game.game_started:
-        game.game_started = False
+    if Imaginarium.game.game_started:
+        Imaginarium.game.game_started = False
         await ctx.send('The game will be ended as soon as possible.')
     else:
         await ctx.send('The game is already ended.')

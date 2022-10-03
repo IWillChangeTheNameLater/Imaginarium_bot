@@ -4,11 +4,11 @@ import random
 import validators
 import vk_api
 
-import game_configuration
-import game_exceptions
-import game_rules
+from . import configuration
+from . import rules
+from . import exceptions
 
-vk_requests = vk_api.VkApi(token=game_configuration.VK_TOKEN).get_api()
+vk_requests = vk_api.VkApi(token=configuration.VK_TOKEN).get_api()
 
 
 class Link:
@@ -24,8 +24,8 @@ class Vk(Source):
     def __init__(self, link):
         self.link = link
         self.domain = link[link.rfind(r'/') + 1:]
-        game_rules.included_types = {y for i in game_rules.included_types if (y := Vk.types.get(i))}
-        game_rules.excluded_types = {y for i in game_rules.excluded_types if (y := Vk.types.get(i))}
+        rules.included_types = {y for i in rules.included_types if (y := Vk.types.get(i))}
+        rules.excluded_types = {y for i in rules.excluded_types if (y := Vk.types.get(i))}
 
     def __eq__(self, other):
         return self.link == other
@@ -60,7 +60,7 @@ class Vk(Source):
 
         self.set_cards_quantity()
         if self.cards_num == 0:
-            raise game_exceptions.NoAnyPosts
+            raise exceptions.NoAnyPosts
 
         try:
             attachments = vk_requests.wall.get(domain=self.domain,
@@ -72,9 +72,9 @@ class Vk(Source):
         # If attachments are found, then get the random one
         random.shuffle(attachments)
         for attachment in attachments:
-            if attachment['type'] not in game_rules.excluded_types:
-                if game_rules.included_types:
-                    if attachment['type'] not in game_rules.included_types:
+            if attachment['type'] not in rules.excluded_types:
+                if rules.included_types:
+                    if attachment['type'] not in rules.included_types:
                         continue
                 return extract_content_from_attachment(attachment)
 
@@ -101,4 +101,5 @@ def create_source_object(source):
             pass
     elif validators.email(source):
         pass
-    raise game_exceptions.Unexpectedsource('The link format is not supported or an unavailable link is specified.')
+    raise exceptions.UnexpectedSource(
+        'The link format is not supported or an unavailable link is specified.')

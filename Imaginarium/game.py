@@ -2,8 +2,8 @@ import collections
 import random
 import time
 
-import game_exceptions
-import game_rules
+from . import exceptions
+from . import rules
 
 game_started = False
 used_cards = set()
@@ -66,7 +66,7 @@ def all_elements_true(iterable, function=lambda x: x):
 def get_random_card():
     try:
         return random.choice(list(sources)).get_random_card()
-    except game_exceptions.NoAnyPosts:
+    except exceptions.NoAnyPosts:
         return get_random_card()
 
 
@@ -123,7 +123,7 @@ def start_game(at_start=empty_function,
         if len(players) >= 3:
             for player in players:
                 player.cards = list()
-                for i in range(game_rules.cards_one_player_has - 1):
+                for i in range(rules.cards_one_player_has - 1):
                     player.cards.append(get_random_card())
 
         round_number = 1
@@ -138,7 +138,7 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [get_random_card() for i in range(game_rules.cards_one_player_has)]
+                    player.cards = [get_random_card() for i in range(rules.cards_one_player_has)]
             else:
                 for player in players:
                     player.cards.append(get_random_card())
@@ -188,7 +188,7 @@ def start_game(at_start=empty_function,
                 else:
                     if votes_for_card[leader.id] != len(players):
                         leader.score += 3
-                    for player in player:
+                    for player in players:
                         if player != leader:
                             if discarded_cards[player.chosen_card - 1][1] == leader.id:
                                 player.score += 3
@@ -203,10 +203,10 @@ def start_game(at_start=empty_function,
 
         # Check for victory
         if len(players) == 2:
-            if max(bot_score, players_score) >= game_rules.winning_score:
+            if max(bot_score, players_score) >= rules.winning_score:
                 game_started = False
         else:
-            if not all_elements_true(players, lambda p: p.score < game_rules.winning_score):
+            if not all_elements_true(players, lambda p: p.score < rules.winning_score):
                 game_started = False
 
     at_end()
