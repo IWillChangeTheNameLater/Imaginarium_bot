@@ -1,5 +1,5 @@
 __pycache__
-discord_bot_configuration.py
+bots/discord/discord_bot_configuration.py
 Imaginarium/configuration.py
 
 /.idea
