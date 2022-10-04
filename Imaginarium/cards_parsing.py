@@ -7,6 +7,7 @@ import vk_api
 from . import configuration
 from . import rules
 from . import exceptions
+from . import game
 
 vk_requests = vk_api.VkApi(token=configuration.VK_TOKEN).get_api()
 
@@ -103,3 +104,10 @@ def create_source_object(source):
         pass
     raise exceptions.UnexpectedSource(
         'The link format is not supported or an unavailable link is specified.')
+
+
+def get_random_card():
+    try:
+        return random.choice(list(game.sources)).get_random_card()
+    except exceptions.NoAnyPosts:
+        return get_random_card()
