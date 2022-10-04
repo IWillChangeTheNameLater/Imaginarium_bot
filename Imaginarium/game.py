@@ -2,8 +2,8 @@ import collections
 import random
 import time
 
-from . import exceptions
 from . import rules
+from . import cards_parsing
 
 game_started = False
 used_cards = set()
@@ -53,21 +53,6 @@ class Player:
 
     score = 0
     chosen_card = None
-
-
-def all_elements_true(iterable, function=lambda x: x):
-    """Return True if all the elements processed by the function are True."""
-    for i in iterable:
-        if not function(i):
-            return False
-    return True
-
-
-def get_random_card():
-    try:
-        return random.choice(list(sources)).get_random_card()
-    except exceptions.NoAnyPosts:
-        return get_random_card()
 
 
 def empty_function():
@@ -124,7 +109,7 @@ def start_game(at_start=empty_function,
             for player in players:
                 player.cards = list()
                 for i in range(rules.cards_one_player_has - 1):
-                    player.cards.append(get_random_card())
+                    player.cards.append(cards_parsing.get_random_card())
 
         round_number = 1
         for leader in players:
@@ -138,15 +123,15 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [get_random_card() for i in range(rules.cards_one_player_has)]
+                    player.cards = [cards_parsing.get_random_card() for i in range(rules.cards_one_player_has)]
             else:
                 for player in players:
-                    player.cards.append(get_random_card())
+                    player.cards.append(cards_parsing.get_random_card())
 
             # Each player discards cards to the common deck
             if len(players) == 2:
                 # Discard the bot's card
-                discarded_cards.append((get_random_card(), None))
+                discarded_cards.append((cards_parsing.get_random_card(), None))
 
                 request_association()
                 show_association()
@@ -155,7 +140,7 @@ def start_game(at_start=empty_function,
             else:
                 if len(players) == 3:
                     for i in range(2):
-                        discarded_cards.append((get_random_card(), None))
+                        discarded_cards.append((cards_parsing.get_random_card(), None))
 
                 show_players_cards()
                 request_leader_card()
@@ -206,7 +191,7 @@ def start_game(at_start=empty_function,
             if max(bot_score, players_score) >= rules.winning_score:
                 game_started = False
         else:
-            if not all_elements_true(players, lambda p: p.score < rules.winning_score):
+            if not all((player.score < rules.winning_score for player in players)):
                 game_started = False
 
     at_end()
