@@ -7,9 +7,13 @@ from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 import asyncio
 import chardet
+from dotenv import load_dotenv
+import os
 
-import discord_bot_configuration
+import configuration
 import Imaginarium
+
+load_dotenv()
 
 
 class Player(Imaginarium.game.Player):
@@ -122,7 +126,7 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
     raise asyncio.TimeoutError
 
 
-bot = commands.Bot(command_prefix=discord_bot_configuration.PREFIX,
+bot = commands.Bot(command_prefix=configuration.PREFIX,
                    intents=discord.Intents.all())
 bot.remove_command('help')
 
@@ -138,7 +142,7 @@ async def on_ready():
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send(
-            'The command does not exist. Write "' + discord_bot_configuration.PREFIX + 'help" to get available commands.')
+            'The command does not exist. Write "' + configuration.PREFIX + 'help" to get available commands.')
     else:
         raise error
 
@@ -573,4 +577,4 @@ async def test(ctx):
     msg = await ctx.send('Click', components=[Button(label='this')])
 
 
-bot.run(discord_bot_configuration.TOKEN)
+bot.run(os.environ['DISCORD_BOT_TOKEN'])

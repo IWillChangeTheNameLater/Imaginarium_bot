@@ -1,8 +1,7 @@
 __pycache__
-bots/discord/discord_bot_configuration.py
-Imaginarium/configuration.py
 
 /.idea
 /venv
+.env
 random_shit.txt
 some_shit.txt

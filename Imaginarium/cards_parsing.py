@@ -3,13 +3,16 @@ import random
 
 import validators
 import vk_api
+from dotenv import load_dotenv
+import os
 
-from . import configuration
 from . import rules
 from . import exceptions
 from . import game
 
-vk_requests = vk_api.VkApi(token=configuration.VK_TOKEN).get_api()
+load_dotenv()
+
+vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
 
 
 class Link:
