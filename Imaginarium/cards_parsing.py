@@ -6,7 +6,7 @@ import vk_api
 from dotenv import load_dotenv
 import os
 
-from . import rules
+from . import rules_setup
 from . import exceptions
 from . import game
 
@@ -28,8 +28,8 @@ class Vk(Source):
     def __init__(self, link):
         self.link = link
         self.domain = link[link.rfind(r'/') + 1:]
-        rules.included_types = {y for i in rules.included_types if (y := Vk.types.get(i))}
-        rules.excluded_types = {y for i in rules.excluded_types if (y := Vk.types.get(i))}
+        rules_setup.included_types = {y for i in rules_setup.included_types if (y := Vk.types.get(i))}
+        rules_setup.excluded_types = {y for i in rules_setup.excluded_types if (y := Vk.types.get(i))}
 
     def __eq__(self, other):
         return self.link == other
@@ -76,9 +76,9 @@ class Vk(Source):
         # If attachments are found, then get the random one
         random.shuffle(attachments)
         for attachment in attachments:
-            if attachment['type'] not in rules.excluded_types:
-                if rules.included_types:
-                    if attachment['type'] not in rules.included_types:
+            if attachment['type'] not in rules_setup.excluded_types:
+                if rules_setup.included_types:
+                    if attachment['type'] not in rules_setup.included_types:
                         continue
                 return extract_content_from_attachment(attachment)
 

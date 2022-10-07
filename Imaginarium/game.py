@@ -2,7 +2,7 @@ import collections
 import random
 import time
 
-from . import rules
+from . import rules_setup
 from . import cards_parsing
 
 game_started = False
@@ -108,7 +108,7 @@ def start_game(at_start=empty_function,
         if len(players) >= 3:
             for player in players:
                 player.cards = list()
-                for i in range(rules.cards_one_player_has - 1):
+                for i in range(rules_setup.cards_one_player_has - 1):
                     player.cards.append(cards_parsing.get_random_card())
 
         round_number = 1
@@ -123,7 +123,7 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [cards_parsing.get_random_card() for i in range(rules.cards_one_player_has)]
+                    player.cards = [cards_parsing.get_random_card() for i in range(rules_setup.cards_one_player_has)]
             else:
                 for player in players:
                     player.cards.append(cards_parsing.get_random_card())
@@ -188,10 +188,10 @@ def start_game(at_start=empty_function,
 
         # Check for victory
         if len(players) == 2:
-            if max(bot_score, players_score) >= rules.winning_score:
+            if max(bot_score, players_score) >= rules_setup.winning_score:
                 game_started = False
         else:
-            if not all((player.score < rules.winning_score for player in players)):
+            if not all((player.score < rules_setup.winning_score for player in players)):
                 game_started = False
 
     at_end()
