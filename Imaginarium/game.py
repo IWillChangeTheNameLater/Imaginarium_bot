@@ -23,8 +23,8 @@ round_association = None
 
 
 class Player:
-    def __init__(self, id, name):
-        self.id = id
+    def __init__(self, player_id, name):
+        self.id = player_id
         self.name = name
 
         self.cards = list()
@@ -88,6 +88,7 @@ def start_game(at_start=empty_function,
     global bot_score
     global players_score
     global game_started
+    global round_association
 
     game_started_at = time.time()
     bot_score = 0
@@ -100,7 +101,8 @@ def start_game(at_start=empty_function,
 
     circle_number = 1
     while True:
-        if not game_started: break
+        if not game_started:
+            break
 
         at_circle_start()
 
@@ -113,7 +115,8 @@ def start_game(at_start=empty_function,
 
         round_number = 1
         for leader in players:
-            if not game_started: break
+            if not game_started:
+                break
 
             at_round_start()
 
@@ -123,7 +126,7 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [cards_parsing.get_random_card() for i in range(rules_setup.cards_one_player_has)]
+                    player.cards = [cards_parsing.get_random_card() for _ in range(rules_setup.cards_one_player_has)]
             else:
                 for player in players:
                     player.cards.append(cards_parsing.get_random_card())
@@ -195,11 +198,3 @@ def start_game(at_start=empty_function,
                 game_started = False
 
     at_end()
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()

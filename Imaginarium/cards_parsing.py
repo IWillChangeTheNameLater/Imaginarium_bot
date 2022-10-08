@@ -30,6 +30,7 @@ class Vk(Source):
         self.domain = link[link.rfind(r'/') + 1:]
         rules_setup.included_types = {y for i in rules_setup.included_types if (y := Vk.types.get(i))}
         rules_setup.excluded_types = {y for i in rules_setup.excluded_types if (y := Vk.types.get(i))}
+        self.cards_num = None
 
     def __eq__(self, other):
         return self.link == other
@@ -75,12 +76,12 @@ class Vk(Source):
 
         # If attachments are found, then get the random one
         random.shuffle(attachments)
-        for attachment in attachments:
-            if attachment['type'] not in rules_setup.excluded_types:
+        for a in attachments:
+            if a['type'] not in rules_setup.excluded_types:
                 if rules_setup.included_types:
-                    if attachment['type'] not in rules_setup.included_types:
+                    if a['type'] not in rules_setup.included_types:
                         continue
-                return extract_content_from_attachment(attachment)
+                return extract_content_from_attachment(a)
 
         return self.get_random_card()
 
