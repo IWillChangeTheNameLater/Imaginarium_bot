@@ -1,6 +1,7 @@
 import nest_asyncio
 
 # To fix "RuntimeError: This event loop is already running"
+# the "next_asyncio.apply()" have to be called before "discord" import.
 nest_asyncio.apply()
 import discord
 from discord.ext import commands
@@ -110,9 +111,9 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
     pending_tasks = [wait_for_message(),
                      wait_for_reaction_add(),
                      wait_for_button_click()]
-    _, pending_tasks = await asyncio.wait(pending_tasks,
-                                          timeout=timeout,
-                                          return_when=asyncio.FIRST_COMPLETED)
+    pending_tasks = (await asyncio.wait(pending_tasks,
+                                        timeout=timeout,
+                                        return_when=asyncio.FIRST_COMPLETED))[1]
     for task in pending_tasks:
         task.cancel()
 
