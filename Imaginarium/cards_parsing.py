@@ -1,10 +1,10 @@
 import math
 import random
+import os
 
+from dotenv import load_dotenv
 import validators
 import vk_api
-from dotenv import load_dotenv
-import os
 
 from . import rules_setup
 from . import exceptions
@@ -12,10 +12,8 @@ from . import game
 
 load_dotenv()
 
-vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
 
-
-class Link:
+class Card:
     def __init__(self, link):
         self.link = link
 
@@ -25,11 +23,14 @@ class Source:
 
 
 class Vk(Source):
-    def __init__(self, link):
+    def __init__(self,
+                 link,
+                 included_types=rules_setup.included_types,
+                 excluded_types=rules_setup.excluded_types):
         self.link = link
         self.domain = link[link.rfind(r'/') + 1:]
-        rules_setup.included_types = {y for i in rules_setup.included_types if (y := Vk.types.get(i))}
-        rules_setup.excluded_types = {y for i in rules_setup.excluded_types if (y := Vk.types.get(i))}
+        self.included_types = {y for i in included_types if (y := Vk.types.get(i))}
+        self.excluded_types = {y for i in excluded_types if (y := Vk.types.get(i))}
         self.cards_num = None
 
     def __eq__(self, other):
@@ -44,12 +45,14 @@ class Vk(Source):
     def __hash__(self):
         return hash(self.link)
 
+    vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
+
     # Change specified types to vk attachment types
     types = {'photo': 'photo',
              'video': 'video'}
 
     def get_cards_quantity(self):
-        return vk_requests.wall.get(domain=self.domain, count=1)['count']
+        return Vk.vk_requests.wall.get(domain=self.domain, count=1)['count']
 
     def set_cards_quantity(self):
         self.cards_num = self.get_cards_quantity()
@@ -61,16 +64,16 @@ class Vk(Source):
             elif attachment['type'] == 'video':
                 video_id = str(attachment[attachment['type']]['owner_id'])
                 video_id += '_' + str(attachment[attachment['type']]['id'])
-                return vk_requests.video.get(videos=video_id)['items'][0]['player']
+                return Vk.vk_requests.video.get(videos=video_id)['items'][0]['player']
 
         self.set_cards_quantity()
         if self.cards_num == 0:
             raise exceptions.NoAnyPosts
 
         try:
-            attachments = vk_requests.wall.get(domain=self.domain,
-                                               offset=random.randrange(self.cards_num),
-                                               count=1)['items'][0]['attachments']
+            attachments = Vk.vk_requests.wall.get(domain=self.domain,
+                                                  offset=random.randrange(self.cards_num),
+                                                  count=1)['items'][0]['attachments']
         except KeyError:
             return self.get_random_card()
 

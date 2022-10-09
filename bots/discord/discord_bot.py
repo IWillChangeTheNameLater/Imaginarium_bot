@@ -1,3 +1,6 @@
+import asyncio
+import os
+
 import nest_asyncio
 
 # To fix "RuntimeError: This event loop is already running"
@@ -6,10 +9,8 @@ nest_asyncio.apply()
 import discord
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
-import asyncio
 import chardet
 from dotenv import load_dotenv
-import os
 
 import configuration
 import Imaginarium
@@ -586,23 +587,6 @@ async def end(ctx):
         await ctx.send('The game will be ended as soon as possible.')
     else:
         await ctx.send('The game is already ended.')
-
-
-# TODO: Finish the function
-# @bot.command(name='pause')
-# async def pause_game(ctx):
-#     pass
-
-
-# TODO: Finish the function
-# @bot.command(name='continue')
-# async def continue_game(ctx):
-#     pass
-
-
-@bot.command()
-async def test(ctx):
-    await ctx.send('Click', components=[Button(label='this')])
 
 
 bot.run(os.environ['DISCORD_BOT_TOKEN'])

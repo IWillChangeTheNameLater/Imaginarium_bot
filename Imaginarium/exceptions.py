@@ -1,6 +1,6 @@
-class UnexpectedSource(Exception):
+class UnexpectedSource(ValueError):
     pass
 
 
-class NoAnyPosts(Exception):
+class NoAnyPosts(LookupError):
     pass
