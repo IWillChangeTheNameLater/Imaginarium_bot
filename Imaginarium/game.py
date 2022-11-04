@@ -1,14 +1,18 @@
 import collections
+import math
 import random
 import time
 
+import validators
+
+from . import sources
+from . import exceptions
 from . import rules_setup
-from . import cards_parsing
 
 game_started = False
 used_cards = set()
 unused_cards = list()
-sources = set()
+used_sources = set()
 players = list()
 
 leader = None
@@ -55,6 +59,37 @@ class Player:
     chosen_card = None
 
 
+def create_source_object(source):
+    """Return an object of class "Source".
+
+    Process the link to the source (email, url, etc.) and create a "Source"
+    object that can be used to get some cards."""
+    if validators.url(source):
+        domain_name = source[source.find('/') + 2:]
+        domain_name = domain_name[:domain_name.find('/')]
+        domain_name = (domain_name := domain_name.split('.'))[math.ceil(len(domain_name) / 2) - 1]
+
+        if domain_name == 'vk':
+            return sources.Vk(source)
+        elif domain_name == 'discord':
+            pass
+        elif domain_name == 'instagram':
+            pass
+        elif domain_name == 'tiktok':
+            pass
+    elif validators.email(source):
+        pass
+    raise exceptions.UnexpectedSource(
+        'The link format is not supported or an unavailable link is specified.')
+
+
+def get_random_card():
+    try:
+        return random.choice(list(used_sources)).get_random_card()
+    except exceptions.NoAnyPosts:
+        return get_random_card()
+
+
 def empty_function():
     pass
 
@@ -74,7 +109,7 @@ def start_game(at_start=empty_function,
                at_round_end=empty_function,
                at_circle_end=empty_function,
                at_end=empty_function):
-    if not sources:
+    if not used_sources:
         raise TypeError('Sources are not specified.')
     if len(players) < 2:
         raise TypeError('There are not enough players to start.')
@@ -111,7 +146,7 @@ def start_game(at_start=empty_function,
             for player in players:
                 player.cards = list()
                 for i in range(rules_setup.cards_one_player_has - 1):
-                    player.cards.append(cards_parsing.get_random_card())
+                    player.cards.append(get_random_card())
 
         round_number = 1
         for leader in players:
@@ -126,15 +161,15 @@ def start_game(at_start=empty_function,
             # Add missed cards
             if len(players) == 2:
                 for player in players:
-                    player.cards = [cards_parsing.get_random_card() for _ in range(rules_setup.cards_one_player_has)]
+                    player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
             else:
                 for player in players:
-                    player.cards.append(cards_parsing.get_random_card())
+                    player.cards.append(get_random_card())
 
             # Each player discards cards to the common deck
             if len(players) == 2:
                 # Discard the bot's card
-                discarded_cards.append((cards_parsing.get_random_card(), None))
+                discarded_cards.append((get_random_card(), None))
 
                 request_association()
                 show_association()
@@ -143,7 +178,7 @@ def start_game(at_start=empty_function,
             else:
                 if len(players) == 3:
                     for i in range(2):
-                        discarded_cards.append((cards_parsing.get_random_card(), None))
+                        discarded_cards.append((get_random_card(), None))
 
                 show_players_cards()
                 request_leader_card()
@@ -194,7 +229,7 @@ def start_game(at_start=empty_function,
             if max(bot_score, players_score) >= rules_setup.winning_score:
                 game_started = False
         else:
-            if not all((player.score < rules_setup.winning_score for player in players)):
+            if not all(player.score < rules_setup.winning_score for player in players):
                 game_started = False
 
     at_end()
