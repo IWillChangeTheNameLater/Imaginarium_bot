@@ -51,7 +51,7 @@ async def iterate_sources(ctx, message, function):
             text = await attachment.read()
             await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
         else:
-            await ctx.send('Sorry, the "' + filetype + '" filetype is not supported.')
+            await ctx.send('The "' + filetype + '" filetype is not supported.')
 
 
 def filled_iter(iterator, filling=None):
@@ -201,7 +201,7 @@ async def get_used_sources(ctx):
     if Imaginarium.game.used_sources:
         await ctx.author.send('\n'.join(str(source) for source in Imaginarium.game.used_sources))
     else:
-        await ctx.author.send('Sorry, there are no any sources here yet.')
+        await ctx.author.send('There are no any sources here yet.')
 
 
 @bot.command()
@@ -218,7 +218,7 @@ async def add_used_sources(ctx, *, message=''):
             try:
                 Imaginarium.game.used_sources.add(Imaginarium.game.create_source_object(source))
             except Imaginarium.exceptions.UnexpectedSource:
-                await ctx.send('Sorry, there is something wrong with source: ' + source)
+                await ctx.send('There is something wrong with source: ' + source)
 
     await iterate_sources(ctx, message, move_source)
 
@@ -230,7 +230,7 @@ async def remove_source(ctx, *, message=''):
             try:
                 Imaginarium.game.used_sources.remove(source)
             except KeyError:
-                await ctx.send('Sorry, there is no the source: ' + source)
+                await ctx.send('There is no the source: ' + source)
 
     await iterate_sources(ctx, message, move_source)
 
