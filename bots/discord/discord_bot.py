@@ -10,12 +10,12 @@ import discord
 from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle
 import chardet
-from dotenv import load_dotenv
+import dotenv
 
 import configuration
 import Imaginarium
 
-load_dotenv()
+dotenv.load_dotenv()
 
 
 class Player(Imaginarium.game.Player):
@@ -169,11 +169,11 @@ async def set_winning_score(ctx, score):
 @bot.command()
 async def get_players_score(ctx):
     if Imaginarium.game.players:
-        await ctx.send(
+        await ctx.author.send(
             'Players score:\n' + '\n'.join(
                 (str(player) + ': ' + str(player.score) for player in Imaginarium.game.players)))
     else:
-        await ctx.send('There are no players.')
+        await ctx.author.send('There are no any players.')
 
 
 @bot.command()
@@ -197,26 +197,26 @@ async def set_step_minutes(ctx, minutes):
 
 
 @bot.command()
-async def get_sources(ctx):
-    if Imaginarium.game.sources:
-        await ctx.author.send('\n'.join(str(source) for source in Imaginarium.game.sources))
+async def get_used_sources(ctx):
+    if Imaginarium.game.used_sources:
+        await ctx.author.send('\n'.join(str(source) for source in Imaginarium.game.used_sources))
     else:
-        await ctx.author.send('Sorry, there are no sources here yet.')
+        await ctx.author.send('Sorry, there are no any sources here yet.')
 
 
 @bot.command()
-async def reset_sources(ctx):
-    Imaginarium.game.sources = set()
+async def reset_used_sources(ctx):
+    Imaginarium.game.used_sources = set()
 
     await ctx.send('Sources are reset.')
 
 
 @bot.command()
-async def add_sources(ctx, *, message=''):
+async def add_used_sources(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                Imaginarium.game.sources.add(Imaginarium.cards_parsing.create_source_object(source))
+                Imaginarium.game.used_sources.add(Imaginarium.game.create_source_object(source))
             except Imaginarium.exceptions.UnexpectedSource:
                 await ctx.send('Sorry, there is something wrong with source: ' + source)
 
@@ -228,7 +228,7 @@ async def remove_source(ctx, *, message=''):
     async def move_source(source):
         if source:
             try:
-                Imaginarium.game.sources.remove(source)
+                Imaginarium.game.used_sources.remove(source)
             except KeyError:
                 await ctx.send('Sorry, there is no the source: ' + source)
 
@@ -240,19 +240,18 @@ async def get_players(ctx):
     if Imaginarium.game.players:
         await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in Imaginarium.game.players))
     else:
-        await ctx.send('There are no players.')
+        await ctx.author.send('There are no any players.')
 
 
 @bot.command()
 async def join(ctx):
-    # TODO add person to queue for joining and move it to Imaginarium.game.py
     if Imaginarium.game.game_started:
         await ctx.send('You can\'t join right now, the game is started.')
     elif ctx.author.id in Imaginarium.game.players:
         await ctx.send('You have already joined')
     else:
         Imaginarium.game.players.append(Player(ctx.author))
-        await ctx.send('Player ' + ctx.author.mention + ' has joined the Imaginarium.game.')
+        await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
 
 
 @bot.command()
