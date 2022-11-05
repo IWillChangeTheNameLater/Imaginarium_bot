@@ -1,2 +1,2 @@
 from .BaseSource import BaseSource
-from .vk import Vk
+from .Vk import Vk

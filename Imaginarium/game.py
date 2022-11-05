@@ -9,21 +9,10 @@ from . import sources
 from . import exceptions
 from . import rules_setup
 
-game_started = False
 used_cards = set()
 unused_cards = list()
 used_sources = set()
 players = list()
-
-leader = None
-circle_number = None
-round_number = None
-discarded_cards = None
-votes_for_card = None
-game_started_at = None
-bot_score = None
-players_score = None
-round_association = None
 
 
 class Player:
@@ -90,6 +79,22 @@ def get_random_card():
         return get_random_card()
 
 
+class GameCondition:
+    """A class which contains variables
+    which contain information about
+    the state of the game."""
+    leader = None
+    circle_number = None
+    round_number = None
+    discarded_cards = None
+    votes_for_card = None
+    game_started_at = None
+    bot_score = None
+    players_score = None
+    game_started = None
+    round_association = None
+
+
 def empty_function():
     pass
 
@@ -114,29 +119,18 @@ def start_game(at_start=empty_function,
     if len(players) < 2:
         raise TypeError('There are not enough players to start.')
 
-    global leader
-    global circle_number
-    global round_number
-    global discarded_cards
-    global votes_for_card
-    global game_started_at
-    global bot_score
-    global players_score
-    global game_started
-    global round_association
-
-    game_started_at = time.time()
-    bot_score = 0
-    players_score = 0
+    GameCondition.game_started_at = time.time()
+    GameCondition.bot_score = 0
+    GameCondition.players_score = 0
     for player in players:
         player.reset_features()
-    game_started = True
+    GameCondition.game_started = True
 
     at_start()
 
-    circle_number = 1
+    GameCondition.circle_number = 1
     while True:
-        if not game_started:
+        if not GameCondition.game_started:
             break
 
         at_circle_start()
@@ -148,16 +142,16 @@ def start_game(at_start=empty_function,
                 for i in range(rules_setup.cards_one_player_has - 1):
                     player.cards.append(get_random_card())
 
-        round_number = 1
-        for leader in players:
-            if not game_started:
+        GameCondition.round_number = 1
+        for GameCondition.leader in players:
+            if not GameCondition.game_started:
                 break
 
             at_round_start()
 
-            votes_for_card = collections.defaultdict(int)
-            discarded_cards = list()
-            round_association = None
+            GameCondition.votes_for_card = collections.defaultdict(int)
+            GameCondition.discarded_cards = list()
+            GameCondition.round_association = None
             # Add missed cards
             if len(players) == 2:
                 for player in players:
@@ -169,7 +163,7 @@ def start_game(at_start=empty_function,
             # Each player discards cards to the common deck
             if len(players) == 2:
                 # Discard the bot's card
-                discarded_cards.append((get_random_card(), None))
+                GameCondition.discarded_cards.append((get_random_card(), None))
 
                 request_association()
                 show_association()
@@ -178,7 +172,7 @@ def start_game(at_start=empty_function,
             else:
                 if len(players) == 3:
                     for i in range(2):
-                        discarded_cards.append((get_random_card(), None))
+                        GameCondition.discarded_cards.append((get_random_card(), None))
 
                 show_players_cards()
                 request_leader_card()
@@ -186,7 +180,7 @@ def start_game(at_start=empty_function,
                 show_association()
                 request_players_cards()
 
-            random.shuffle(discarded_cards)
+            random.shuffle(GameCondition.discarded_cards)
 
             # Each player votes for the target card
             show_discarded_cards()
@@ -197,39 +191,39 @@ def start_game(at_start=empty_function,
 
             # Scoring
             if len(players) == 2:
-                if votes_for_card[None] == 2:
-                    players_score += 2
-                elif votes_for_card[None] == 1:
-                    players_score += 1
-                    bot_score += 1
-                elif votes_for_card[None] == 0:
-                    bot_score += 3
+                if GameCondition.votes_for_card[None] == 2:
+                    GameCondition.players_score += 2
+                elif GameCondition.votes_for_card[None] == 1:
+                    GameCondition.players_score += 1
+                    GameCondition.bot_score += 1
+                elif GameCondition.votes_for_card[None] == 0:
+                    GameCondition.bot_score += 3
             else:
-                if votes_for_card[leader.id] == 0:
+                if GameCondition.votes_for_card[GameCondition.leader.id] == 0:
                     for player in players:
-                        player.score += votes_for_card[player.id]
+                        player.score += GameCondition.votes_for_card[player.id]
                 else:
-                    if votes_for_card[leader.id] != len(players):
-                        leader.score += 3
+                    if GameCondition.votes_for_card[GameCondition.leader.id] != len(players):
+                        GameCondition.leader.score += 3
                     for player in players:
-                        if player != leader:
-                            if discarded_cards[player.chosen_card - 1][1] == leader.id:
+                        if player != GameCondition.leader:
+                            if GameCondition.discarded_cards[player.chosen_card - 1][1] == GameCondition.leader.id:
                                 player.score += 3
 
             at_round_end()
 
-            round_number += 1
+            GameCondition.round_number += 1
 
         at_circle_end()
 
-        circle_number += 1
+        GameCondition.circle_number += 1
 
         # Check for victory
         if len(players) == 2:
-            if max(bot_score, players_score) >= rules_setup.winning_score:
-                game_started = False
+            if max(GameCondition.bot_score, GameCondition.players_score) >= rules_setup.winning_score:
+                GameCondition.game_started = False
         else:
             if not all(player.score < rules_setup.winning_score for player in players):
-                game_started = False
+                GameCondition.game_started = False
 
     at_end()
