@@ -92,16 +92,16 @@ class Player(Imaginarium.game.Player):
         await self.user.send(message, *args, **kwargs)
 
 
-def at_start():
+def at_start_hook():
     asyncio.run(Gameplay.start.ctx.channel.send('The game has started.'))
 
 
-def at_round_start():
+def at_round_start_hook():
     asyncio.run(
         Gameplay.start.ctx.channel.send('The round ' + str(GameCondition.round_number) + ' has started.'))
 
 
-def request_association():
+def request_association_hook():
     def message_check(message):
         if all((not message.author.bot,
                 message.author == GameCondition.leader)):
@@ -125,14 +125,14 @@ def request_association():
                                                                     button_check=button_check))
 
 
-def show_association():
+def show_association_hook():
     if GameCondition.round_association:
         asyncio.run(
             Gameplay.start.ctx.channel.send(
                 'The association of the round is: ' + str(GameCondition.round_association)))
 
 
-def request_players_cards_2():
+def request_players_cards_2_hook():
     discarded_card = None
 
     def message_check(message):
@@ -178,7 +178,7 @@ def request_players_cards_2():
             discarded_card = card
 
 
-def request_leader_card():
+def request_leader_card_hook():
     def message_check(message):
         try:
             number = int(message.content)
@@ -225,7 +225,7 @@ def request_leader_card():
         (GameCondition.leader.cards.pop(card - 1), GameCondition.leader.id))
 
 
-def request_players_cards():
+def request_players_cards_hook():
     def message_check(message):
         try:
             number = int(message.content)
@@ -270,7 +270,7 @@ def request_players_cards():
             GameCondition.discarded_cards.append((player.cards.pop(card - 1), player.id))
 
 
-def vote_for_target_card_2():
+def vote_for_target_card_2_hook():
     def message_check(message):
         try:
             number = int(message.content)
@@ -318,7 +318,7 @@ def vote_for_target_card_2():
         player.chosen_card = card
 
 
-def vote_for_target_card():
+def vote_for_target_card_hook():
     def message_check(message):
         try:
             number = int(message.content)
@@ -368,7 +368,7 @@ def vote_for_target_card():
             player.chosen_card = card
 
 
-def at_end():
+def at_end_hook():
     game_took_time = Imaginarium.game.time.time() - GameCondition.game_started_at
     asyncio.run(Gameplay.start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
         int(game_took_time % 60)) + ' seconds.'))
@@ -416,16 +416,16 @@ class Gameplay(commands.Cog):
         Gameplay.start.ctx = ctx
 
         try:
-            Imaginarium.game.start_game(at_start=at_start,
-                                        at_round_start=at_round_start,
-                                        request_association=request_association,
-                                        show_association=show_association,
-                                        request_players_cards_2=request_players_cards_2,
-                                        request_leader_card=request_leader_card,
-                                        request_players_cards=request_players_cards,
-                                        vote_for_target_card_2=vote_for_target_card_2,
-                                        vote_for_target_card=vote_for_target_card,
-                                        at_end=at_end)
+            Imaginarium.game.start_game(at_start_hook=at_start_hook,
+                                        at_round_start_hook=at_round_start_hook,
+                                        request_association_hook=request_association_hook,
+                                        show_association_hook=show_association_hook,
+                                        request_players_cards_2_hook=request_players_cards_2_hook,
+                                        request_leader_card_hook=request_leader_card_hook,
+                                        request_players_cards_hook=request_players_cards_hook,
+                                        vote_for_target_card_2_hook=vote_for_target_card_2_hook,
+                                        vote_for_target_card_hook=vote_for_target_card_hook,
+                                        at_end_hook=at_end_hook)
         except TypeError:
             await ctx.send('The game cannot start yet. Specify all data and start the game again.')
 

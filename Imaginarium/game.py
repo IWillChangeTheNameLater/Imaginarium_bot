@@ -99,21 +99,21 @@ def empty_function():
     pass
 
 
-def start_game(at_start=empty_function,
-               at_circle_start=empty_function,
-               at_round_start=empty_function,
-               request_association=empty_function,
-               show_association=empty_function,
-               show_players_cards=empty_function,
-               request_players_cards_2=empty_function,
-               request_leader_card=empty_function,
-               request_players_cards=empty_function,
-               show_discarded_cards=empty_function,
-               vote_for_target_card_2=empty_function,
-               vote_for_target_card=empty_function,
-               at_round_end=empty_function,
-               at_circle_end=empty_function,
-               at_end=empty_function):
+def start_game(at_start_hook=empty_function,
+               at_circle_start_hook=empty_function,
+               at_round_start_hook=empty_function,
+               request_association_hook=empty_function,
+               show_association_hook=empty_function,
+               show_players_cards_hook=empty_function,
+               request_players_cards_2_hook=empty_function,
+               request_leader_card_hook=empty_function,
+               request_players_cards_hook=empty_function,
+               show_discarded_cards_hook=empty_function,
+               vote_for_target_card_2_hook=empty_function,
+               vote_for_target_card_hook=empty_function,
+               at_round_end_hook=empty_function,
+               at_circle_end_hook=empty_function,
+               at_end_hook=empty_function):
     if not used_sources:
         raise TypeError('Sources are not specified.')
     if len(players) < 2:
@@ -126,14 +126,14 @@ def start_game(at_start=empty_function,
         player.reset_features()
     GameCondition.game_started = True
 
-    at_start()
+    at_start_hook()
 
     GameCondition.circle_number = 1
     while True:
         if not GameCondition.game_started:
             break
 
-        at_circle_start()
+        at_circle_start_hook()
 
         # Hand out cards
         if len(players) >= 3:
@@ -147,7 +147,7 @@ def start_game(at_start=empty_function,
             if not GameCondition.game_started:
                 break
 
-            at_round_start()
+            at_round_start_hook()
 
             GameCondition.votes_for_card = collections.defaultdict(int)
             GameCondition.discarded_cards = list()
@@ -165,29 +165,29 @@ def start_game(at_start=empty_function,
                 # Discard the bot's card
                 GameCondition.discarded_cards.append((get_random_card(), None))
 
-                request_association()
-                show_association()
-                show_players_cards()
-                request_players_cards_2()
+                request_association_hook()
+                show_association_hook()
+                show_players_cards_hook()
+                request_players_cards_2_hook()
             else:
                 if len(players) == 3:
                     for i in range(2):
                         GameCondition.discarded_cards.append((get_random_card(), None))
 
-                show_players_cards()
-                request_leader_card()
-                request_association()
-                show_association()
-                request_players_cards()
+                show_players_cards_hook()
+                request_leader_card_hook()
+                request_association_hook()
+                show_association_hook()
+                request_players_cards_hook()
 
             random.shuffle(GameCondition.discarded_cards)
 
             # Each player votes for the target card
-            show_discarded_cards()
+            show_discarded_cards_hook()
             if len(players) == 2:
-                vote_for_target_card_2()
+                vote_for_target_card_2_hook()
             else:
-                vote_for_target_card()
+                vote_for_target_card_hook()
 
             # Scoring
             if len(players) == 2:
@@ -210,11 +210,11 @@ def start_game(at_start=empty_function,
                             if GameCondition.discarded_cards[player.chosen_card - 1][1] == GameCondition.leader.id:
                                 player.score += 3
 
-            at_round_end()
+            at_round_end_hook()
 
             GameCondition.round_number += 1
 
-        at_circle_end()
+        at_circle_end_hook()
 
         GameCondition.circle_number += 1
 
@@ -226,4 +226,4 @@ def start_game(at_start=empty_function,
             if not all(player.score < rules_setup.winning_score for player in players):
                 GameCondition.game_started = False
 
-    at_end()
+    at_end_hook()
