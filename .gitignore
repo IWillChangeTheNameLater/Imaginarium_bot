@@ -3,5 +3,6 @@
 /.idea
 /venv
 .env
+*.exe
 random_shit.txt
 some_shit.txt

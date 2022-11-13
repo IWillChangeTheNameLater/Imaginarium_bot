@@ -1,59 +1,11 @@
 import asyncio
-import os
-
-import nest_asyncio
-
-# To fix "RuntimeError: This event loop is already running"
-# the "next_asyncio.apply()" have to be called before "discord" import.
-nest_asyncio.apply()
-import discord
-from discord.ext import commands
-from discord_components import DiscordComponents, Button, ButtonStyle
 import random
-import chardet
-import dotenv
 
-import configuration
+from discord.ext import commands
+from discord_components import Button, ButtonStyle
+
 import Imaginarium
 from Imaginarium.game import GameCondition
-
-dotenv.load_dotenv()
-
-
-class Player(Imaginarium.game.Player):
-    def __init__(self, user):
-        super().__init__(user.id, user.mention)
-
-        self.user = user
-
-    async def send(self, message, *args, **kwargs):
-        await self.user.send(message, *args, **kwargs)
-
-
-def extract_file_extension(filename):
-    return filename[filename.rfind('.') + 1:]
-
-
-async def iterate_sources(ctx, message, function):
-    """Extract sources from attachments and process them.
-
-    Extract separated by break sources from the file and the message and
-    process them by the function."""
-
-    async def iterate_lines(lines):
-        for source in lines.replace('\r', '').split('\n'):
-            await function(source)
-
-    await iterate_lines(message)
-
-    for attachment in ctx.message.attachments:
-        filetype = extract_file_extension(attachment.filename)
-
-        if filetype == 'txt':
-            text = await attachment.read()
-            await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
-        else:
-            await ctx.send('The "' + filetype + '" filetype is not supported.')
 
 
 def filled_iter(iterator, filling=None):
@@ -93,7 +45,10 @@ def generate_buttons(labels, styles=filled_iter((), 2),
 
 
 async def wait_for_reply(recipient, message=None, reactions=(), components=None, message_check=None,
-                         reaction_check=None, button_check=None, timeout=None):
+                         reaction_check=None, button_check=None, timeout=None, bot=None):
+    if bot is None:
+        # noinspection PyUnresolvedReferences
+        bot = wait_for_reply.bot
     reply = None
     msg = await recipient.send(message, components=components)
     for r in reactions:
@@ -127,165 +82,23 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
     raise asyncio.TimeoutError
 
 
-bot = commands.Bot(command_prefix=configuration.PREFIX,
-                   intents=discord.Intents.all())
-bot.remove_command('help')
+class Player(Imaginarium.game.Player):
+    def __init__(self, user):
+        super().__init__(user.id, user.mention)
 
+        self.user = user
 
-@bot.event
-async def on_ready():
-    DiscordComponents(bot)
-
-    print('The bot is ready.')
-
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send(
-            'The command does not exist. Write "' + configuration.PREFIX + 'help" to get available commands.')
-    else:
-        raise error
-
-
-@bot.event
-async def on_button_click(interaction):
-    if not interaction.responded:
-        await interaction.respond(type=6)
-
-
-@bot.command(name='help')
-async def guidance(ctx):
-    await ctx.author.send('Godspeed.\n'
-                          '*Useful information*')
-
-
-@bot.command()
-async def set_winning_score(ctx, score):
-    if score.isdigit():
-        Imaginarium.rules_setup.winning_score = int(score)
-    else:
-        await ctx.author.send('Score is supposed to be a number.')
-
-
-@bot.command()
-async def get_players_score(ctx):
-    if Imaginarium.game.players:
-        await ctx.author.send(
-            'Players score:\n' + '\n'.join(
-                (str(player) + ': ' + str(player.score) for player in Imaginarium.game.players)))
-    else:
-        await ctx.author.send('There are no any players.')
-
-
-@bot.command()
-async def get_used_cards(ctx):
-    await ctx.author.send('\n'.join(Imaginarium.game.used_cards))
-
-
-@bot.command()
-async def reset_used_cards(ctx):
-    Imaginarium.game.used_cards = set()
-
-    await ctx.send('Used cards are reset.')
-
-
-@bot.command()
-async def set_step_minutes(ctx, minutes):
-    if minutes.isdigit():
-        Imaginarium.rules_setup.step_timeout = float(minutes) * 60
-    else:
-        await ctx.author.send('"Score" supposed to be a number.')
-
-
-@bot.command()
-async def get_used_sources(ctx):
-    if Imaginarium.game.used_sources:
-        await ctx.author.send('\n'.join(str(source) for source in Imaginarium.game.used_sources))
-    else:
-        await ctx.author.send('There are no any sources here yet.')
-
-
-@bot.command()
-async def reset_used_sources(ctx):
-    Imaginarium.game.used_sources = set()
-
-    await ctx.send('Sources are reset.')
-
-
-@bot.command()
-async def add_used_sources(ctx, *, message=''):
-    async def move_source(source):
-        if source:
-            try:
-                Imaginarium.game.used_sources.add(Imaginarium.game.create_source_object(source))
-            except Imaginarium.exceptions.UnexpectedSource:
-                await ctx.send('There is something wrong with source: ' + source)
-
-    await iterate_sources(ctx, message, move_source)
-
-
-@bot.command()
-async def remove_source(ctx, *, message=''):
-    async def move_source(source):
-        if source:
-            try:
-                Imaginarium.game.used_sources.remove(source)
-            except KeyError:
-                await ctx.send('There is no the source: ' + source)
-
-    await iterate_sources(ctx, message, move_source)
-
-
-@bot.command()
-async def get_players(ctx):
-    if Imaginarium.game.players:
-        await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in Imaginarium.game.players))
-    else:
-        await ctx.author.send('There are no any players.')
-
-
-@bot.command()
-async def join(ctx):
-    if GameCondition.game_started:
-        await ctx.send('You can\'t join right now, the game is started.')
-    elif ctx.author.id in Imaginarium.game.players:
-        await ctx.send('You have already joined')
-    else:
-        Imaginarium.game.players.append(Player(ctx.author))
-        await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
-
-
-@bot.command()
-async def leave(ctx):
-    if GameCondition.game_started:
-        await ctx.send('You can\'t leave the game now, it is started.')
-    else:
-        try:
-            Imaginarium.game.players.remove(ctx.author.id)
-            await ctx.send('Players ' + ctx.author.mention + ' have left the game.')
-        except ValueError:
-            ctx.send('You have already left.')
-
-
-@bot.command()
-async def shuffle_players_order(ctx):
-    random.shuffle(Imaginarium.game.players)
-    if Imaginarium.game.players:
-        await ctx.send(
-            'Now you walk in the following order: ' + '\n' + '\n'.join(
-                str(player) for player in Imaginarium.game.players))
-    else:
-        await ctx.send('There are no any players.')
+    async def send(self, message, *args, **kwargs):
+        await self.user.send(message, *args, **kwargs)
 
 
 def at_start():
-    asyncio.run(start.ctx.channel.send('The game has started.'))
+    asyncio.run(Gameplay.start.ctx.channel.send('The game has started.'))
 
 
 def at_round_start():
     asyncio.run(
-        start.ctx.channel.send('The round ' + str(GameCondition.round_number) + ' has started.'))
+        Gameplay.start.ctx.channel.send('The round ' + str(GameCondition.round_number) + ' has started.'))
 
 
 def request_association():
@@ -315,7 +128,7 @@ def request_association():
 def show_association():
     if GameCondition.round_association:
         asyncio.run(
-            start.ctx.channel.send(
+            Gameplay.start.ctx.channel.send(
                 'The association of the round is: ' + str(GameCondition.round_association)))
 
 
@@ -557,48 +370,75 @@ def vote_for_target_card():
 
 def at_end():
     game_took_time = Imaginarium.game.time.time() - GameCondition.game_started_at
-    asyncio.run(start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
+    asyncio.run(Gameplay.start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
         int(game_took_time % 60)) + ' seconds.'))
 
     if len(Imaginarium.game.players) == 2:
         if GameCondition.bot_score > GameCondition.players_score:
-            asyncio.run(start.ctx.send('You lose with score: ' + str(GameCondition.players_score)))
+            asyncio.run(Gameplay.start.ctx.send('You lose with score: ' + str(GameCondition.players_score)))
         if GameCondition.players_score > GameCondition.bot_score:
-            asyncio.run(start.ctx.send('You win with score: ' + str(GameCondition.players_score)))
+            asyncio.run(Gameplay.start.ctx.send('You win with score: ' + str(GameCondition.players_score)))
         else:
-            asyncio.run(start.ctx.send('Победила дружба (сырок)!'))
+            asyncio.run(Gameplay.start.ctx.send('Победила дружба (сырок)!'))
     else:
-        asyncio.run(start.ctx.send('The winners: \n' +
-                                   '\n'.join((str(place) + '. ' + str(player) for place, player in
-                                              enumerate(sorted(Imaginarium.game.players)[:3], start=1)))))
+        asyncio.run(Gameplay.start.ctx.send('The winners: \n' +
+                                            '\n'.join((str(place) + '. ' + str(player) for place, player in
+                                                       enumerate(sorted(Imaginarium.game.players)[:3], start=1)))))
 
 
-@bot.command()
-async def start(ctx):
-    start.ctx = ctx
+class Gameplay(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-    try:
-        Imaginarium.game.start_game(at_start=at_start,
-                                    at_round_start=at_round_start,
-                                    request_association=request_association,
-                                    show_association=show_association,
-                                    request_players_cards_2=request_players_cards_2,
-                                    request_leader_card=request_leader_card,
-                                    request_players_cards=request_players_cards,
-                                    vote_for_target_card_2=vote_for_target_card_2,
-                                    vote_for_target_card=vote_for_target_card,
-                                    at_end=at_end)
-    except TypeError:
-        await ctx.send('The game cannot start yet. Specify all data and start the game again.')
+    @commands.command()
+    async def join(self, ctx):
+        if GameCondition.game_started:
+            await ctx.send('You can\'t join right now, the game is started.')
+        elif ctx.author.id in Imaginarium.game.players:
+            await ctx.send('You have already joined')
+        else:
+            Imaginarium.game.players.append(Player(ctx.author))
+            await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
+
+    @commands.command()
+    async def leave(self, ctx):
+        if GameCondition.game_started:
+            await ctx.send('You can\'t leave the game now, it is started.')
+        else:
+            try:
+                Imaginarium.game.players.remove(ctx.author.id)
+                await ctx.send('Players ' + ctx.author.mention + ' have left the game.')
+            except ValueError:
+                ctx.send('You have already left.')
+
+    @commands.command()
+    async def start(self, ctx):
+        Gameplay.start.ctx = ctx
+
+        try:
+            Imaginarium.game.start_game(at_start=at_start,
+                                        at_round_start=at_round_start,
+                                        request_association=request_association,
+                                        show_association=show_association,
+                                        request_players_cards_2=request_players_cards_2,
+                                        request_leader_card=request_leader_card,
+                                        request_players_cards=request_players_cards,
+                                        vote_for_target_card_2=vote_for_target_card_2,
+                                        vote_for_target_card=vote_for_target_card,
+                                        at_end=at_end)
+        except TypeError:
+            await ctx.send('The game cannot start yet. Specify all data and start the game again.')
+
+    @commands.command()
+    async def end(self, ctx):
+        if GameCondition.game_started:
+            GameCondition.game_started = False
+            await ctx.send('The game will be ended as soon as possible.')
+        else:
+            await ctx.send('The game is already ended.')
 
 
-@bot.command()
-async def end(ctx):
-    if GameCondition.game_started:
-        GameCondition.game_started = False
-        await ctx.send('The game will be ended as soon as possible.')
-    else:
-        await ctx.send('The game is already ended.')
+def setup(bot):
+    wait_for_reply.bot = bot
 
-
-bot.run(os.environ['DISCORD_BOT_TOKEN'])
+    bot.add_cog(Gameplay(bot))
