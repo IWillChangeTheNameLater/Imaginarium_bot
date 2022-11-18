@@ -79,6 +79,20 @@ def get_random_card():
         return get_random_card()
 
 
+def join(player):
+    if GameCondition.game_started:
+        raise exceptions.GameIsStarted
+    if player not in players:
+        players.append(player)
+
+
+def leave(player):
+    if GameCondition.game_started:
+        raise exceptions.GameIsStarted
+    if player in players:
+        players.remove(player)
+
+
 class GameCondition:
     """A class which contains variables
     which contain information about
@@ -95,25 +109,27 @@ class GameCondition:
     round_association = None
 
 
-def empty_function():
+def empty_hook_function():
     pass
 
 
-def start_game(at_start_hook=empty_function,
-               at_circle_start_hook=empty_function,
-               at_round_start_hook=empty_function,
-               request_association_hook=empty_function,
-               show_association_hook=empty_function,
-               show_players_cards_hook=empty_function,
-               request_players_cards_2_hook=empty_function,
-               request_leader_card_hook=empty_function,
-               request_players_cards_hook=empty_function,
-               show_discarded_cards_hook=empty_function,
-               vote_for_target_card_2_hook=empty_function,
-               vote_for_target_card_hook=empty_function,
-               at_round_end_hook=empty_function,
-               at_circle_end_hook=empty_function,
-               at_end_hook=empty_function):
+def start_game(at_start_hook=empty_hook_function,
+               at_circle_start_hook=empty_hook_function,
+               at_round_start_hook=empty_hook_function,
+               request_association_hook=empty_hook_function,
+               show_association_hook=empty_hook_function,
+               show_players_cards_hook=empty_hook_function,
+               request_players_cards_2_hook=empty_hook_function,
+               request_leader_card_hook=empty_hook_function,
+               request_players_cards_hook=empty_hook_function,
+               show_discarded_cards_hook=empty_hook_function,
+               vote_for_target_card_2_hook=empty_hook_function,
+               vote_for_target_card_hook=empty_hook_function,
+               at_round_end_hook=empty_hook_function,
+               at_circle_end_hook=empty_hook_function,
+               at_end_hook=empty_hook_function):
+    if GameCondition.game_started:
+        raise exceptions.GameIsStarted
     if not used_sources:
         raise TypeError('Sources are not specified.')
     if len(players) < 2:
@@ -227,3 +243,10 @@ def start_game(at_start_hook=empty_function,
                 GameCondition.game_started = False
 
     at_end_hook()
+
+
+def end_game():
+    if GameCondition.game_started:
+        GameCondition.game_started = False
+    else:
+        raise exceptions.GameIsEnded

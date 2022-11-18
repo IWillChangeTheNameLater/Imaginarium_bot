@@ -3,6 +3,7 @@ from discord_components import DiscordComponents
 
 # The base import don't have to work, but it does.
 # Probably because the module is a cog. ¯\_(ツ)_/¯
+# noinspection PyUnresolvedReferences,PyPackageRequirements
 import configuration
 
 

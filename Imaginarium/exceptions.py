@@ -4,3 +4,11 @@ class UnexpectedSource(ValueError):
 
 class NoAnyPosts(LookupError):
     pass
+
+
+class GameIsStarted(Exception):
+    pass
+
+
+class GameIsEnded(Exception):
+    pass

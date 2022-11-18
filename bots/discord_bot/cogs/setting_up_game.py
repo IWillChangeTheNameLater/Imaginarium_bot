@@ -1,5 +1,3 @@
-import random
-
 from discord.ext import commands
 import chardet
 
@@ -52,13 +50,13 @@ class SettingUpGame(commands.Cog):
 
     @commands.command()
     async def reset_used_cards(self, ctx):
-        Imaginarium.game.used_cards = set()
+        Imaginarium.gameplay.used_cards = set()
 
         await ctx.send('Used cards are reset.')
 
     @commands.command()
     async def reset_used_sources(self, ctx):
-        Imaginarium.game.used_sources = set()
+        Imaginarium.gameplay.used_sources = set()
 
         await ctx.send('Sources are reset.')
 
@@ -67,7 +65,7 @@ class SettingUpGame(commands.Cog):
         async def move_source(source):
             if source:
                 try:
-                    Imaginarium.game.used_sources.add(Imaginarium.game.create_source_object(source))
+                    Imaginarium.setting_up_game.add_used_source(source)
                 except Imaginarium.exceptions.UnexpectedSource:
                     await ctx.send('There is something wrong with source: ' + source)
 
@@ -76,23 +74,25 @@ class SettingUpGame(commands.Cog):
     @commands.command()
     async def remove_used_sources(self, ctx, *, message=''):
         async def move_source(source):
-            if source:
-                try:
-                    Imaginarium.game.used_sources.remove(source)
-                except KeyError:
-                    await ctx.send('There is no the source: ' + source)
+            try:
+                Imaginarium.setting_up_game.remove_used_source(source)
+            except KeyError:
+                await ctx.send('There is no the source: ' + source)
 
         await iterate_sources(ctx, message, move_source)
 
     @commands.command()
     async def shuffle_players_order(self, ctx):
-        random.shuffle(Imaginarium.game.players)
-        if Imaginarium.game.players:
-            await ctx.send(
-                'Now you walk in the following order: ' + '\n' + '\n'.join(
-                    str(player) for player in Imaginarium.game.players))
-        else:
-            await ctx.send('There are no any players.')
+        try:
+            if Imaginarium.getting_game_information.get_players():
+                Imaginarium.setting_up_game.shuffle_players_order()
+                await ctx.send(
+                    'Now you walk in the following order: \n' + '\n'.join(
+                        str(player) for player in Imaginarium.getting_game_information.get_players()))
+            else:
+                await ctx.send('There are no any players.')
+        except Imaginarium.exceptions.GameIsStarted:
+            await ctx.send('You can\'t shuffle players now, the game is started.')
 
 
 def setup(bot):
