@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 import Imaginarium
+from messages_text import *
 
 
 class GettingGameInformation(commands.Cog):
@@ -9,38 +10,35 @@ class GettingGameInformation(commands.Cog):
 
     @commands.command(name='help')
     async def help_guidance(self, ctx):
-        await ctx.author.send('Godspeed.\n'
-                              '*Useful information*')
+        await ctx.author.send(English.help_guidance())
 
     @commands.command()
     async def get_players(self, ctx):
         if ps := Imaginarium.getting_game_information.get_players():
-            await ctx.author.send('Players: \n' + '\n'.join(str(player) for player in ps))
+            await ctx.author.send(English.players_list())
         else:
-            await ctx.author.send('There are no any players.')
+            await ctx.author.send(English.no_any_players())
 
     @commands.command()
     async def get_players_score(self, ctx):
         if pss := Imaginarium.getting_game_information.get_players_score():
-            await ctx.author.send(
-                'Players score:\n' + '\n'.join(
-                    (str(ps[0]) + ': ' + str(ps[1]) for ps in pss)))
+            await ctx.author.send(English.players_score())
         else:
-            await ctx.author.send('There are no any players.')
+            await ctx.author.send(English.no_any_players())
 
     @commands.command()
     async def get_used_cards(self, ctx):
         if uc := Imaginarium.getting_game_information.get_used_cards():
             await ctx.author.send('\n'.join(uc))
         else:
-            await ctx.author.send('There are no any used cards.')
+            await ctx.author.send(English.no_any_used_cards())
 
     @commands.command()
     async def get_used_sources(self, ctx):
         if us := Imaginarium.getting_game_information.get_used_sources():
             await ctx.author.send('Used sources: \n' + '\n'.join(str(source) for source in us))
         else:
-            await ctx.author.send('There are no any sources.')
+            await ctx.author.send(English.no_any_sources())
 
 
 def setup(bot):

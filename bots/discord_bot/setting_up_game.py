@@ -2,6 +2,7 @@ from discord.ext import commands
 import chardet
 
 import Imaginarium
+from messages_text import *
 
 
 def extract_file_extension(filename):
@@ -27,7 +28,7 @@ async def iterate_sources(ctx, message, function):
             text = await attachment.read()
             await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
         else:
-            await ctx.send('The "' + filetype + '" filetype is not supported.')
+            await ctx.send(English.filetype_is_not_supported(filetype))
 
 
 class SettingUpGame(commands.Cog):
@@ -39,26 +40,26 @@ class SettingUpGame(commands.Cog):
         if score.isdigit():
             Imaginarium.rules_setup.winning_score = int(score)
         else:
-            await ctx.author.send('Score is supposed to be a number.')
+            await ctx.author.send(English.score_must_be_number())
 
     @commands.command()
-    async def set_step_minutes(self, ctx, minutes):
+    async def set_step_timeout(self, ctx, minutes):
         if minutes.isdigit():
             Imaginarium.rules_setup.step_timeout = float(minutes) * 60
         else:
-            await ctx.author.send('"Score" supposed to be a number.')
+            await ctx.author.send(English.step_timeout_must_be_number())
 
     @commands.command()
     async def reset_used_cards(self, ctx):
         Imaginarium.gameplay.used_cards = set()
 
-        await ctx.send('Used cards are reset.')
+        await ctx.send(English.used_cards_successfully_reset())
 
     @commands.command()
     async def reset_used_sources(self, ctx):
         Imaginarium.gameplay.used_sources = set()
 
-        await ctx.send('Sources are reset.')
+        await ctx.send(English.sources_successfully_reset())
 
     @commands.command()
     async def add_used_sources(self, ctx, *, message=''):
@@ -67,7 +68,7 @@ class SettingUpGame(commands.Cog):
                 try:
                     Imaginarium.setting_up_game.add_used_source(source)
                 except Imaginarium.exceptions.UnexpectedSource:
-                    await ctx.send('There is something wrong with source: ' + source)
+                    await ctx.send(English.wrong_source(source))
 
         await iterate_sources(ctx, message, move_source)
 
@@ -77,7 +78,7 @@ class SettingUpGame(commands.Cog):
             try:
                 Imaginarium.setting_up_game.remove_used_source(source)
             except KeyError:
-                await ctx.send('There is no the source: ' + source)
+                await ctx.send(English.no_source(source))
 
         await iterate_sources(ctx, message, move_source)
 
@@ -86,13 +87,11 @@ class SettingUpGame(commands.Cog):
         try:
             if Imaginarium.getting_game_information.get_players():
                 Imaginarium.setting_up_game.shuffle_players_order()
-                await ctx.send(
-                    'Now you walk in the following order: \n' + '\n'.join(
-                        str(player) for player in Imaginarium.getting_game_information.get_players()))
+                await ctx.send(English.current_following_order())
             else:
-                await ctx.send('There are no any players.')
+                await ctx.send(English.no_any_players())
         except Imaginarium.exceptions.GameIsStarted:
-            await ctx.send('You can\'t shuffle players now, the game is started.')
+            await ctx.send(English.you_cannot_shuffle_players_now())
 
 
 def setup(bot):

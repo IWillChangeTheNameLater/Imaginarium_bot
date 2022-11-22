@@ -5,6 +5,7 @@ from discord_components import DiscordComponents
 # Probably because the module is a cog. ¯\_(ツ)_/¯
 # noinspection PyUnresolvedReferences,PyPackageRequirements
 import configuration
+from messages_text import *
 
 
 class Listeners(commands.Cog):
@@ -15,13 +16,12 @@ class Listeners(commands.Cog):
     async def on_ready(self):
         DiscordComponents(self.bot)
 
-        print('The bot is ready')
+        print(English.bot_ready())
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            await ctx.send(
-                'The command does not exist. Write "' + configuration.PREFIX + 'help" to get available commands.')
+            await ctx.send(English.command_does_not_exist(configuration.PREFIX))
         else:
             raise error
 

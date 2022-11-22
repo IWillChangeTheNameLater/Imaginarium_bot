@@ -107,6 +107,7 @@ class GameCondition:
     players_score = None
     game_started = None
     round_association = None
+    game_took_time = None
 
 
 def empty_hook_function():
@@ -241,6 +242,8 @@ def start_game(at_start_hook=empty_hook_function,
         else:
             if not all(player.score < rules_setup.winning_score for player in players):
                 GameCondition.game_started = False
+
+    GameCondition.game_took_time = time.time() - GameCondition.game_started_at
 
     at_end_hook()
 

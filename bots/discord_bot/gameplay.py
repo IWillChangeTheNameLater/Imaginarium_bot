@@ -6,6 +6,7 @@ from discord_components import Button, ButtonStyle
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
+from messages_text import *
 
 
 class Player(Imaginarium.gameplay.Player):
@@ -86,19 +87,18 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
         task.cancel()
 
     if reply:
-        # TODO return not str
         return str(reply)
 
     raise asyncio.TimeoutError
 
 
 def at_start_hook():
-    asyncio.run(Gameplay.start.ctx.channel.send('The game has started.'))
+    asyncio.run(Gameplay.start.ctx.channel.send(English.game_has_started()))
 
 
 def at_round_start_hook():
     asyncio.run(
-        Gameplay.start.ctx.channel.send('The round ' + str(GameCondition.round_number) + ' has started.'))
+        Gameplay.start.ctx.channel.send(English.round_has_started()))
 
 
 def request_association_hook():
@@ -115,9 +115,7 @@ def request_association_hook():
         return False
 
     Imaginarium.gameplay.round_association = asyncio.run(wait_for_reply(GameCondition.leader,
-                                                                        message='Did you tell the association '
-                                                                                'of the round? Write it below '
-                                                                                'or confirm it by pressing the button.',
+                                                                        message=English.inform_association(),
                                                                         components=[Button(style=ButtonStyle.green,
                                                                                            label='Yes',
                                                                                            emoji='✅')],
@@ -129,7 +127,7 @@ def show_association_hook():
     if GameCondition.round_association:
         asyncio.run(
             Gameplay.start.ctx.channel.send(
-                'The association of the round is: ' + str(GameCondition.round_association)))
+                English.round_association()))
 
 
 def request_players_cards_2_hook():
@@ -160,19 +158,18 @@ def request_players_cards_2_hook():
         return False
 
     for player in Imaginarium.gameplay.players:
-        for line in ('Choose the first card you want to... choose?..',
-                     'Choose the second card you want to... choose?..'):
+        for line in (English.choose_first_card(),
+                     English.choose_second_card()):
             try:
                 card = int(asyncio.run(wait_for_reply(player, message=line + '\n'.join(str(c) for c in player.cards),
                                                       message_check=message_check, button_check=button_check,
                                                       components=generate_buttons(
                                                           range(1, Imaginarium.rules_setup.cards_one_player_has + 1)),
                                                       timeout=Imaginarium.rules_setup.step_timeout)))
-                asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
+                asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
             except asyncio.TimeoutError:
                 card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-                asyncio.run(player.send('You was thinking too much. The card ' + player.cards[
-                    card - 1] + ' was automatically selected for you.'))
+                asyncio.run(player.send(English.card_selected_automatically(player.cards[card - 1])))
 
             GameCondition.discarded_cards.append((player.cards[card - 1], player.id))
             discarded_card = card
@@ -203,23 +200,19 @@ def request_leader_card_hook():
 
     try:
         card = int(asyncio.run(wait_for_reply(GameCondition.leader,
-                                              message='You are a leader now. Choose number of one of your cards:\n' +
-                                                      '\n'.join(
-                                                          str(c) for c in GameCondition.leader.cards),
+                                              message=English.choose_your_leaders_card(),
                                               message_check=message_check,
                                               button_check=button_check,
                                               components=generate_buttons(range(1,
                                                                                 Imaginarium.rules_setup.
                                                                                 cards_one_player_has + 1)),
                                               timeout=Imaginarium.rules_setup.step_timeout)))
-        asyncio.run(GameCondition.leader.send('You has chosen the card ' +
-                                              GameCondition.leader.cards[
-                                                  card - 1] + '.'))
+        asyncio.run(GameCondition.leader.send(English.your_chosen_card(GameCondition.leader.cards[
+                                                                           card - 1])))
     except asyncio.TimeoutError:
         card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-        asyncio.run(GameCondition.leader.send('You was thinking too much. The card ' +
-                                              GameCondition.leader.cards[card - 1] +
-                                              ' was automatically selected for you.'))
+        asyncio.run(GameCondition.leader.send(
+            English.card_selected_automatically(GameCondition.leader.cards[card - 1])))
 
     GameCondition.discarded_cards.append(
         (GameCondition.leader.cards.pop(card - 1), GameCondition.leader.id))
@@ -252,20 +245,17 @@ def request_players_cards_hook():
         if player != GameCondition.leader:
             try:
                 card = int(asyncio.run(wait_for_reply(player,
-                                                      message='Choose the card you want to... Choose?..:\n' +
-                                                              '\n'.join(str(c) for c in player.cards),
+                                                      message=English.choose_card(player.cards),
                                                       message_check=message_check,
                                                       button_check=button_check,
                                                       components=generate_buttons(range(1,
                                                                                         Imaginarium.rules_setup.
                                                                                         cards_one_player_has + 1)),
                                                       timeout=Imaginarium.rules_setup.step_timeout)))
-                asyncio.run(player.send('You has chosen the card ' + player.cards[card - 1] + '.'))
+                asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
             except asyncio.TimeoutError:
                 card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-                asyncio.run(player.send('You was thinking too much. The card ' +
-                                        player.cards[card - 1] +
-                                        ' was automatically selected for you.'))
+                asyncio.run(player.send(English.card_selected_automatically(player.cards[card - 1])))
 
             GameCondition.discarded_cards.append((player.cards.pop(card - 1), player.id))
 
@@ -298,20 +288,17 @@ def vote_for_target_card_2_hook():
 
     for player in Imaginarium.gameplay.players:
         try:
-            card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
-                str(c[0]) for c in GameCondition.discarded_cards), message_check=message_check,
-                                                  button_check=button_check,
-                                                  components=generate_buttons(
-                                                      range(1,
-                                                            len(GameCondition.discarded_cards) + 1)),
-                                                  timeout=Imaginarium.rules_setup.step_timeout)))
-            asyncio.run(player.send(
-                'You has chosen the card ' + GameCondition.discarded_cards[card - 1][0] + '.'))
+            card = int(
+                asyncio.run(wait_for_reply(player, message=English.choose_enemy_card(), message_check=message_check,
+                                           button_check=button_check,
+                                           components=generate_buttons(
+                                               range(1,
+                                                     len(GameCondition.discarded_cards) + 1)),
+                                           timeout=Imaginarium.rules_setup.step_timeout)))
+            asyncio.run(player.send(English.your_chosen_card(GameCondition.discarded_cards[card - 1][0])))
         except asyncio.TimeoutError:
             card = random.randint(1, len(Imaginarium.gameplay.players))
-            asyncio.run(player.send('You was thinking too much. The card ' +
-                                    GameCondition.discarded_cards[card - 1] +
-                                    ' was automatically selected for you.'))
+            asyncio.run(player.send(English.card_selected_automatically(GameCondition.discarded_cards[card - 1])))
 
         GameCondition.votes_for_card[
             GameCondition.discarded_cards[card - 1][1]] += 1
@@ -347,21 +334,19 @@ def vote_for_target_card_hook():
     for player in Imaginarium.gameplay.players:
         if player != GameCondition.leader:
             try:
-                card = int(asyncio.run(wait_for_reply(player, message='Choose the enemy\'s card: \n' + '\n'.join(
-                    str(c[0]) for c in GameCondition.discarded_cards), message_check=message_check,
-                                                      button_check=button_check,
-                                                      components=generate_buttons(
-                                                          range(1,
-                                                                len(GameCondition.discarded_cards) + 1)),
-                                                      timeout=Imaginarium.rules_setup.step_timeout)))
+                card = int(
+                    asyncio.run(wait_for_reply(player, message=English.choose_enemy_card(), message_check=message_check,
+                                               button_check=button_check,
+                                               components=generate_buttons(
+                                                   range(1,
+                                                         len(GameCondition.discarded_cards) + 1)),
+                                               timeout=Imaginarium.rules_setup.step_timeout)))
                 asyncio.run(
-                    player.send('You has chosen the card ' + GameCondition.discarded_cards[card - 1][
-                        0] + '.'))
+                    player.send(English.your_chosen_card(GameCondition.discarded_cards[card - 1][
+                                                             0])))
             except asyncio.TimeoutError:
                 card = random.randint(1, len(Imaginarium.gameplay.players))
-                asyncio.run(player.send('You was thinking too much. The card ' +
-                                        GameCondition.discarded_cards[card - 1] +
-                                        ' was automatically selected for you.'))
+                asyncio.run(player.send(English.card_selected_automatically(GameCondition.discarded_cards[card - 1])))
 
             GameCondition.votes_for_card[
                 GameCondition.discarded_cards[card - 1][1]] += 1
@@ -369,21 +354,17 @@ def vote_for_target_card_hook():
 
 
 def at_end_hook():
-    game_took_time = Imaginarium.gameplay.time.time() - GameCondition.game_started_at
-    asyncio.run(Gameplay.start.ctx.send('The game took: ' + str(int(game_took_time // 60)) + ' minutes and ' + str(
-        int(game_took_time % 60)) + ' seconds.'))
+    asyncio.run(Gameplay.start.ctx.send(English.game_took_time()))
 
     if len(Imaginarium.gameplay.players) == 2:
         if GameCondition.bot_score > GameCondition.players_score:
-            asyncio.run(Gameplay.start.ctx.send('You lose with score: ' + str(GameCondition.players_score)))
+            asyncio.run(Gameplay.start.ctx.send(English.loss_score()))
         if GameCondition.players_score > GameCondition.bot_score:
-            asyncio.run(Gameplay.start.ctx.send('You win with score: ' + str(GameCondition.players_score)))
+            asyncio.run(Gameplay.start.ctx.send(English.win_score()))
         else:
-            asyncio.run(Gameplay.start.ctx.send('Победила дружба (сырок)!'))
+            asyncio.run(Gameplay.start.ctx.send(English.draw_score()))
     else:
-        asyncio.run(Gameplay.start.ctx.send('The winners: \n' +
-                                            '\n'.join((str(place) + '. ' + str(player) for place, player in
-                                                       enumerate(sorted(Imaginarium.gameplay.players)[:3], start=1)))))
+        asyncio.run(Gameplay.start.ctx.send(English.winning_rating()))
 
 
 class Gameplay(commands.Cog):
@@ -394,23 +375,23 @@ class Gameplay(commands.Cog):
     async def join(self, ctx):
         try:
             if ctx.author.id in Imaginarium.gameplay.players:
-                await ctx.send('You have already joined')
+                await ctx.send(English.you_already_joined())
             else:
                 Imaginarium.gameplay.join(Player(ctx.author))
-                await ctx.send('Player ' + ctx.author.mention + ' has joined the game.')
+                await ctx.send(English.player_joined(ctx.author.mention))
         except Imaginarium.exceptions.GameIsStarted:
-            await ctx.send('You can\'t join right now, the game is started.')
+            await ctx.send(English.you_cannot_join_now())
 
     @commands.command()
     async def leave(self, ctx):
         try:
             if ctx.author.id not in Imaginarium.gameplay.players:
-                await ctx.send('You have already left')
+                await ctx.send(English.you_already_left())
             else:
                 Imaginarium.gameplay.leave(ctx.author.id)
-                await ctx.send('Players ' + ctx.author.mention + ' have left the game.')
+                await ctx.send(English.player_left(ctx.author.mention))
         except Imaginarium.exceptions.GameIsStarted:
-            await ctx.send('You can\'t leave the game now, it is started.')
+            await ctx.send(English.you_cannot_leave_now())
 
     @commands.command()
     async def start(self, ctx):
@@ -428,17 +409,17 @@ class Gameplay(commands.Cog):
                                             vote_for_target_card_hook=vote_for_target_card_hook,
                                             at_end_hook=at_end_hook)
         except Imaginarium.exceptions.GameIsStarted:
-            await ctx.send('The game is already started.')
+            await ctx.send(English.game_already_started())
         except TypeError:
-            await ctx.send('The game cannot start yet. Specify all data and start the game again.')
+            await ctx.send(English.game_cannot_start_game_now())
 
     @commands.command()
     async def end(self, ctx):
         try:
             Imaginarium.gameplay.end_game()
-            await ctx.send('The game will be ended as soon as possible.')
+            await ctx.send(English.game_will_end())
         except Imaginarium.exceptions.GameIsStarted:
-            await ctx.send('The game is already ended.')
+            await ctx.send(English.game_already_ended())
 
 
 def setup(bot):
