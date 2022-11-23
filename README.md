@@ -27,5 +27,13 @@ by editing the **".\bots\discord_bot.py"** file.
 
 You can run any of the bots
 by running the
+**"run.py"**
+file in the project folder and
+following its instructions.
+
+##### OR
+
+You can run them
+by running the
 **"main.py"**
 file in the folder of this bot.

@@ -1,6 +1,13 @@
 import os
 import sys
 
+# Make the script available both as a script and as a module.
+if __name__ == '__main__':
+    # Iterate up the directory until the "Imaginarium_bot" folder is found.
+    sys.path.append(os.sep.join(y := __file__.split(os.sep)[:__file__.split(os.sep).index('Imaginarium_bot') + 1]))
+else:
+    sys.path.append(os.path.dirname(__file__))
+
 import nest_asyncio
 
 # The "next_asyncio.apply()" have to be called before "discord" import
@@ -15,7 +22,7 @@ import configuration
 dotenv.load_dotenv()
 
 # Add directory with cogs to search for
-sys.path.append(configuration.PATH_TO_COGS_DIRECTORY)
+sys.path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 
 bot = commands.Bot(command_prefix=configuration.PREFIX,
                    intents=discord.Intents.all())
@@ -39,7 +46,7 @@ async def reload_extension(ctx, extension):
 
 
 def get_extensions():
-    return [filename[:-3] for filename in os.listdir(configuration.PATH_TO_COGS_DIRECTORY)
+    return [filename[:-3] for filename in os.listdir(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
             if all((filename[:-3] in configuration.COGS_NAMES,
                     filename.endswith('.py')))]
 
