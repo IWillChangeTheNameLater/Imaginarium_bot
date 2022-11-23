@@ -41,12 +41,12 @@ async def unload_extension(ctx, extension):
 
 @bot.command()
 async def reload_extension(ctx, extension):
-    bot.unload_extension(extension)
-    bot.load_extension(extension)
+    bot.reload_extension(extension)
 
 
 def get_extensions():
-    return [filename[:-3] for filename in os.listdir(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
+    return [filename[:-3] for filename in
+            os.listdir(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
             if all((filename[:-3] in configuration.COGS_NAMES,
                     filename.endswith('.py')))]
 
@@ -66,8 +66,7 @@ async def unload_extensions(ctx):
 @bot.command()
 async def reload_extensions(ctx):
     for extension in get_extensions():
-        bot.unload_extension(extension)
-        bot.load_extension(extension)
+        bot.reload_extension(extension)
 
 
 def main():

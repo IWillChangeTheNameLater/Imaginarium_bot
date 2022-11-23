@@ -1,3 +1,5 @@
+import os
+
 from discord.ext import commands
 import chardet
 
@@ -38,26 +40,26 @@ class SettingUpGame(commands.Cog):
     @commands.command()
     async def set_winning_score(self, ctx, score):
         if score.isdigit():
-            Imaginarium.rules_setup.winning_score = int(score)
+            Imaginarium.setting_up_game.set_winning_score(int(score))
         else:
             await ctx.author.send(English.score_must_be_number())
 
     @commands.command()
-    async def set_step_timeout(self, ctx, minutes):
+    async def set_minutes_for_step(self, ctx, minutes):
         if minutes.isdigit():
-            Imaginarium.rules_setup.step_timeout = float(minutes) * 60
+            Imaginarium.setting_up_game.set_step_timeout(float(minutes * 60))
         else:
             await ctx.author.send(English.step_timeout_must_be_number())
 
     @commands.command()
     async def reset_used_cards(self, ctx):
-        Imaginarium.gameplay.used_cards = set()
+        Imaginarium.setting_up_game.reset_used_cards()
 
         await ctx.send(English.used_cards_successfully_reset())
 
     @commands.command()
     async def reset_used_sources(self, ctx):
-        Imaginarium.gameplay.used_sources = set()
+        Imaginarium.setting_up_game.reset_used_sources()
 
         await ctx.send(English.sources_successfully_reset())
 

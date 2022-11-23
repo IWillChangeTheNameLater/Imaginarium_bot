@@ -76,8 +76,10 @@ def game_took_time(took=None):
     if took is None:
         if GameCondition.game_took_time is None:
             took = 0
+        else:
+            took = GameCondition.game_took_time
 
-    return f'The game took: {took // 60} minutes and {took % 60} seconds.'
+    return f'The game took: {int(took // 60)} minutes and {int(took % 60)} seconds.'
 
 
 def loss_score(score=None):
@@ -146,6 +148,14 @@ def game_already_ended():
     return 'The game is already ended.'
 
 
+def no_any_used_sources():
+    return 'Sources are not specified.'
+
+
+def not_enough_players():
+    return 'There are not enough players to start.'
+
+
 ##############################################################################
 
 
@@ -176,13 +186,20 @@ def players_score(score=None):
     return f'Players score: \n{score}'
 
 
+def used_cards_list(used_cards=None):
+    if used_cards is None:
+        used_cards = '\n'.join(str(used_card) for used_card in Imaginarium.getting_game_information.get_used_cards())
+
+    return f'Used cards: \n{used_cards}'
+
+
 def no_any_used_cards():
     return 'There are no any used cards.'
 
 
 def used_sources_list(sources=None):
     if sources is None:
-        sources = '\n'.join(str(source) for source in Imaginarium.getting_game_information.get_used_sources())
+        sources = '\n'.join(str(used_source) for used_source in Imaginarium.getting_game_information.get_used_sources())
 
     return f'Used sources: \n{sources}'
 

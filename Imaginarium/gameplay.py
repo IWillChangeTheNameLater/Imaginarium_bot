@@ -130,11 +130,11 @@ def start_game(at_start_hook=empty_hook_function,
                at_circle_end_hook=empty_hook_function,
                at_end_hook=empty_hook_function):
     if GameCondition.game_started:
-        raise exceptions.GameIsStarted
+        raise exceptions.GameIsStarted('The game is already started.')
     if not used_sources:
-        raise TypeError('Sources are not specified.')
+        raise exceptions.NoAnyUsedSources('Sources are not specified.')
     if len(players) < 2:
-        raise TypeError('There are not enough players to start.')
+        raise exceptions.NotEnoughPlayers('There are not enough players to start.')
 
     GameCondition.game_started_at = time.time()
     GameCondition.bot_score = 0
@@ -183,24 +183,33 @@ def start_game(at_start_hook=empty_hook_function,
                 GameCondition.discarded_cards.append((get_random_card(), None))
 
                 request_association_hook()
+
                 show_association_hook()
+
                 show_players_cards_hook()
+
                 request_players_cards_2_hook()
+
             else:
                 if len(players) == 3:
                     for i in range(2):
                         GameCondition.discarded_cards.append((get_random_card(), None))
 
                 show_players_cards_hook()
+
                 request_leader_card_hook()
+
                 request_association_hook()
+
                 show_association_hook()
+
                 request_players_cards_hook()
 
             random.shuffle(GameCondition.discarded_cards)
 
-            # Each player votes for the target card
             show_discarded_cards_hook()
+
+            # Each player votes for the target card
             if len(players) == 2:
                 vote_for_target_card_2_hook()
             else:
@@ -252,4 +261,4 @@ def end_game():
     if GameCondition.game_started:
         GameCondition.game_started = False
     else:
-        raise exceptions.GameIsEnded
+        raise exceptions.GameIsEnded('The game is already ended.')

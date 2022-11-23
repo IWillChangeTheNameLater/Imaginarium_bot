@@ -1,9 +1,6 @@
 from discord.ext import commands
 from discord_components import DiscordComponents
 
-# The base import don't have to work, but it does.
-# Probably because the module is a cog. ¯\_(ツ)_/¯
-# noinspection PyUnresolvedReferences,PyPackageRequirements
 import configuration
 from messages_text import *
 
@@ -28,6 +25,7 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_button_click(self, interaction):
         if not interaction.responded:
+            # Ignore the "This interaction failed" error
             await interaction.respond(type=6)
 
 

@@ -9,12 +9,12 @@ def set_winning_score(score):
     rules_setup.winning_score = score
 
 
-def set_step_minutes(minutes):
+def set_step_timeout(minutes):
     rules_setup.step_timeout = minutes * 60
 
 
-def reset_used_cares():
-    gameplay.used_sources = set()
+def reset_used_cards():
+    gameplay.used_cards = set()
 
 
 def reset_used_sources():
