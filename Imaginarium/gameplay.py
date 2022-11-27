@@ -58,18 +58,20 @@ def create_source_object(source):
         domain_name = domain_name[:domain_name.find('/')]
         domain_name = (domain_name := domain_name.split('.'))[math.ceil(len(domain_name) / 2) - 1]
 
-        if domain_name == 'vk':
-            return sources.Vk(source)
-        elif domain_name == 'discord':
-            pass
-        elif domain_name == 'instagram':
-            pass
-        elif domain_name == 'tiktok':
-            pass
+        match domain_name:
+            case 'vk':
+                return sources.Vk(source)
+            case 'discord':
+                pass
+            case 'instagram':
+                pass
+            case 'twitter':
+                pass
     elif validators.email(source):
         pass
-    raise exceptions.UnexpectedSource(
-        'The link format is not supported or an unavailable link is specified.')
+    else:
+        raise exceptions.UnexpectedSource(
+            'The link format is not supported or an unavailable link is specified.')
 
 
 def get_random_card():
@@ -211,19 +213,24 @@ def start_game(at_start_hook=empty_hook_function,
 
             # Each player votes for the target card
             if len(players) == 2:
+
                 vote_for_target_card_2_hook()
+
             else:
+
                 vote_for_target_card_hook()
 
             # Scoring
             if len(players) == 2:
-                if GameCondition.votes_for_card[None] == 2:
-                    GameCondition.players_score += 2
-                elif GameCondition.votes_for_card[None] == 1:
-                    GameCondition.players_score += 1
-                    GameCondition.bot_score += 1
-                elif GameCondition.votes_for_card[None] == 0:
-                    GameCondition.bot_score += 3
+                # Count bot's score
+                match GameCondition.votes_for_card[None]:
+                    case 0:
+                        GameCondition.bot_score += 3
+                    case 1:
+                        GameCondition.players_score += 1
+                        GameCondition.bot_score += 1
+                    case 2:
+                        GameCondition.players_score += 2
             else:
                 if GameCondition.votes_for_card[GameCondition.leader.id] == 0:
                     for player in players:

@@ -35,12 +35,13 @@ class Vk(BaseSource):
 
     def get_random_card(self):
         def extract_content_from_attachment(attachment):
-            if attachment['type'] == 'photo':
-                return attachment[attachment['type']]['sizes'][-1]['url']
-            elif attachment['type'] == 'video':
-                video_id = str(attachment[attachment['type']]['owner_id'])
-                video_id += '_' + str(attachment[attachment['type']]['id'])
-                return vk_requests.video.get(videos=video_id)['items'][0]['player']
+            match attachment['type']:
+                case 'photo':
+                    return attachment[attachment['type']]['sizes'][-1]['url']
+                case 'video':
+                    video_id = str(attachment[attachment['type']]['owner_id'])
+                    video_id += '_' + str(attachment[attachment['type']]['id'])
+                    return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
         self.set_cards_quantity()
         if self.cards_num == 0:
