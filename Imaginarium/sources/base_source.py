@@ -9,8 +9,8 @@ class BaseSource(abc.ABC):
                  included_types=rules_setup.included_types,
                  excluded_types=rules_setup.excluded_types):
         self.link = link
-        self.included_types = included_types
-        self.excluded_types = excluded_types
+        self._included_types = included_types
+        self._excluded_types = excluded_types
 
     def __eq__(self, other):
         return self.link == other

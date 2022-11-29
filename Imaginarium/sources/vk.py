@@ -14,24 +14,27 @@ vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
 
 
 class Vk(BaseSource):
-    types = {'photo': 'photo',
-             'video': 'video'}
+    _types = {'photo': 'photo',
+              'video': 'video'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.domain = self.link[self.link.rfind(r'/') + 1:]
-        # # Change specified types to vk attachment types
-        self.included_types = {y for i in self.included_types if (y := Vk.types.get(i))}
-        self.excluded_types = {y for i in self.excluded_types if (y := Vk.types.get(i))}
+        # Specify types to vk attachment types
+        self._included_types = {y for i in self._included_types if (y := Vk._types.get(i))}
+        self._excluded_types = {y for i in self._excluded_types if (y := Vk._types.get(i))}
 
-        self.cards_num = None
+        self.cards_quantity = None
 
     def get_cards_quantity(self):
         return vk_requests.wall.get(domain=self.domain, count=1)['count']
 
-    def set_cards_quantity(self):
-        self.cards_num = self.get_cards_quantity()
+    def set_cards_quantity(self, quantity=None):
+        if quantity is None:
+            self.cards_quantity = self.get_cards_quantity()
+        else:
+            self.cards_quantity = quantity
 
     def get_random_card(self):
         def extract_content_from_attachment(attachment):
@@ -41,15 +44,16 @@ class Vk(BaseSource):
                 case 'video':
                     video_id = str(attachment[attachment['type']]['owner_id'])
                     video_id += '_' + str(attachment[attachment['type']]['id'])
+
                     return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
         self.set_cards_quantity()
-        if self.cards_num == 0:
+        if self.cards_quantity == 0:
             raise exceptions.NoAnyPosts
 
         try:
             attachments = vk_requests.wall.get(domain=self.domain,
-                                               offset=random.randrange(self.cards_num),
+                                               offset=random.randrange(self.cards_quantity),
                                                count=1)['items'][0]['attachments']
         except KeyError:
             return self.get_random_card()
