@@ -1,22 +1,22 @@
 class UnexpectedSource(ValueError):
-    pass
+	pass
 
 
 class NoAnyPosts(LookupError):
-    pass
+	pass
 
 
 class GameIsStarted(Exception):
-    pass
+	pass
 
 
 class NoAnyUsedSources(Exception):
-    pass
+	pass
 
 
 class NotEnoughPlayers(TypeError):
-    pass
+	pass
 
 
 class GameIsEnded(Exception):
-    pass
+	pass
