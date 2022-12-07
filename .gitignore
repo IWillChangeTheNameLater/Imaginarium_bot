@@ -4,5 +4,6 @@
 /venv
 .env
 *.exe
-random_shit.txt
-some_shit.txt
+
+# The data that helps in the development
+/helpful stuff/
