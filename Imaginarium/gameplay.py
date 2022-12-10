@@ -96,6 +96,7 @@ class GameCondition:
 	game_started = None
 	round_association = None
 	game_took_time = None
+	players_count = None
 
 
 def empty_hook_function():
@@ -127,6 +128,7 @@ def start_game(at_start_hook=empty_hook_function,
 	GameCondition.game_started_at = time.time()
 	GameCondition.bot_score = 0
 	GameCondition.players_score = 0
+	players_count = len(players)
 	for player in players:
 		player.reset_features()
 	GameCondition.game_started = True
@@ -141,7 +143,7 @@ def start_game(at_start_hook=empty_hook_function,
 		at_circle_start_hook()
 
 		# Hand out cards
-		if len(players) >= 3:
+		if players_count >= 3:
 			for player in players:
 				player.cards = list()
 				for i in range(rules_setup.cards_one_player_has - 1):
@@ -158,7 +160,7 @@ def start_game(at_start_hook=empty_hook_function,
 			GameCondition.discarded_cards = list()
 			GameCondition.round_association = None
 			# Add missed cards
-			if len(players) == 2:
+			if players_count == 2:
 				for player in players:
 					player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
 			else:
@@ -166,7 +168,7 @@ def start_game(at_start_hook=empty_hook_function,
 					player.cards.append(get_random_card())
 
 			# Each player discards cards to the common deck
-			if len(players) == 2:
+			if players_count == 2:
 				# Discard the bot's card
 				GameCondition.discarded_cards.append((get_random_card(), None))
 
@@ -179,7 +181,7 @@ def start_game(at_start_hook=empty_hook_function,
 				request_players_cards_2_hook()
 
 			else:
-				if len(players) == 3:
+				if players_count == 3:
 					for i in range(2):
 						GameCondition.discarded_cards.append((get_random_card(), None))
 
@@ -198,7 +200,7 @@ def start_game(at_start_hook=empty_hook_function,
 			show_discarded_cards_hook()
 
 			# Each player votes for the target card
-			if len(players) == 2:
+			if players_count == 2:
 
 				vote_for_target_card_2_hook()
 
@@ -207,7 +209,7 @@ def start_game(at_start_hook=empty_hook_function,
 				vote_for_target_card_hook()
 
 			# Scoring
-			if len(players) == 2:
+			if players_count == 2:
 				# Count bot's score
 				match GameCondition.votes_for_card[None]:
 					case 0:
@@ -222,7 +224,7 @@ def start_game(at_start_hook=empty_hook_function,
 					for player in players:
 						player.score += GameCondition.votes_for_card[player.id]
 				else:
-					if GameCondition.votes_for_card[GameCondition.leader.id] != len(players):
+					if GameCondition.votes_for_card[GameCondition.leader.id] != players_count:
 						GameCondition.leader.score += 3
 					for player in players:
 						if player != GameCondition.leader:
@@ -238,7 +240,7 @@ def start_game(at_start_hook=empty_hook_function,
 		GameCondition.circle_number += 1
 
 		# Check for victory
-		if len(players) == 2:
+		if players_count == 2:
 			if max(GameCondition.bot_score, GameCondition.players_score) >= rules_setup.winning_score:
 				GameCondition.game_started = False
 		else:
