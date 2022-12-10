@@ -69,9 +69,9 @@ def create_source_object(source):
 				pass
 	elif validators.email(source):
 		pass
-	else:
-		raise exceptions.UnexpectedSource(
-			'The link format is not supported or an unavailable link is specified.')
+
+	raise exceptions.UnexpectedSource(
+		'The link format is not supported or an unavailable link is specified.')
 
 
 def get_random_card():
