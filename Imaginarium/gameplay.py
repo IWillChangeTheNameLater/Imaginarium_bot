@@ -81,23 +81,9 @@ def get_random_card():
 		return get_random_card()
 
 
-def join(player):
-	if GameCondition.game_started:
-		raise exceptions.GameIsStarted
-	if player not in players:
-		players.append(player)
-
-
-def leave(player):
-	if GameCondition.game_started:
-		raise exceptions.GameIsStarted
-	if player in players:
-		players.remove(player)
-
-
 class GameCondition:
 	"""A class which contains variables
-	which contain information about
+	with information about
 	the state of the game."""
 	leader = None
 	circle_number = None
@@ -269,3 +255,17 @@ def end_game():
 		GameCondition.game_started = False
 	else:
 		raise exceptions.GameIsEnded('The game is already ended.')
+
+
+def join(player):
+	if GameCondition.game_started:
+		raise exceptions.GameIsStarted
+	if player not in players:
+		players.append(player)
+
+
+def leave(player):
+	if GameCondition.game_started:
+		raise exceptions.GameIsStarted
+	if player in players:
+		players.remove(player)
