@@ -132,10 +132,17 @@ def digit_button_check_decorator(func):
 	return inner
 
 
-def in_range_of_cards_message_check_decorator(func,
+def in_range_of_cards_message_check_decorator(func=None,
+                                              *,
                                               start=1,
                                               stop=None,
                                               step=1):
+	if func is None:
+		return lambda func: in_range_of_cards_message_check_decorator(func,
+		                                                              start=start,
+		                                                              stop=stop,
+		                                                              step=step)
+
 	if stop is None:
 		stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
@@ -148,10 +155,17 @@ def in_range_of_cards_message_check_decorator(func,
 	return inner
 
 
-def in_range_of_cards_button_check_decorator(func,
+def in_range_of_cards_button_check_decorator(func=None,
+                                             *,
                                              start=1,
                                              stop=None,
                                              step=1):
+	if func is None:
+		return lambda func: in_range_of_cards_button_check_decorator(func,
+		                                                             start=start,
+		                                                             stop=stop,
+		                                                             step=step)
+
 	if stop is None:
 		stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
@@ -163,7 +177,10 @@ def in_range_of_cards_button_check_decorator(func,
 	return inner
 
 
-def leader_message_check_decorator(func, leader=None):
+def leader_message_check_decorator(func=None, *, leader=None):
+	if func is None:
+		return lambda func: leader_message_check_decorator(func, leader=leader)
+
 	if leader is None:
 		leader = GameCondition.leader
 
@@ -175,7 +192,10 @@ def leader_message_check_decorator(func, leader=None):
 	return inner
 
 
-def leader_button_check_decorator(func, leader=None):
+def leader_button_check_decorator(func=None, *, leader=None):
+	if func is None:
+		return lambda func: leader_button_check_decorator(func, leader=leader)
+
 	if leader is None:
 		leader = GameCondition.leader
 
@@ -187,7 +207,10 @@ def leader_button_check_decorator(func, leader=None):
 	return inner
 
 
-def not_leader_message_check_decorator(func, leader=None):
+def not_leader_message_check_decorator(func=None, *, leader=None):
+	if func is None:
+		return lambda func: not_leader_message_check_decorator(func, leader=leader)
+
 	if leader is None:
 		leader = GameCondition.leader
 
@@ -199,7 +222,10 @@ def not_leader_message_check_decorator(func, leader=None):
 	return inner
 
 
-def not_leader_button_check_decorator(func, leader=None):
+def not_leader_button_check_decorator(func=None, *, leader=None):
+	if func is None:
+		return lambda func: not_leader_button_check_decorator(func, leader=leader)
+
 	if leader is None:
 		leader = GameCondition.leader
 
