@@ -7,8 +7,8 @@ def get_players():
 
 def get_players_score():
 	if len(gameplay.players) == 2:
-		return (('Players score', gameplay.GameCondition.players_score),
-		        ('Bot score', gameplay.GameCondition.bot_score))
+		return (('Players score', gameplay.GameCondition._players_score),
+		        ('Bot score', gameplay.GameCondition._bot_score))
 	else:
 		return [(player, player.score) for player in gameplay.players]
 

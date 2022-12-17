@@ -10,7 +10,7 @@ def game_has_started():
 
 def round_has_started(number=None):
 	if number is None:
-		number = GameCondition.round_number
+		number = GameCondition._round_number
 
 	return f'The round {number} has started.'
 
@@ -22,7 +22,7 @@ def inform_association():
 
 def round_association(association=None):
 	if association is None:
-		association = GameCondition.round_association
+		association = GameCondition._round_association
 
 	return f'The association of the round is: ' \
 	       f'{association}.'
@@ -52,8 +52,8 @@ def card_selected_automatically(card):
 
 def choose_your_leaders_card(cards=None):
 	if cards is None:
-		if GameCondition.leader is not None:
-			cards = GameCondition.leader.cards
+		if GameCondition._leader is not None:
+			cards = GameCondition._leader.cards
 
 	cards = '\n'.join(str(c) for c in cards)
 
@@ -62,10 +62,10 @@ def choose_your_leaders_card(cards=None):
 
 def choose_enemy_card(cards=None):
 	if cards is None:
-		if GameCondition.discarded_cards is None:
+		if GameCondition._discarded_cards is None:
 			cards = ()
 		else:
-			cards = (card[0] for card in GameCondition.discarded_cards)
+			cards = (card[0] for card in GameCondition._discarded_cards)
 
 	cards = '\n'.join(str(card) for card in cards)
 
@@ -74,24 +74,24 @@ def choose_enemy_card(cards=None):
 
 def game_took_time(took=None):
 	if took is None:
-		if GameCondition.game_took_time is None:
+		if GameCondition._game_took_time is None:
 			took = 0
 		else:
-			took = GameCondition.game_took_time
+			took = GameCondition._game_took_time
 
 	return f'The game took: {int(took // 60)} minutes and {int(took % 60)} seconds.'
 
 
 def loss_score(score=None):
 	if score is None:
-		score = GameCondition.players_score
+		score = GameCondition._players_score
 
 	return f'You lose with score: {score}!'
 
 
 def win_score(score=None):
 	if score is None:
-		score = GameCondition.players_score
+		score = GameCondition._players_score
 
 	return f'You win with score: {score}!'
 

@@ -26,7 +26,7 @@ def add_used_source(source):
 
 
 def remove_used_source(source):
-	if not gameplay.GameCondition.game_started:
+	if not gameplay.GameCondition._game_started:
 		gameplay.used_sources.remove(source)
 	else:
 		raise exceptions.GameIsStarted
