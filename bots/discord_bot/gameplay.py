@@ -1,5 +1,6 @@
 import asyncio
 import random
+import itertools
 
 from discord.ext import commands
 from discord_components import Button, ButtonStyle
@@ -19,17 +20,11 @@ class Player(Imaginarium.gameplay.Player):
 		await self.user.send(message, *args, **kwargs)
 
 
-def filled_iter(iterator, filling=None):
-	for i in iterator:
-		yield i
-	while True:
-		yield filling
-
-
-def generate_buttons(labels, styles=filled_iter((), 2),
-                     urls=filled_iter(()),
-                     disabled=filled_iter((), False),
-                     emojis=filled_iter(())):
+def generate_buttons(labels,
+                     styles=itertools.repeat(2),
+                     urls=itertools.repeat(None),
+                     disabled=itertools.repeat(False),
+                     emojis=itertools.repeat(None)):
 	"""Return generated list of DiscordComponents.Button."""
 	labels = iter(labels)
 	styles = iter(styles)
@@ -311,10 +306,13 @@ def request_players_cards_2_hook():
 		for line in (English.choose_first_card(),
 		             English.choose_second_card()):
 			try:
-				card = int(asyncio.run(wait_for_reply(player, message=line + '\n'.join(str(c) for c in player.cards),
-				                                      message_check=message_check, button_check=button_check,
+				card = int(asyncio.run(wait_for_reply(player,
+				                                      message=line + '\n'.join(str(c) for c in player.cards),
+				                                      message_check=message_check,
+				                                      button_check=button_check,
 				                                      components=generate_buttons(
-					                                      range(1, Imaginarium.rules_setup.cards_one_player_has + 1)))))
+					                                      range(1,
+					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
@@ -342,9 +340,9 @@ def request_leader_card_hook():
 		                                      message=English.choose_your_leaders_card(),
 		                                      message_check=message_check,
 		                                      button_check=button_check,
-		                                      components=generate_buttons(range(1,
-		                                                                        Imaginarium.rules_setup.
-		                                                                        cards_one_player_has + 1)))))
+		                                      components=generate_buttons(
+			                                      range(1,
+			                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 		asyncio.run(GameCondition._leader.send(English.your_chosen_card(GameCondition._leader.cards[
 			                                                                card - 1])))
 	except asyncio.TimeoutError:
@@ -374,9 +372,9 @@ def request_players_cards_hook():
 				                                      message=English.choose_card(player.cards),
 				                                      message_check=message_check,
 				                                      button_check=button_check,
-				                                      components=generate_buttons(range(1,
-				                                                                        Imaginarium.rules_setup.
-				                                                                        cards_one_player_has + 1)))))
+				                                      components=generate_buttons(
+					                                      range(1,
+					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
@@ -385,6 +383,7 @@ def request_players_cards_hook():
 			GameCondition._discarded_cards.append((player.cards.pop(card - 1), player.id))
 
 
+# noinspection DuplicatedCode
 def vote_for_target_card_2_hook():
 	@selected_card_message_check_decorator
 	def message_check(message):
@@ -401,7 +400,9 @@ def vote_for_target_card_2_hook():
 	for player in Imaginarium.gameplay.players:
 		try:
 			card = int(
-				asyncio.run(wait_for_reply(player, message=English.choose_enemy_card(), message_check=message_check,
+				asyncio.run(wait_for_reply(player,
+				                           message=English.choose_enemy_card(),
+				                           message_check=message_check,
 				                           button_check=button_check,
 				                           components=generate_buttons(
 					                           range(1,
@@ -416,6 +417,7 @@ def vote_for_target_card_2_hook():
 		player.chosen_card = card
 
 
+# noinspection DuplicatedCode
 def vote_for_target_card_hook():
 	@selected_card_message_check_decorator
 	@not_leader_message_check_decorator
@@ -435,7 +437,9 @@ def vote_for_target_card_hook():
 		if player != GameCondition._leader:
 			try:
 				card = int(
-					asyncio.run(wait_for_reply(player, message=English.choose_enemy_card(), message_check=message_check,
+					asyncio.run(wait_for_reply(player,
+					                           message=English.choose_enemy_card(),
+					                           message_check=message_check,
 					                           button_check=button_check,
 					                           components=generate_buttons(
 						                           range(1,
@@ -458,7 +462,7 @@ def at_end_hook():
 	if len(Imaginarium.gameplay.players) == 2:
 		if GameCondition._bot_score > GameCondition._players_score:
 			asyncio.run(Gameplay.start.ctx.send(English.loss_score()))
-		if GameCondition._players_score > GameCondition._bot_score:
+		elif GameCondition._bot_score < GameCondition._players_score:
 			asyncio.run(Gameplay.start.ctx.send(English.win_score()))
 		else:
 			asyncio.run(Gameplay.start.ctx.send(English.draw_score()))

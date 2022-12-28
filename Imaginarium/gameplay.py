@@ -71,7 +71,7 @@ def create_source_object(source):
 		pass
 
 	raise exceptions.UnexpectedSource(
-		'The link format is not supported or an unavailable link is specified.')
+		'The specified source is unsupported.')
 
 
 def get_random_card():
@@ -119,11 +119,14 @@ def start_game(at_start_hook=empty_hook_function,
                at_circle_end_hook=empty_hook_function,
                at_end_hook=empty_hook_function):
 	if GameCondition._game_started:
-		raise exceptions.GameIsStarted('The game is already started.')
+		raise exceptions.GameIsStarted(
+			'The game is already started.')
 	if not used_sources:
-		raise exceptions.NoAnyUsedSources('Sources are not specified.')
+		raise exceptions.NoAnyUsedSources(
+			'Sources are not specified.')
 	if len(players) < 2:
-		raise exceptions.NotEnoughPlayers('There are not enough players to start.')
+		raise exceptions.NotEnoughPlayers(
+			'There are not enough players to start.')
 
 	GameCondition._game_started_at = time.time()
 	GameCondition._bot_score = 0
@@ -135,37 +138,36 @@ def start_game(at_start_hook=empty_hook_function,
 
 	at_start_hook()
 
-	GameCondition._circle_number = 1
+	GameCondition._circle_number = 0
 	while True:
 		if not GameCondition._game_started:
 			break
 
-		at_circle_start_hook()
-
+		GameCondition._circle_number += 1
 		# Hand out cards
 		if players_count >= 3:
 			for player in players:
-				player.cards = list()
-				for i in range(rules_setup.cards_one_player_has - 1):
-					player.cards.append(get_random_card())
+				# We deal one less card than the player should have,
+				# since at the beginning of each round we add one additional card.
+				player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
 
-		GameCondition._round_number = 1
+		at_circle_start_hook()
+
+		GameCondition._round_number = 0
 		for GameCondition._leader in players:
 			if not GameCondition._game_started:
 				break
 
-			at_round_start_hook()
-
+			GameCondition._round_number += 1
 			GameCondition._votes_for_card = collections.defaultdict(int)
 			GameCondition._discarded_cards = list()
 			GameCondition._round_association = None
-			# Add missed cards
+			# Refresh cards
 			if players_count == 2:
 				for player in players:
 					player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
-			else:
-				for player in players:
-					player.cards.append(get_random_card())
+
+			at_round_start_hook()
 
 			# Each player discards cards to the common deck
 			if players_count == 2:
@@ -231,21 +233,22 @@ def start_game(at_start_hook=empty_hook_function,
 							if GameCondition._discarded_cards[player.chosen_card - 1][1] == GameCondition._leader.id:
 								player.score += 3
 
+			# Add missed cards
+			if players_count >= 3:
+				for player in players:
+					player.cards.append(get_random_card())
+
 			at_round_end_hook()
-
-			GameCondition._round_number += 1
-
-		at_circle_end_hook()
-
-		GameCondition._circle_number += 1
 
 		# Check for victory
 		if players_count == 2:
 			if max(GameCondition._bot_score, GameCondition._players_score) >= rules_setup.winning_score:
 				GameCondition._game_started = False
 		else:
-			if not all(player.score < rules_setup.winning_score for player in players):
+			if any(player.score >= rules_setup.winning_score for player in players):
 				GameCondition._game_started = False
+
+		at_circle_end_hook()
 
 	GameCondition._game_took_time = time.time() - GameCondition._game_started_at
 
@@ -256,7 +259,8 @@ def end_game():
 	if GameCondition._game_started:
 		GameCondition._game_started = False
 	else:
-		raise exceptions.GameIsEnded('The game is already ended.')
+		raise exceptions.GameIsEnded(
+			'The game is already ended.')
 
 
 def join(player):

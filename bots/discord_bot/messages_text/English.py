@@ -214,7 +214,7 @@ def no_any_sources():
 # Listeners
 ##############################################################################
 def bot_ready():
-	return 'The bot is ready.'
+	return 'The discord bot is ready.'
 
 
 def command_does_not_exist(write_for_help):
