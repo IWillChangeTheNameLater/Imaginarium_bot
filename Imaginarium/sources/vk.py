@@ -6,7 +6,6 @@ import vk_api
 
 from . import BaseSource
 from .. import exceptions
-from .. import rules_setup
 
 dotenv.load_dotenv()
 
@@ -61,9 +60,9 @@ class Vk(BaseSource):
 		# If attachments are found, then get the random one
 		random.shuffle(attachments)
 		for a in attachments:
-			if a['type'] not in rules_setup.excluded_types:
-				if rules_setup.included_types:
-					if a['type'] not in rules_setup.included_types:
+			if a['type'] not in self._excluded_types:
+				if self._included_types:
+					if a['type'] not in self._included_types:
 						continue
 				return extract_content_from_attachment(a)
 
