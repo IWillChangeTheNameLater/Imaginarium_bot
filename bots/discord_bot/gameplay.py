@@ -1,9 +1,12 @@
 import asyncio
 import random
 import itertools
+import functools
+from typing import TypeAlias, Iterable, Sequence, Callable, Any
 
+import discord
 from discord.ext import commands
-from discord_components import Button, ButtonStyle
+from discord_components import Button, ButtonStyle, Interaction
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
@@ -11,20 +14,24 @@ from messages_text import *
 
 
 class Player(Imaginarium.gameplay.Player):
-	def __init__(self, user):
+	def __init__(self, user: discord.Member) -> None:
 		super().__init__(user.id, user.mention)
 
-		self.user = user
+		self.user: discord.Member = user
 
-	async def send(self, message, *args, **kwargs):
+	async def send(self, message: str, *args, **kwargs) -> None:
 		await self.user.send(message, *args, **kwargs)
 
 
-def generate_buttons(labels,
-                     styles=itertools.repeat(2),
-                     urls=itertools.repeat(None),
-                     disabled=itertools.repeat(False),
-                     emojis=itertools.repeat(None)):
+Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
+
+
+def generate_buttons(labels: Iterable[str],
+                     styles: Iterable[int] = itertools.repeat(2),
+                     urls: Iterable[str] = itertools.repeat(None),
+                     disabled: Iterable[bool] = itertools.repeat(False),
+                     emojis: Iterable[Emoji] = itertools.repeat(None)) \
+		-> Sequence[Sequence[Button]]:
 	"""Return generated list of DiscordComponents.Button."""
 	labels = iter(labels)
 	styles = iter(styles)
@@ -50,8 +57,18 @@ def generate_buttons(labels,
 	return buttons
 
 
-async def wait_for_reply(recipient, message=None, reactions=(), components=None, message_check=None,
-                         reaction_check=None, button_check=None, timeout=None, bot=None):
+Reaction: TypeAlias = Emoji | discord.Reaction
+
+
+async def wait_for_reply(recipient: discord.abc.Messageable | Player,
+                         message: str = None,
+                         reactions: Iterable[Reaction] = (),
+                         components: Iterable[Iterable[Button]] = None,
+                         message_check: Callable[[discord.Message], bool] = None,
+                         reaction_check: Callable[[discord.Reaction], bool] = None,
+                         button_check: Callable[[Interaction], bool] = None,
+                         timeout: float = None,
+                         bot: discord.Client = None) -> str:
 	if bot is None:
 		# noinspection PyUnresolvedReferences
 		bot = wait_for_reply.bot
@@ -74,7 +91,7 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
 
 	async def wait_for_button_click():
 		nonlocal reply
-		reply = (await bot.wait_for("button_click", check=button_check)).component.label
+		reply = (await bot.wait_for('button_click', check=button_check)).component.label
 
 	pending_tasks = [wait_for_message(),
 	                 wait_for_reaction_add(),
@@ -91,7 +108,12 @@ async def wait_for_reply(recipient, message=None, reactions=(), components=None,
 	raise asyncio.TimeoutError
 
 
-def not_bot_message_check_decorator(func):
+MessageCheck: TypeAlias = Callable[[discord.Message], bool]
+ButtonCheck: TypeAlias = Callable[[Interaction], bool]
+
+
+def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
+	@functools.wraps(func)
 	def inner(message):
 		if not message.author.bot:
 			return func(message)
@@ -100,7 +122,8 @@ def not_bot_message_check_decorator(func):
 	return inner
 
 
-def not_bot_button_check_decorator(func):
+def not_bot_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
+	@functools.wraps(func)
 	def inner(interaction):
 		if not interaction.author.bot:
 			return func(interaction)
@@ -109,7 +132,8 @@ def not_bot_button_check_decorator(func):
 	return inner
 
 
-def digit_message_check_decorator(func):
+def digit_message_check_decorator(func: MessageCheck) -> MessageCheck:
+	@functools.wraps(func)
 	def inner(message):
 		if message.content.isdigit():
 			return func(message)
@@ -118,7 +142,8 @@ def digit_message_check_decorator(func):
 	return inner
 
 
-def digit_button_check_decorator(func):
+def digit_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
+	@functools.wraps(func)
 	def inner(interaction):
 		if interaction.component.label.isdigit():
 			return func(interaction)
@@ -127,11 +152,12 @@ def digit_button_check_decorator(func):
 	return inner
 
 
-def in_range_of_cards_message_check_decorator(func=None,
+def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
                                               *,
-                                              start=1,
-                                              stop=None,
-                                              step=1):
+                                              start: int = 1,
+                                              stop: int = None,
+                                              step: int = 1) \
+		-> MessageCheck | Callable[[], MessageCheck]:
 	if func is None:
 		return lambda func: in_range_of_cards_message_check_decorator(func,
 		                                                              start=start,
@@ -141,6 +167,7 @@ def in_range_of_cards_message_check_decorator(func=None,
 	if stop is None:
 		stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
+	@functools.wraps(func)
 	def inner(message):
 		if int(message.content) in range(start, stop, step):
 			return func(message)
@@ -150,11 +177,12 @@ def in_range_of_cards_message_check_decorator(func=None,
 	return inner
 
 
-def in_range_of_cards_button_check_decorator(func=None,
+def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
                                              *,
-                                             start=1,
-                                             stop=None,
-                                             step=1):
+                                             start: int = 1,
+                                             stop: int = None,
+                                             step: int = 1) \
+		-> ButtonCheck | Callable[[], ButtonCheck]:
 	if func is None:
 		return lambda func: in_range_of_cards_button_check_decorator(func,
 		                                                             start=start,
@@ -164,6 +192,7 @@ def in_range_of_cards_button_check_decorator(func=None,
 	if stop is None:
 		stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
+	@functools.wraps(func)
 	def inner(interaction):
 		if int(interaction.component.label) in range(start, stop, step):
 			return func(interaction)
@@ -172,13 +201,17 @@ def in_range_of_cards_button_check_decorator(func=None,
 	return inner
 
 
-def leader_message_check_decorator(func=None, *, leader=None):
+def leader_message_check_decorator(func: MessageCheck = None,
+                                   *,
+                                   leader: Player = None) \
+		-> MessageCheck | Callable[[], MessageCheck]:
 	if func is None:
 		return lambda func: leader_message_check_decorator(func, leader=leader)
 
 	if leader is None:
 		leader = GameCondition._leader
 
+	@functools.wraps(func)
 	def inner(message):
 		if message.author == leader:
 			return func(message)
@@ -187,13 +220,17 @@ def leader_message_check_decorator(func=None, *, leader=None):
 	return inner
 
 
-def leader_button_check_decorator(func=None, *, leader=None):
+def leader_button_check_decorator(func: ButtonCheck = None,
+                                  *,
+                                  leader: Player = None) \
+		-> ButtonCheck | Callable[[], ButtonCheck]:
 	if func is None:
 		return lambda func: leader_button_check_decorator(func, leader=leader)
 
 	if leader is None:
 		leader = GameCondition._leader
 
+	@functools.wraps(func)
 	def inner(interaction):
 		if interaction.author.id == leader.id:
 			return func(interaction)
@@ -202,13 +239,17 @@ def leader_button_check_decorator(func=None, *, leader=None):
 	return inner
 
 
-def not_leader_message_check_decorator(func=None, *, leader=None):
+def not_leader_message_check_decorator(func: MessageCheck = None,
+                                       *,
+                                       leader: Player = None) \
+		-> MessageCheck | Callable[[], MessageCheck]:
 	if func is None:
 		return lambda func: not_leader_message_check_decorator(func, leader=leader)
 
 	if leader is None:
 		leader = GameCondition._leader
 
+	@functools.wraps(func)
 	def inner(message):
 		if message.author != leader:
 			return func(message)
@@ -217,13 +258,16 @@ def not_leader_message_check_decorator(func=None, *, leader=None):
 	return inner
 
 
-def not_leader_button_check_decorator(func=None, *, leader=None):
+def not_leader_button_check_decorator(func: ButtonCheck = None,
+                                      *,
+                                      leader: Player = None):
 	if func is None:
 		return lambda func: not_leader_button_check_decorator(func, leader=leader)
 
 	if leader is None:
 		leader = GameCondition._leader
 
+	@functools.wraps(func)
 	def inner(interaction):
 		if interaction.author.id != leader.id:
 			return func(interaction)
@@ -232,7 +276,7 @@ def not_leader_button_check_decorator(func=None, *, leader=None):
 	return inner
 
 
-def selected_card_message_check_decorator(func):
+def selected_card_message_check_decorator(func: MessageCheck) -> MessageCheck:
 	func = in_range_of_cards_message_check_decorator(func)
 	func = digit_message_check_decorator(func)
 	func = not_bot_message_check_decorator(func)
@@ -240,7 +284,7 @@ def selected_card_message_check_decorator(func):
 	return func
 
 
-def selected_card_button_check_decorator(func):
+def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 	func = in_range_of_cards_button_check_decorator(func)
 	func = digit_button_check_decorator(func)
 	func = not_bot_button_check_decorator(func)
@@ -248,23 +292,24 @@ def selected_card_button_check_decorator(func):
 	return func
 
 
-def at_start_hook():
+def at_start_hook() -> None:
 	asyncio.run(Gameplay.start.ctx.channel.send(English.game_has_started()))
 
 
-def at_round_start_hook():
+def at_round_start_hook() -> None:
 	asyncio.run(Gameplay.start.ctx.channel.send(English.round_has_started()))
 
 
-def request_association_hook():
+# noinspection PyTypeChecker
+def request_association_hook() -> None:
 	@not_bot_message_check_decorator
 	@leader_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		return True
 
 	@not_bot_button_check_decorator
 	@leader_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		return True
 
 	Imaginarium.gameplay.round_association = asyncio.run(wait_for_reply(GameCondition._leader,
@@ -276,16 +321,16 @@ def request_association_hook():
 	                                                                    button_check=button_check))
 
 
-def show_association_hook():
+def show_association_hook() -> None:
 	if GameCondition._round_association:
 		asyncio.run(Gameplay.start.ctx.channel.send(English.round_association()))
 
 
-def request_players_cards_2_hook():
+def request_players_cards_2_hook() -> None:
 	discarded_card = None
 
 	@selected_card_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		number = int(message.content)
 
 		# Check the number is not equal to the previous discarded card
@@ -294,7 +339,7 @@ def request_players_cards_2_hook():
 		return False
 
 	@selected_card_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		number = int(interaction.component.label)
 
 		# Check the number is not equal to the previous discarded card
@@ -324,15 +369,15 @@ def request_players_cards_2_hook():
 			discarded_card = card
 
 
-def request_leader_card_hook():
+def request_leader_card_hook() -> None:
 	@selected_card_message_check_decorator
 	@leader_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		return True
 
 	@selected_card_button_check_decorator
 	@leader_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		return True
 
 	try:
@@ -354,15 +399,15 @@ def request_leader_card_hook():
 		(GameCondition._leader.cards.pop(card - 1), GameCondition._leader.id))
 
 
-def request_players_cards_hook():
+def request_players_cards_hook() -> None:
 	@selected_card_message_check_decorator
 	@not_leader_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		return True
 
 	@selected_card_button_check_decorator
 	@not_leader_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		return True
 
 	for player in Imaginarium.gameplay.players:
@@ -384,15 +429,15 @@ def request_players_cards_hook():
 
 
 # noinspection DuplicatedCode
-def vote_for_target_card_2_hook():
+def vote_for_target_card_2_hook() -> None:
 	@selected_card_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		if GameCondition._discarded_cards[int(message.content) - 1][1] != message.author.id:
 			return True
 		return False
 
 	@selected_card_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id:
 			return True
 		return False
@@ -410,7 +455,7 @@ def vote_for_target_card_2_hook():
 			asyncio.run(player.send(English.your_chosen_card(GameCondition._discarded_cards[card - 1][0])))
 		except asyncio.TimeoutError:
 			card = random.randint(1, len(Imaginarium.gameplay.players))
-			asyncio.run(player.send(English.card_selected_automatically(GameCondition._discarded_cards[card - 1])))
+			asyncio.run(player.send(English.card_selected_automatically(GameCondition._discarded_cards[card - 1][0])))
 
 		GameCondition._votes_for_card[
 			GameCondition._discarded_cards[card - 1][1]] += 1
@@ -418,17 +463,17 @@ def vote_for_target_card_2_hook():
 
 
 # noinspection DuplicatedCode
-def vote_for_target_card_hook():
+def vote_for_target_card_hook() -> None:
 	@selected_card_message_check_decorator
 	@not_leader_message_check_decorator
-	def message_check(message):
+	def message_check(message: discord.Message) -> bool:
 		if GameCondition._discarded_cards[int(message.content) - 1][1] != message.author.id:
 			return True
 		return False
 
 	@selected_card_button_check_decorator
 	@not_leader_button_check_decorator
-	def button_check(interaction):
+	def button_check(interaction: Any) -> bool:
 		if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != interaction.user.id:
 			return True
 		return False
@@ -449,14 +494,15 @@ def vote_for_target_card_hook():
 						                                     0])))
 			except asyncio.TimeoutError:
 				card = random.randint(1, len(Imaginarium.gameplay.players))
-				asyncio.run(player.send(English.card_selected_automatically(GameCondition._discarded_cards[card - 1])))
+				asyncio.run(
+					player.send(English.card_selected_automatically(GameCondition._discarded_cards[card - 1][0])))
 
 			GameCondition._votes_for_card[
 				GameCondition._discarded_cards[card - 1][1]] += 1
 			player.chosen_card = card
 
 
-def at_end_hook():
+def at_end_hook() -> None:
 	asyncio.run(Gameplay.start.ctx.send(English.game_took_time()))
 
 	if len(Imaginarium.gameplay.players) == 2:

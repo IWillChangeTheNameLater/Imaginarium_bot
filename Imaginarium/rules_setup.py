@@ -1,6 +1,8 @@
-include_used_cards = False
-step_timeout = 60
-cards_one_player_has = 6
-winning_score = 3
-included_types = ('photo',)
-excluded_types = ()
+from typing import Collection
+
+include_used_cards: bool = False
+step_timeout: float = 60
+cards_one_player_has: int = 6
+winning_score: float = 3
+included_types: Collection[str] = ('photo',)
+excluded_types: Collection[str] = ()

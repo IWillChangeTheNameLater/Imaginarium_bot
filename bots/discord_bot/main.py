@@ -1,10 +1,12 @@
 import os
 import sys
+from typing import Generator
 
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
 	# Iterate up the directory until the "Imaginarium_bot" folder is found.
-	sys.path.append(os.sep.join(y := __file__.split(os.sep)[:__file__.split(os.sep).index('Imaginarium_bot') + 1]))
+	sys.path.append(os.sep.join(y := __file__.split(os.sep) \
+		[:__file__.split(os.sep).index('Imaginarium_bot') + 1]))
 else:
 	sys.path.append(os.path.dirname(__file__))
 
@@ -44,11 +46,11 @@ async def reload_extension(ctx, extension):
 	bot.reload_extension(extension)
 
 
-def get_extensions():
-	return [filename[:-3] for filename in
+def get_extensions() -> Generator[str, None, None]:
+	return (filename[:-3] for filename in
 	        os.listdir(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 	        if all((filename[:-3] in configuration.COGS_NAMES,
-	                filename.endswith('.py')))]
+	                filename.endswith('.py'))))
 
 
 @bot.command()

@@ -1,3 +1,5 @@
+from typing import Callable, Coroutine
+
 from discord.ext import commands
 import chardet
 
@@ -5,28 +7,30 @@ import Imaginarium
 from messages_text import *
 
 
-def extract_file_extension(filename):
+def extract_file_extension(filename: str) -> str:
 	return filename[filename.rfind('.') + 1:]
 
 
-async def iterate_sources(ctx, message, function):
+async def iterate_sources(ctx: commands.Context,
+                          message: str,
+                          function: Callable[..., Coroutine]) -> None:
 	"""Extract sources from attachments and process them.
 
 	Extract separated by break sources from the file and the message and
 	process them by the function."""
 
-	async def iterate_lines(lines):
+	async def iterate_lines(lines: str, function: Callable[[str], Coroutine]) -> None:
 		for source in lines.replace('\r', '').split('\n'):
 			await function(source)
 
-	await iterate_lines(message)
+	await iterate_lines(message, function)
 
 	for attachment in ctx.message.attachments:
 		filetype = extract_file_extension(attachment.filename)
 
 		if filetype == 'txt':
 			text = await attachment.read()
-			await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']))
+			await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']), function)
 		else:
 			await ctx.send(English.filetype_is_not_supported(filetype))
 
@@ -63,7 +67,7 @@ class SettingUpGame(commands.Cog):
 
 	@commands.command()
 	async def add_used_sources(self, ctx, *, message=''):
-		async def move_source(source):
+		async def move_source(source: str) -> None:
 			if source:
 				try:
 					Imaginarium.setting_up_game.add_used_source(source)
@@ -74,11 +78,11 @@ class SettingUpGame(commands.Cog):
 
 	@commands.command()
 	async def remove_used_sources(self, ctx, *, message=''):
-		async def move_source(source):
+		async def move_source(source: Imaginarium.sources.BaseSource) -> None:
 			try:
 				Imaginarium.setting_up_game.remove_used_source(source)
 			except KeyError:
-				await ctx.send(English.no_source(source))
+				await ctx.send(English.no_source(source._link))
 
 		await iterate_sources(ctx, message, move_source)
 

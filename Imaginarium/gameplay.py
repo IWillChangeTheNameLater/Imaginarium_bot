@@ -2,6 +2,7 @@ import collections
 import math
 import random
 import time
+from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
 
 import validators
 
@@ -9,46 +10,69 @@ from . import sources
 from . import exceptions
 from . import rules_setup
 
-used_cards = set()
-unused_cards = list()
-used_sources = set()
-players = list()
-
 
 class Player:
-	def __init__(self, player_id, name):
-		self.id = player_id
-		self.name = name
+	def __init__(self, player_id: int, name: str) -> None:
+		self.id: int = player_id
+		self.name: str = name
 
-		self.cards = list()
-		self.discarded_cards = list()
+		self.cards: MutableSequence[str] = list()
+		self.discarded_cards: MutableSequence[str] = list()
 
-	def __hash__(self): return self.id
+	def __hash__(self) -> int:
+		return hash(self.id)
 
-	def __repr__(self): return self.name
+	def __repr__(self) -> str:
+		return self.name
 
-	def __str__(self): return self.name
+	def __str__(self) -> str:
+		return self.name
 
-	def __eq__(self, x): return self.id == x
+	def __eq__(self, other: Any) -> bool:
+		# return self.id == other
+		try:
+			return self.id == other.id
+		except AttributeError:
+			return self.id == other
 
-	def __ne__(self, x): return self.id != x
+	def __ne__(self, other: Any) -> bool:
+		try:
+			return self.id != other.id
+		except AttributeError:
+			return self.id != other
 
-	def __gt__(self, x): return self.score > x
+	def __gt__(self, other: Any) -> bool:
+		try:
+			return self.score > other.score
+		except AttributeError:
+			return self.score > other
 
-	def __lt__(self, x): return self.score < x
+	def __lt__(self, other: Any) -> bool:
+		try:
+			return self.score < other.score
+		except AttributeError:
+			return self.score < other
 
-	def __ge__(self, x): return self.score >= x
+	def __ge__(self, other: Any) -> bool:
+		try:
+			return self.score >= other.score
+		except AttributeError:
+			return self.score >= other
 
-	def __le__(self, x): return self.score <= x
+	def __le__(self, other: Any) -> bool:
+		try:
+			return self.score <= other.score
+		except AttributeError:
+			return self.score <= other
 
-	def reset_features(self):
+	def reset_features(self) -> None:
 		self.score = 0
 
-	score = 0
-	chosen_card = None
+	score: float = 0
+	chosen_card: int = None
 
 
-def create_source_object(source):
+def create_source_object(source: str) -> sources.BaseSource:
 	"""Return an object of class "Source".
 
 	Process the link to the source (email, url, etc.) and create a "Source"
@@ -74,50 +98,63 @@ def create_source_object(source):
 		'The specified source is unsupported.')
 
 
-def get_random_card():
+def get_random_card() -> str:
 	try:
 		return random.choice(list(used_sources)).get_random_card()
 	except exceptions.NoAnyPosts:
 		return get_random_card()
 
 
+used_cards: MutableSequence[str] = list()
+unused_cards: MutableSequence[str] = list()
+used_sources: MutableSequence[sources.BaseSource] = list()
+players: MutableSequence[Any] = list()
+
+players_score: float = 0
+player_step_timeout: float = 0
+
+
 class GameCondition:
 	"""A class which contains variables
 	with information about
 	the state of the game."""
-	_leader = None
-	_circle_number = None
-	_round_number = None
-	_discarded_cards = None
-	_votes_for_card = None
-	_game_started_at = None
-	_bot_score = None
-	_players_score = None
-	_game_started = None
-	_round_association = None
-	_game_took_time = None
-	_players_count = None
+	_leader: Any = None
+	_circle_number: int = None
+	_round_number: int = None
+	_discarded_cards: MutableSequence[Tuple[str, Player | int | None]] = None
+	_votes_for_card: Mapping[Player | int | None, int] = None
+	_game_started_at: float = None
+	_bot_score: float = None
+	_players_score: float = None
+	_game_started: bool = None
+	_round_association: str = None
+	_game_took_time: float = None
+	_players_count: int = None
 
 
-def empty_hook_function():
+EmptyHook: TypeAlias = Callable[[], None]
+
+
+def empty_hook() -> None:
 	pass
 
 
-def start_game(at_start_hook=empty_hook_function,
-               at_circle_start_hook=empty_hook_function,
-               at_round_start_hook=empty_hook_function,
-               request_association_hook=empty_hook_function,
-               show_association_hook=empty_hook_function,
-               show_players_cards_hook=empty_hook_function,
-               request_players_cards_2_hook=empty_hook_function,
-               request_leader_card_hook=empty_hook_function,
-               request_players_cards_hook=empty_hook_function,
-               show_discarded_cards_hook=empty_hook_function,
-               vote_for_target_card_2_hook=empty_hook_function,
-               vote_for_target_card_hook=empty_hook_function,
-               at_round_end_hook=empty_hook_function,
-               at_circle_end_hook=empty_hook_function,
-               at_end_hook=empty_hook_function):
+# This is already some kind of bullshit
+def start_game(at_start_hook: EmptyHook = empty_hook,
+               at_circle_start_hook: EmptyHook = empty_hook,
+               at_round_start_hook: EmptyHook = empty_hook,
+               request_association_hook: EmptyHook = empty_hook,
+               show_association_hook: EmptyHook = empty_hook,
+               show_players_cards_hook: EmptyHook = empty_hook,
+               request_players_cards_2_hook: EmptyHook = empty_hook,
+               request_leader_card_hook: EmptyHook = empty_hook,
+               request_players_cards_hook: EmptyHook = empty_hook,
+               show_discarded_cards_hook: EmptyHook = empty_hook,
+               vote_for_target_card_2_hook: EmptyHook = empty_hook,
+               vote_for_target_card_hook: EmptyHook = empty_hook,
+               at_round_end_hook: EmptyHook = empty_hook,
+               at_circle_end_hook: EmptyHook = empty_hook,
+               at_end_hook: EmptyHook = empty_hook) -> None:
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted(
 			'The game is already started.')
@@ -255,7 +292,7 @@ def start_game(at_start_hook=empty_hook_function,
 	at_end_hook()
 
 
-def end_game():
+def end_game() -> None:
 	if GameCondition._game_started:
 		GameCondition._game_started = False
 	else:
@@ -263,14 +300,14 @@ def end_game():
 			'The game is already ended.')
 
 
-def join(player):
+def join(player: Player) -> None:
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted
 	if player not in players:
 		players.append(player)
 
 
-def leave(player):
+def leave(player: Player) -> None:
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted
 	if player in players:
