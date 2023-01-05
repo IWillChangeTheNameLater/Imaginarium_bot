@@ -93,9 +93,9 @@ async def wait_for_reply(recipient: discord.abc.Messageable | Player,
 		nonlocal reply
 		reply = (await bot.wait_for('button_click', check=button_check)).component.label
 
-	pending_tasks = [wait_for_message(),
+	pending_tasks = (wait_for_message(),
 	                 wait_for_reaction_add(),
-	                 wait_for_button_click()]
+	                 wait_for_button_click())
 	pending_tasks = (await asyncio.wait(pending_tasks,
 	                                    timeout=timeout,
 	                                    return_when=asyncio.FIRST_COMPLETED))[1]
