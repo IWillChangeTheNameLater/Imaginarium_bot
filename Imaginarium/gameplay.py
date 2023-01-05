@@ -21,6 +21,8 @@ class Player:
 
 		self.cards: MutableSequence[str] = []
 		self.discarded_cards: MutableSequence[str] = []
+		self.score: float = 0
+		self.chosen_card: int | None = None
 
 	def __hash__(self) -> int:
 		return hash(self.id)
@@ -70,9 +72,6 @@ class Player:
 
 	def reset_features(self) -> None:
 		self.score = 0
-
-	score: float = 0
-	chosen_card: int = None
 
 
 def create_source_object(source: str) -> sources.BaseSource:

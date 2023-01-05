@@ -2,7 +2,7 @@ import asyncio
 import random
 import itertools
 import functools
-from typing import TypeAlias, Iterable, Sequence, Callable, Any
+from typing import TypeAlias, Iterable, MutableSequence, Callable, Any
 
 import discord
 from discord.ext import commands
@@ -31,7 +31,7 @@ def generate_buttons(labels: Iterable[str],
                      urls: Iterable[str] = itertools.repeat(None),
                      disabled: Iterable[bool] = itertools.repeat(False),
                      emojis: Iterable[Emoji] = itertools.repeat(None)) \
-		-> Sequence[Sequence[Button]]:
+		-> MutableSequence[MutableSequence[Button]]:
 	"""Return generated list of DiscordComponents.Button."""
 	labels = iter(labels)
 	styles = iter(styles)
