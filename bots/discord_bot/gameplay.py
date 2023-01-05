@@ -348,11 +348,11 @@ def request_players_cards_2_hook() -> None:
 		return False
 
 	for player in Imaginarium.gameplay.players:
-		for line in (English.choose_first_card(),
-		             English.choose_second_card()):
+		for message in (English.choose_first_card(player.cards),
+		                English.choose_second_card(player.cards)):
 			try:
 				card = int(asyncio.run(wait_for_reply(player,
-				                                      message=line + '\n'.join(str(c) for c in player.cards),
+				                                      message=message,
 				                                      message_check=message_check,
 				                                      button_check=button_check,
 				                                      buttons=generate_buttons(

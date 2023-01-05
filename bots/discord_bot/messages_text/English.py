@@ -36,12 +36,14 @@ def choose_card(cards: Iterable[str]) -> str:
 	return f'Choose the card you want to... Choose?..: \n{cards}'
 
 
-def choose_first_card() -> str:
-	return 'Choose the first card you want to... choose?.. \n'
+def choose_first_card(cards: Iterable[str]) -> str:
+	cards = '\n'.join(card for card in cards)
+	return f'Choose the first card you want to... choose?.. \n{cards}'
 
 
-def choose_second_card() -> str:
-	return 'Choose the second card you want to... choose?.. \n'
+def choose_second_card(cards: Iterable[str]) -> str:
+	cards = '\n'.join(card for card in cards)
+	return f'Choose the second card you want to... choose?.. \n{cards}'
 
 
 def your_chosen_card(card: str) -> str:
