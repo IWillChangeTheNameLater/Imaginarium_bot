@@ -12,9 +12,12 @@ from . import rules_setup
 
 
 class Player:
-	def __init__(self, player_id: int, name: str) -> None:
+	def __init__(self, player_id: int, name: str = None) -> None:
 		self.id: int = player_id
-		self.name: str = name
+		if name is None:
+			self.name: str = f'Player {self.id}'
+		else:
+			self.name: str = name
 
 		self.cards: MutableSequence[str] = []
 		self.discarded_cards: MutableSequence[str] = []
