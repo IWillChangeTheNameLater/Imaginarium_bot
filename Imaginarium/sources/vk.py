@@ -14,16 +14,16 @@ vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
 
 
 class Vk(BaseSource):
-	_types = {'photo': 'photo',
-	          'video': 'video'}
+	_types_map = {'photo': 'photo',
+	              'video': 'video'}
 
 	def __init__(self, *args, **kwargs) -> None:
 		super().__init__(*args, **kwargs)
 
 		self._domain: str = self._link[self._link.rfind(r'/') + 1:]
 		# Specify types to vk attachment types
-		self._included_types: Container = {y for i in self._included_types if (y := Vk._types.get(i))}
-		self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types.get(i))}
+		self._included_types: Container = {y for i in self._included_types if (y := Vk._types_map.get(i))}
+		self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types_map.get(i))}
 
 		self._cards_quantity: int | None = None
 

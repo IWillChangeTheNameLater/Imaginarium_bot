@@ -19,8 +19,8 @@ class Player(Imaginarium.gameplay.Player):
 
 		self.user: discord.Member = user
 
-	async def send(self, message: str, *args, **kwargs) -> None:
-		await self.user.send(message, *args, **kwargs)
+	async def send(self, *args, **kwargs) -> None:
+		await self.user.send(*args, **kwargs)
 
 
 Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
@@ -63,7 +63,7 @@ Reaction: TypeAlias = Emoji | discord.Reaction
 async def wait_for_reply(recipient: discord.abc.Messageable | Player,
                          message: str = None,
                          reactions: Iterable[Reaction] = (),
-                         components: Iterable[Iterable[Button]] = None,
+                         buttons: Iterable[Iterable[Button]] = None,
                          message_check: Callable[[discord.Message], bool] = None,
                          reaction_check: Callable[[discord.Reaction], bool] = None,
                          button_check: Callable[[Interaction], bool] = None,
@@ -77,9 +77,9 @@ async def wait_for_reply(recipient: discord.abc.Messageable | Player,
 
 	reply = None
 
-	msg = await recipient.send(message, components=components)
+	message = await recipient.send(message, components=buttons)
 	for r in reactions:
-		await msg.add_reaction(r)
+		await message.add_reaction(r)
 
 	async def wait_for_message():
 		nonlocal reply
@@ -314,9 +314,9 @@ def request_association_hook() -> None:
 
 	Imaginarium.gameplay.round_association = asyncio.run(wait_for_reply(GameCondition._leader,
 	                                                                    message=English.inform_association(),
-	                                                                    components=[Button(style=ButtonStyle.green,
-	                                                                                       label='Yes',
-	                                                                                       emoji='✅')],
+	                                                                    buttons=[Button(style=ButtonStyle.green,
+	                                                                                    label='Yes',
+	                                                                                    emoji='✅')],
 	                                                                    message_check=message_check,
 	                                                                    button_check=button_check))
 
@@ -355,7 +355,7 @@ def request_players_cards_2_hook() -> None:
 				                                      message=line + '\n'.join(str(c) for c in player.cards),
 				                                      message_check=message_check,
 				                                      button_check=button_check,
-				                                      components=generate_buttons(
+				                                      buttons=generate_buttons(
 					                                      range(1,
 					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
@@ -385,7 +385,7 @@ def request_leader_card_hook() -> None:
 		                                      message=English.choose_your_leaders_card(),
 		                                      message_check=message_check,
 		                                      button_check=button_check,
-		                                      components=generate_buttons(
+		                                      buttons=generate_buttons(
 			                                      range(1,
 			                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 		asyncio.run(GameCondition._leader.send(English.your_chosen_card(GameCondition._leader.cards[
@@ -417,7 +417,7 @@ def request_players_cards_hook() -> None:
 				                                      message=English.choose_card(player.cards),
 				                                      message_check=message_check,
 				                                      button_check=button_check,
-				                                      components=generate_buttons(
+				                                      buttons=generate_buttons(
 					                                      range(1,
 					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
@@ -449,7 +449,7 @@ def vote_for_target_card_2_hook() -> None:
 				                           message=English.choose_enemy_card(),
 				                           message_check=message_check,
 				                           button_check=button_check,
-				                           components=generate_buttons(
+				                           buttons=generate_buttons(
 					                           range(1,
 					                                 len(GameCondition._discarded_cards) + 1)))))
 			asyncio.run(player.send(English.your_chosen_card(GameCondition._discarded_cards[card - 1][0])))
@@ -486,7 +486,7 @@ def vote_for_target_card_hook() -> None:
 					                           message=English.choose_enemy_card(),
 					                           message_check=message_check,
 					                           button_check=button_check,
-					                           components=generate_buttons(
+					                           buttons=generate_buttons(
 						                           range(1,
 						                                 len(GameCondition._discarded_cards) + 1)))))
 				asyncio.run(

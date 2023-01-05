@@ -16,8 +16,8 @@ class Player:
 		self.id: int = player_id
 		self.name: str = name
 
-		self.cards: MutableSequence[str] = list()
-		self.discarded_cards: MutableSequence[str] = list()
+		self.cards: MutableSequence[str] = []
+		self.discarded_cards: MutableSequence[str] = []
 
 	def __hash__(self) -> int:
 		return hash(self.id)
@@ -100,15 +100,15 @@ def create_source_object(source: str) -> sources.BaseSource:
 
 def get_random_card() -> str:
 	try:
-		return random.choice(list(used_sources)).get_random_card()
+		return random.choice(used_sources).get_random_card()
 	except exceptions.NoAnyPosts:
 		return get_random_card()
 
 
-used_cards: MutableSequence[str] = list()
-unused_cards: MutableSequence[str] = list()
-used_sources: MutableSequence[sources.BaseSource] = list()
-players: MutableSequence[Any] = list()
+used_cards: MutableSequence[str] = []
+unused_cards: MutableSequence[str] = []
+used_sources: MutableSequence[sources.BaseSource] = []
+players: MutableSequence[Any] = []
 
 players_score: float = 0
 player_step_timeout: float = 0
@@ -176,6 +176,7 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 	at_start_hook()
 
 	GameCondition._circle_number = 0
+	# Circle starts
 	while True:
 		if not GameCondition._game_started:
 			break
@@ -191,13 +192,14 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 		at_circle_start_hook()
 
 		GameCondition._round_number = 0
+		# Round starts
 		for GameCondition._leader in players:
 			if not GameCondition._game_started:
 				break
 
 			GameCondition._round_number += 1
 			GameCondition._votes_for_card = collections.defaultdict(int)
-			GameCondition._discarded_cards = list()
+			GameCondition._discarded_cards = []
 			GameCondition._round_association = None
 			# Refresh cards
 			if players_count == 2:
