@@ -87,6 +87,26 @@ async def wait_for_reply(recipient: discord.abc.Messageable | Player,
                          button_check: Callable[[Interaction], bool] = None,
                          timeout: float = None,
                          bot: discord.Client = None) -> str:
+	"""Wait for a reply from the recipient.
+
+	Send a message to the recipient and wait for a correct reply
+	with a message, reaction or button until time is up.
+
+	:param recipient: Discord member or channel that will receive the message.
+	:param message: Text that will be sent to the recipient.
+	:param reactions: Reactions that will be added to the message.
+	:param buttons: Buttons that will be added to the message.
+	:param message_check: Function that checks if the message is correct.
+	:param reaction_check: Function that checks if the reaction is correct.
+	:param button_check: Function that checks if the button is correct.
+	:param timeout: Time in seconds after which the function will
+	raise asyncio.TimeoutError.
+	:param bot: Discord client that will be used to wait for a reply.
+
+	:return: Text of the message, label of the button or emoji of the reaction.
+
+	:raise asyncio.TimeoutError: If the time is up and no correct reply was received."""
+
 	if bot is None:
 		# noinspection PyUnresolvedReferences
 		bot = wait_for_reply.bot
@@ -404,7 +424,8 @@ def request_players_cards_2_hook() -> None:
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-				asyncio.run(player.send(English.card_selected_automatically(player.cards[card - 1])))
+				asyncio.run(player.send(
+					English.card_selected_automatically(player.cards[card - 1])))
 
 			GameCondition._discarded_cards.append((player.cards[card - 1], player.id))
 
@@ -471,7 +492,8 @@ def request_players_cards_hook() -> None:
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-				asyncio.run(player.send(English.card_selected_automatically(player.cards[card - 1])))
+				asyncio.run(player.send(
+					English.card_selected_automatically(player.cards[card - 1])))
 
 			GameCondition._discarded_cards.append((player.cards.pop(card - 1), player.id))
 
