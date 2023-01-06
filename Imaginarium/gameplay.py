@@ -94,7 +94,8 @@ def create_source_object(source: str) -> sources.BaseSource:
 	if validators.url(source):
 		domain_name = source[source.find('/') + 2:]
 		domain_name = domain_name[:domain_name.find('/')]
-		domain_name = (domain_name := domain_name.split('.'))[math.ceil(len(domain_name) / 2) - 1]
+		domain_name = (domain_name := domain_name.split('.')) \
+			[math.ceil(len(domain_name) / 2) - 1]
 
 		match domain_name:
 			case 'vk':
@@ -168,23 +169,24 @@ def empty_hook() -> None:
 
 
 # This is already some kind of bullshit
-def start_game(at_start_hook: EmptyHook = empty_hook,
-               at_circle_start_hook: EmptyHook = empty_hook,
-               at_round_start_hook: EmptyHook = empty_hook,
-               request_association_hook: EmptyHook = empty_hook,
-               show_association_hook: EmptyHook = empty_hook,
-               show_players_cards_hook: EmptyHook = empty_hook,
-               request_players_cards_2_hook: EmptyHook = empty_hook,
-               request_leader_card_hook: EmptyHook = empty_hook,
-               request_players_cards_hook: EmptyHook = empty_hook,
-               show_discarded_cards_hook: EmptyHook = empty_hook,
-               vote_for_target_card_2_hook: EmptyHook = empty_hook,
-               vote_for_target_card_hook: EmptyHook = empty_hook,
-               at_round_end_hook: EmptyHook = empty_hook,
-               at_circle_end_hook: EmptyHook = empty_hook,
-               at_end_hook: EmptyHook = empty_hook) -> None:
-	"""Call the function inside another module to start the game with following order
-	and the module's own hooks.
+def start_game(
+		at_start_hook: EmptyHook = empty_hook,
+		at_circle_start_hook: EmptyHook = empty_hook,
+		at_round_start_hook: EmptyHook = empty_hook,
+		request_association_hook: EmptyHook = empty_hook,
+		show_association_hook: EmptyHook = empty_hook,
+		show_players_cards_hook: EmptyHook = empty_hook,
+		request_players_cards_2_hook: EmptyHook = empty_hook,
+		request_leader_card_hook: EmptyHook = empty_hook,
+		request_players_cards_hook: EmptyHook = empty_hook,
+		show_discarded_cards_hook: EmptyHook = empty_hook,
+		vote_for_target_card_2_hook: EmptyHook = empty_hook,
+		vote_for_target_card_hook: EmptyHook = empty_hook,
+		at_round_end_hook: EmptyHook = empty_hook,
+		at_circle_end_hook: EmptyHook = empty_hook,
+		at_end_hook: EmptyHook = empty_hook) -> None:
+	"""Call the function inside another module to start the game
+	with following order and the module's own hooks.
 
 	:param at_start_hook: A hook that is called when the game starts.
 	:param at_circle_start_hook: A hook that is called when a circle starts.
@@ -246,7 +248,8 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 			for player in players:
 				# We deal one less card than the player should have,
 				# since at the beginning of each round we add one additional card.
-				player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
+				player.cards = [get_random_card()
+				                for _ in range(rules_setup.cards_one_player_has)]
 
 		at_circle_start_hook()
 
@@ -263,7 +266,8 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 			# Refresh cards
 			if players_count == 2:
 				for player in players:
-					player.cards = [get_random_card() for _ in range(rules_setup.cards_one_player_has)]
+					player.cards = [get_random_card()
+					                for _ in range(rules_setup.cards_one_player_has)]
 
 			at_round_start_hook()
 
@@ -328,7 +332,8 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 						GameCondition._leader.score += 3
 					for player in players:
 						if player != GameCondition._leader:
-							if GameCondition._discarded_cards[player.chosen_card - 1][1] == GameCondition._leader.id:
+							if GameCondition._discarded_cards[player.chosen_card - 1][1] == \
+									GameCondition._leader.id:
 								player.score += 3
 
 			# Add missed cards
@@ -340,7 +345,8 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 
 		# Check for victory
 		if players_count == 2:
-			if max(GameCondition._bot_score, GameCondition._players_score) >= rules_setup.winning_score:
+			if max(GameCondition._bot_score, GameCondition._players_score) >= \
+					rules_setup.winning_score:
 				GameCondition._game_started = False
 		else:
 			if any(player.score >= rules_setup.winning_score for player in players):
