@@ -46,9 +46,15 @@ async def reload_extension(ctx, extension):
 	bot.reload_extension(extension)
 
 
-def get_extensions() -> Generator[str, None, None]:
-	return (filename[:-3] for filename in
-	        os.listdir(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
+def get_extensions(cogs_dir: str = None) -> Generator[str, None, None]:
+	"""Get the names of all the extensions in the directory.
+
+	:param cogs_dir: The directory with cogs.
+	"""
+	if cogs_dir is None:
+		cogs_dir = os.environ['PATH_TO_DISCORD_COGS_DIRECTORY']
+
+	return (filename[:-3] for filename in os.listdir(cogs_dir)
 	        if all((filename[:-3] in configuration.COGS_NAMES,
 	                filename.endswith('.py'))))
 

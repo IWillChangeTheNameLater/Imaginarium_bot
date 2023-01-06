@@ -9,6 +9,7 @@ def get_players() -> MutableSequence[gameplay.Player]:
 
 
 def get_players_score() -> Iterable[Tuple[str, float]]:
+	"""Returns a list of tuples with player name and score."""
 	if len(gameplay.players) == 2:
 		return (('Players score', gameplay.GameCondition._players_score),
 		        ('Bot score', gameplay.GameCondition._bot_score))

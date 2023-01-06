@@ -12,7 +12,14 @@ from . import rules_setup
 
 
 class Player:
+	"""A player in the game."""
+
 	def __init__(self, player_id: int, name: str = None) -> None:
+		"""Create a new player.
+
+		:param player_id: The player's ID.
+		:param name: The player's name which can be generated automatically
+		if it is not specified."""
 		self.id: int = player_id
 		if name is None:
 			self.name: str = f'Player {self.id}'
@@ -20,9 +27,13 @@ class Player:
 			self.name: str = name
 
 		self.cards: MutableSequence[str] = []
+		"""The player's cards."""
 		self.discarded_cards: MutableSequence[str] = []
+		"""The cards the player has discarded during a game."""
 		self.score: float = 0
+		"""The player's score in a game."""
 		self.chosen_card: int | None = None
+		"""The card the player has voted for in a round."""
 
 	def __hash__(self) -> int:
 		return hash(self.id)
@@ -34,7 +45,6 @@ class Player:
 		return self.name
 
 	def __eq__(self, other: Any) -> bool:
-		# return self.id == other
 		try:
 			return self.id == other.id
 		except AttributeError:
@@ -70,15 +80,17 @@ class Player:
 		except AttributeError:
 			return self.score <= other
 
-	def reset_features(self) -> None:
+	def reset_state(self) -> None:
+		"""Reset the player's state to their default values."""
 		self.score = 0
 
 
 def create_source_object(source: str) -> sources.BaseSource:
-	"""Return an object of class "Source".
+	"""Process the link to the source (email, url, etc.)
+	and create a BaseSource object that can be used to get cards.
 
-	Process the link to the source (email, url, etc.) and create a "Source"
-	object that can be used to get some cards."""
+	:param source: A link to the source.
+	:returns: A BaseSource object that can be used to get cards."""
 	if validators.url(source):
 		domain_name = source[source.find('/') + 2:]
 		domain_name = domain_name[:domain_name.find('/')]
@@ -101,6 +113,9 @@ def create_source_object(source: str) -> sources.BaseSource:
 
 
 def get_random_card() -> str:
+	"""Get a random card from a source in the list of sources.
+
+	:returns: A link to a random card."""
 	try:
 		return random.choice(used_sources).get_random_card()
 	except exceptions.NoAnyPosts:
@@ -108,12 +123,16 @@ def get_random_card() -> str:
 
 
 used_cards: MutableSequence[str] = []
+"""The cards that have already been used in the game."""
 unused_cards: MutableSequence[str] = []
+"""The cards that will be used in the game."""
 used_sources: MutableSequence[sources.BaseSource] = []
+"""The sources that are used in a game."""
 players: MutableSequence[Any] = []
+"""The players that are playing."""
 
-players_score: float = 0
 player_step_timeout: float = 0
+"""The time in seconds that the player has to make a choice."""
 
 
 class GameCondition:
@@ -121,13 +140,19 @@ class GameCondition:
 	with information about
 	the state of the game."""
 	_leader: Any = None
+	"""The player who is the leader in the current round."""
 	_circle_number: int = None
 	_round_number: int = None
 	_discarded_cards: MutableSequence[Tuple[str, Player | int | None]] = None
+	"""The tuples of cards and the players who discarded them.
+	The player is None if the card was discarded by the bot."""
 	_votes_for_card: Mapping[Player | int | None, int] = None
+	"""The map of players and the number of votes for their cards."""
 	_game_started_at: float = None
 	_bot_score: float = None
+	"""The bot's score in two-person mode."""
 	_players_score: float = None
+	"""The players' score in two-person mode."""
 	_game_started: bool = None
 	_round_association: str = None
 	_game_took_time: float = None
@@ -138,6 +163,7 @@ EmptyHook: TypeAlias = Callable[[], None]
 
 
 def empty_hook() -> None:
+	"""Do nothing perfectly."""
 	pass
 
 
@@ -157,6 +183,37 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
                at_round_end_hook: EmptyHook = empty_hook,
                at_circle_end_hook: EmptyHook = empty_hook,
                at_end_hook: EmptyHook = empty_hook) -> None:
+	"""Call the function inside another module to start the game with following order
+	and the module's own hooks.
+
+	:param at_start_hook: A hook that is called when the game starts.
+	:param at_circle_start_hook: A hook that is called when a circle starts.
+	:param at_round_start_hook: A hook that is called when a round starts.
+	:param request_association_hook: A hook that is called
+	to require the association of the round from a leader.
+	:param show_association_hook: A hook that is called
+	to show an association
+	to players.
+	:param show_players_cards_hook: A hook that is called
+	to show players their cards.
+	:param request_players_cards_2_hook: A hook that is called
+	to require players' cards they want to discard
+	in two-person mode.
+	:param request_leader_card_hook: A hook that is called
+	to require a leader's card he wants to discard.
+	:param request_players_cards_hook: A hook that is called
+	to require players' cards they want to discard.
+	:param show_discarded_cards_hook: A hook that is called
+	to show discarded cards to players.
+	:param vote_for_target_card_2_hook: A hook that is called
+	to require a vote for a target card
+	in two-person mode.
+	:param vote_for_target_card_hook: A hook that is called
+	to require a vote for a target card.
+	:param at_round_end_hook: A hook that is called when a round ends.
+	:param at_circle_end_hook: A hook that is called when a circle ends.
+	:param at_end_hook: A hook that is called when the game ends.
+	"""
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted(
 			'The game is already started.')
@@ -172,7 +229,7 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 	GameCondition._players_score = 0
 	players_count = len(players)
 	for player in players:
-		player.reset_features()
+		player.reset_state()
 	GameCondition._game_started = True
 
 	at_start_hook()
@@ -297,6 +354,7 @@ def start_game(at_start_hook: EmptyHook = empty_hook,
 
 
 def end_game() -> None:
+	"""End the game as soon as possible."""
 	if GameCondition._game_started:
 		GameCondition._game_started = False
 	else:

@@ -14,12 +14,15 @@ def extract_file_extension(filename: str) -> str:
 async def iterate_sources(ctx: commands.Context,
                           message: str,
                           function: Callable[..., Coroutine]) -> None:
-	"""Extract sources from attachments and process them.
-
-	Extract separated by break sources from the file and the message and
-	process them by the function."""
+	"""Extract separated by break sources from the file and the message and
+	process them by the function.
+	:param ctx: The message context.
+	:param message: The message with sources.
+	:param function: The function to process the sources.
+	"""
 
 	async def iterate_lines(lines: str, function: Callable[[str], Coroutine]) -> None:
+		"""Iterate over the lines and process them by the function."""
 		for source in lines.replace('\r', '').split('\n'):
 			await function(source)
 

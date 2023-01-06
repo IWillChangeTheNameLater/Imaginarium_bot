@@ -14,12 +14,19 @@ from messages_text import *
 
 
 class Player(Imaginarium.gameplay.Player):
+	"""Class that inherits from "Imaginarium.gameplay.Player"
+	and is used to work with players in discord bot."""
+
 	def __init__(self, user: discord.Member) -> None:
+		"""Initialize the player.
+
+		:param user: Discord member that is the player."""
 		super().__init__(user.id, user.mention)
 
 		self.user: discord.Member = user
 
 	async def send(self, *args, **kwargs) -> None:
+		"""Send a message to the member that is the player."""
 		await self.user.send(*args, **kwargs)
 
 
@@ -32,7 +39,18 @@ def generate_buttons(labels: Iterable[str],
                      disabled: Iterable[bool] = itertools.repeat(False),
                      emojis: Iterable[Emoji] = itertools.repeat(None)) \
 		-> MutableSequence[MutableSequence[Button]]:
-	"""Return generated list of DiscordComponents.Button."""
+	"""Generate list of DiscordComponents.Button.
+
+	:param labels: Text that will be displayed on the buttons.
+	:param styles: Color of the buttons.
+	:param urls: URL that will be opened when the buttons are clicked.
+	:param disabled: Buttons that will be disabled.
+	:param emojis: Emojis that will be displayed on the buttons.
+
+	:return: List of lists of DiscordComponents.Button.
+
+	.. note:: The maximum size of the list is 5x5.
+	"""
 	labels = iter(labels)
 	styles = iter(styles)
 	urls = iter(urls)
@@ -113,6 +131,8 @@ ButtonCheck: TypeAlias = Callable[[Interaction], bool]
 
 
 def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
+	"""Decorator that checks if the message author is not a bot."""
+
 	@functools.wraps(func)
 	def inner(message):
 		if not message.author.bot:
@@ -123,6 +143,8 @@ def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
 
 
 def not_bot_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
+	"""Decorator that checks if the button author is not a bot."""
+
 	@functools.wraps(func)
 	def inner(interaction):
 		if not interaction.author.bot:
@@ -133,6 +155,8 @@ def not_bot_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 
 
 def digit_message_check_decorator(func: MessageCheck) -> MessageCheck:
+	"""Decorator that checks if the message content is a digit."""
+
 	@functools.wraps(func)
 	def inner(message):
 		if message.content.isdigit():
@@ -143,6 +167,8 @@ def digit_message_check_decorator(func: MessageCheck) -> MessageCheck:
 
 
 def digit_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
+	"""Decorator that checks if the button label is a digit."""
+
 	@functools.wraps(func)
 	def inner(interaction):
 		if interaction.component.label.isdigit():
@@ -158,6 +184,8 @@ def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
                                               stop: int = None,
                                               step: int = 1) \
 		-> MessageCheck | Callable[[], MessageCheck]:
+	"""Decorator that checks if the message content is a digit
+	that is in range of cards quantity."""
 	if func is None:
 		return lambda func: in_range_of_cards_message_check_decorator(func,
 		                                                              start=start,
@@ -183,6 +211,8 @@ def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
                                              stop: int = None,
                                              step: int = 1) \
 		-> ButtonCheck | Callable[[], ButtonCheck]:
+	"""Decorator that checks if the button label is a digit
+	that is in range of cards quantity."""
 	if func is None:
 		return lambda func: in_range_of_cards_button_check_decorator(func,
 		                                                             start=start,
@@ -205,6 +235,7 @@ def leader_message_check_decorator(func: MessageCheck = None,
                                    *,
                                    leader: Player = None) \
 		-> MessageCheck | Callable[[], MessageCheck]:
+	"""Decorator that checks if the message author is the leader."""
 	if func is None:
 		return lambda func: leader_message_check_decorator(func, leader=leader)
 
@@ -224,6 +255,7 @@ def leader_button_check_decorator(func: ButtonCheck = None,
                                   *,
                                   leader: Player = None) \
 		-> ButtonCheck | Callable[[], ButtonCheck]:
+	"""Decorator that checks if the button author is the leader."""
 	if func is None:
 		return lambda func: leader_button_check_decorator(func, leader=leader)
 
@@ -243,6 +275,7 @@ def not_leader_message_check_decorator(func: MessageCheck = None,
                                        *,
                                        leader: Player = None) \
 		-> MessageCheck | Callable[[], MessageCheck]:
+	"""Decorator that checks if the message author is not the leader."""
 	if func is None:
 		return lambda func: not_leader_message_check_decorator(func, leader=leader)
 
@@ -261,6 +294,7 @@ def not_leader_message_check_decorator(func: MessageCheck = None,
 def not_leader_button_check_decorator(func: ButtonCheck = None,
                                       *,
                                       leader: Player = None):
+	"""Decorator that checks if the button author is not the leader."""
 	if func is None:
 		return lambda func: not_leader_button_check_decorator(func, leader=leader)
 
@@ -277,6 +311,7 @@ def not_leader_button_check_decorator(func: ButtonCheck = None,
 
 
 def selected_card_message_check_decorator(func: MessageCheck) -> MessageCheck:
+	"""Decorator that checks if the message content can be interpreted as a selected card."""
 	func = in_range_of_cards_message_check_decorator(func)
 	func = digit_message_check_decorator(func)
 	func = not_bot_message_check_decorator(func)
@@ -285,6 +320,7 @@ def selected_card_message_check_decorator(func: MessageCheck) -> MessageCheck:
 
 
 def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
+	"""Decorator that checks if the button label can be interpreted as a selected card."""
 	func = in_range_of_cards_button_check_decorator(func)
 	func = digit_button_check_decorator(func)
 	func = not_bot_button_check_decorator(func)
@@ -293,15 +329,19 @@ def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 
 
 def at_start_hook() -> None:
+	"""Send a message to the channel that the game has started."""
 	asyncio.run(Gameplay.start.ctx.channel.send(English.game_has_started()))
 
 
 def at_round_start_hook() -> None:
+	"""Send a message to the channel that the round has started."""
 	asyncio.run(Gameplay.start.ctx.channel.send(English.round_has_started()))
 
 
 # noinspection PyTypeChecker
 def request_association_hook() -> None:
+	"""Do not continue the game until the leader specifies an association."""
+
 	@not_bot_message_check_decorator
 	@leader_message_check_decorator
 	def message_check(message: discord.Message) -> bool:
@@ -322,11 +362,14 @@ def request_association_hook() -> None:
 
 
 def show_association_hook() -> None:
+	"""Send the association to the channel."""
 	if GameCondition._round_association:
 		asyncio.run(Gameplay.start.ctx.channel.send(English.round_association()))
 
 
 def request_players_cards_2_hook() -> None:
+	"""Request each player to choose 2 cards to discard in two-player mode
+	or choose the cards automatically if the player's time is up."""
 	discarded_card = None
 
 	@selected_card_message_check_decorator
@@ -370,6 +413,8 @@ def request_players_cards_2_hook() -> None:
 
 
 def request_leader_card_hook() -> None:
+	"""Request the leader to choose a card to discard."""
+
 	@selected_card_message_check_decorator
 	@leader_message_check_decorator
 	def message_check(message: discord.Message) -> bool:
@@ -400,6 +445,9 @@ def request_leader_card_hook() -> None:
 
 
 def request_players_cards_hook() -> None:
+	"""Request each player except the leader to choose a card to discard
+	or choose the card automatically if the player's time is up."""
+
 	@selected_card_message_check_decorator
 	@not_leader_message_check_decorator
 	def message_check(message: discord.Message) -> bool:
@@ -430,6 +478,8 @@ def request_players_cards_hook() -> None:
 
 # noinspection DuplicatedCode
 def vote_for_target_card_2_hook() -> None:
+	"""Request each player to vote for the bot's card in two-player mode."""
+
 	@selected_card_message_check_decorator
 	def message_check(message: discord.Message) -> bool:
 		if GameCondition._discarded_cards[int(message.content) - 1][1] != message.author.id:
@@ -464,6 +514,8 @@ def vote_for_target_card_2_hook() -> None:
 
 # noinspection DuplicatedCode
 def vote_for_target_card_hook() -> None:
+	"""Request each player to vote for the leader's card."""
+
 	@selected_card_message_check_decorator
 	@not_leader_message_check_decorator
 	def message_check(message: discord.Message) -> bool:
@@ -503,6 +555,7 @@ def vote_for_target_card_hook() -> None:
 
 
 def at_end_hook() -> None:
+	"""Announce the results of the game."""
 	asyncio.run(Gameplay.start.ctx.send(English.game_took_time()))
 
 	if len(Imaginarium.gameplay.players) == 2:
@@ -522,6 +575,7 @@ class Gameplay(commands.Cog):
 
 	@commands.command()
 	async def join(self, ctx):
+		"""Join the game."""
 		try:
 			if ctx.author.id in Imaginarium.gameplay.players:
 				await ctx.send(English.you_already_joined())
@@ -534,6 +588,7 @@ class Gameplay(commands.Cog):
 
 	@commands.command()
 	async def leave(self, ctx):
+		"""Leave the game."""
 		try:
 			if ctx.author.id not in Imaginarium.gameplay.players:
 				await ctx.send(English.you_already_left())
@@ -546,6 +601,7 @@ class Gameplay(commands.Cog):
 
 	@commands.command()
 	async def start(self, ctx):
+		"""Start the game."""
 		Gameplay.start.ctx = ctx
 
 		try:
@@ -568,6 +624,7 @@ class Gameplay(commands.Cog):
 
 	@commands.command()
 	async def end(self, ctx):
+		"""End the game."""
 		try:
 			Imaginarium.gameplay.end_game()
 
