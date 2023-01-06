@@ -1,16 +1,16 @@
 import asyncio
 import random
-import itertools
 import functools
-from typing import TypeAlias, Iterable, MutableSequence, Callable, Any
+from typing import TypeAlias, Iterable, Callable, Any
 
 import discord
 from discord.ext import commands
-from discord_components import Button, ButtonStyle, Interaction
+from discord_components import Button, Interaction
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
 from messages_text import *
+import messages_components as mc
 
 
 class Player(Imaginarium.gameplay.Player):
@@ -30,52 +30,7 @@ class Player(Imaginarium.gameplay.Player):
 		await self.user.send(*args, **kwargs)
 
 
-Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
-
-
-def generate_buttons(labels: Iterable[str],
-                     styles: Iterable[int] = itertools.repeat(2),
-                     urls: Iterable[str] = itertools.repeat(None),
-                     disabled: Iterable[bool] = itertools.repeat(False),
-                     emojis: Iterable[Emoji] = itertools.repeat(None)) \
-		-> MutableSequence[MutableSequence[Button]]:
-	"""Generate list of DiscordComponents.Button.
-
-	:param labels: Text that will be displayed on the buttons.
-	:param styles: Color of the buttons.
-	:param urls: URL that will be opened when the buttons are clicked.
-	:param disabled: Buttons that will be disabled.
-	:param emojis: Emojis that will be displayed on the buttons.
-
-	:return: List of lists of DiscordComponents.Button.
-
-	.. note:: The maximum size of the list is 5x5.
-	"""
-	labels = iter(labels)
-	styles = iter(styles)
-	urls = iter(urls)
-	disabled = iter(disabled)
-	emojis = iter(emojis)
-
-	buttons = []
-	for i in range(5):
-		row = []
-		for j in range(5):
-			try:
-				row.append(Button(label=next(labels),
-				                  style=next(styles),
-				                  url=next(urls),
-				                  disabled=next(disabled),
-				                  emoji=next(emojis)))
-			except StopIteration:
-				if row:
-					buttons.append(row)
-				return buttons
-		buttons.append(row)
-	return buttons
-
-
-Reaction: TypeAlias = Emoji | discord.Reaction
+Reaction: TypeAlias = discord.Reaction | discord.Emoji | discord.PartialEmoji | str
 
 
 async def wait_for_reply(recipient: discord.abc.Messageable | Player,
@@ -372,13 +327,12 @@ def request_association_hook() -> None:
 	def button_check(interaction: Any) -> bool:
 		return True
 
-	Imaginarium.gameplay.round_association = asyncio.run(wait_for_reply(GameCondition._leader,
-	                                                                    message=English.inform_association(),
-	                                                                    buttons=[Button(style=ButtonStyle.green,
-	                                                                                    label='Yes',
-	                                                                                    emoji='✅')],
-	                                                                    message_check=message_check,
-	                                                                    button_check=button_check))
+	Imaginarium.gameplay.round_association = \
+		asyncio.run(wait_for_reply(GameCondition._leader,
+		                           message=English.inform_association(),
+		                           buttons=mc.confirm_association(),
+		                           message_check=message_check,
+		                           button_check=button_check))
 
 
 def show_association_hook() -> None:
@@ -390,6 +344,7 @@ def show_association_hook() -> None:
 def request_players_cards_2_hook() -> None:
 	"""Request each player to choose 2 cards to discard in two-player mode
 	or choose the cards automatically if the player's time is up."""
+	# Remember discarded card to not allow the player to choose it again.
 	discarded_card = None
 
 	@selected_card_message_check_decorator
@@ -418,9 +373,7 @@ def request_players_cards_2_hook() -> None:
 				                                      message=message,
 				                                      message_check=message_check,
 				                                      button_check=button_check,
-				                                      buttons=generate_buttons(
-					                                      range(1,
-					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
+				                                      buttons=mc.players_cards())))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
@@ -451,11 +404,9 @@ def request_leader_card_hook() -> None:
 		                                      message=English.choose_your_leaders_card(),
 		                                      message_check=message_check,
 		                                      button_check=button_check,
-		                                      buttons=generate_buttons(
-			                                      range(1,
-			                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
-		asyncio.run(GameCondition._leader.send(English.your_chosen_card(GameCondition._leader.cards[
-			                                                                card - 1])))
+		                                      buttons=mc.players_cards())))
+		asyncio.run(GameCondition._leader.send(
+			English.your_chosen_card(GameCondition._leader.cards[card - 1])))
 	except asyncio.TimeoutError:
 		card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
 		asyncio.run(GameCondition._leader.send(
@@ -486,9 +437,7 @@ def request_players_cards_hook() -> None:
 				                                      message=English.choose_card(player.cards),
 				                                      message_check=message_check,
 				                                      button_check=button_check,
-				                                      buttons=generate_buttons(
-					                                      range(1,
-					                                            Imaginarium.rules_setup.cards_one_player_has + 1)))))
+				                                      buttons=mc.players_cards())))
 				asyncio.run(player.send(English.your_chosen_card(player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
@@ -521,9 +470,7 @@ def vote_for_target_card_2_hook() -> None:
 				                           message=English.choose_enemy_card(),
 				                           message_check=message_check,
 				                           button_check=button_check,
-				                           buttons=generate_buttons(
-					                           range(1,
-					                                 len(GameCondition._discarded_cards) + 1)))))
+				                           buttons=mc.discarded_cards())))
 			asyncio.run(player.send(English.your_chosen_card(GameCondition._discarded_cards[card - 1][0])))
 		except asyncio.TimeoutError:
 			card = random.randint(1, len(Imaginarium.gameplay.players))
@@ -560,9 +507,7 @@ def vote_for_target_card_hook() -> None:
 					                           message=English.choose_enemy_card(),
 					                           message_check=message_check,
 					                           button_check=button_check,
-					                           buttons=generate_buttons(
-						                           range(1,
-						                                 len(GameCondition._discarded_cards) + 1)))))
+					                           buttons=mc.discarded_cards())))
 				asyncio.run(
 					player.send(English.your_chosen_card(GameCondition._discarded_cards[card - 1][
 						                                     0])))
