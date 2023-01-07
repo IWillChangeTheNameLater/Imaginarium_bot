@@ -371,12 +371,16 @@ def end_game() -> None:
 def join(player: Player) -> None:
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted
-	if player not in players:
+	elif player in players:
+		raise exceptions.PlayerAlreadyJoined
+	else:
 		players.append(player)
 
 
 def leave(player: Player) -> None:
 	if GameCondition._game_started:
 		raise exceptions.GameIsStarted
-	if player in players:
+	elif player not in players:
+		raise exceptions.PlayerAlreadyLeft
+	else:
 		players.remove(player)

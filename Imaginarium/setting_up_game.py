@@ -1,5 +1,7 @@
 import random
 
+from .gameplay import GameCondition
+
 from . import sources
 from . import exceptions
 from . import gameplay
@@ -40,4 +42,7 @@ def remove_used_source(source: sources.BaseSource) -> None:
 
 
 def shuffle_players_order() -> None:
-	random.shuffle(gameplay.players)
+	if GameCondition._game_started:
+		raise exceptions.GameIsStarted
+	else:
+		random.shuffle(gameplay.players)

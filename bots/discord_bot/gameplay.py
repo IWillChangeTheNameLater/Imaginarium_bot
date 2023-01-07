@@ -392,12 +392,13 @@ def request_players_cards_2_hook() -> None:
 					message_check=message_check,
 					button_check=button_check,
 					buttons=mc.players_cards())))
-				asyncio.run(player.send(English.your_chosen_card(
-					player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
 				asyncio.run(player.send(
 					English.card_selected_automatically(player.cards[card - 1])))
+			else:
+				asyncio.run(player.send(English.your_chosen_card(
+					player.cards[card - 1])))
 
 			GameCondition._discarded_cards.append((player.cards[card - 1],
 			                                       player.id))
@@ -426,14 +427,13 @@ def request_leader_card_hook() -> None:
 			message_check=message_check,
 			button_check=button_check,
 			buttons=mc.players_cards())))
-		asyncio.run(GameCondition._leader.send(
-			English.your_chosen_card(
-				GameCondition._leader.cards[card - 1])))
 	except asyncio.TimeoutError:
 		card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
-		asyncio.run(GameCondition._leader.send(
-			English.card_selected_automatically(
-				GameCondition._leader.cards[card - 1])))
+		asyncio.run(GameCondition._leader.send(English.card_selected_automatically(
+			GameCondition._leader.cards[card - 1])))
+	else:
+		asyncio.run(GameCondition._leader.send(English.your_chosen_card(
+			GameCondition._leader.cards[card - 1])))
 
 	GameCondition._discarded_cards.append(
 		(GameCondition._leader.cards.pop(card - 1), GameCondition._leader.id))
@@ -462,13 +462,14 @@ def request_players_cards_hook() -> None:
 					message_check=message_check,
 					button_check=button_check,
 					buttons=mc.players_cards())))
-				asyncio.run(player.send(English.your_chosen_card(
-					player.cards[card - 1])))
 			except asyncio.TimeoutError:
 				card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
 				asyncio.run(player.send(
 					English.card_selected_automatically(
 						player.cards[card - 1])))
+			else:
+				asyncio.run(player.send(English.your_chosen_card(
+					player.cards[card - 1])))
 
 			GameCondition._discarded_cards.append((player.cards.pop(card - 1), player.id))
 
@@ -500,11 +501,12 @@ def vote_for_target_card_2_hook() -> None:
 					message_check=message_check,
 					button_check=button_check,
 					buttons=mc.discarded_cards())))
-			asyncio.run(player.send(English.your_chosen_card(
-				GameCondition._discarded_cards[card - 1][0])))
 		except asyncio.TimeoutError:
 			card = random.randint(1, len(Imaginarium.gameplay.players))
 			asyncio.run(player.send(English.card_selected_automatically(
+				GameCondition._discarded_cards[card - 1][0])))
+		else:
+			asyncio.run(player.send(English.your_chosen_card(
 				GameCondition._discarded_cards[card - 1][0])))
 
 		GameCondition._votes_for_card[
@@ -542,14 +544,14 @@ def vote_for_target_card_hook() -> None:
 						message_check=message_check,
 						button_check=button_check,
 						buttons=mc.discarded_cards())))
-				asyncio.run(
-					player.send(English.your_chosen_card(
-						GameCondition._discarded_cards[card - 1][0])))
 			except asyncio.TimeoutError:
 				card = random.randint(1, len(Imaginarium.gameplay.players))
 				asyncio.run(
 					player.send(English.card_selected_automatically(
 						GameCondition._discarded_cards[card - 1][0])))
+			else:
+				asyncio.run(player.send(English.your_chosen_card(
+					GameCondition._discarded_cards[card - 1][0])))
 
 			GameCondition._votes_for_card[
 				GameCondition._discarded_cards[card - 1][1]] += 1
@@ -579,11 +581,11 @@ class Gameplay(commands.Cog):
 	async def join(self, ctx):
 		"""Join the game."""
 		try:
-			if ctx.author.id in Imaginarium.gameplay.players:
+			try:
+				Imaginarium.gameplay.join(Player(ctx.author))
+			except Imaginarium.exceptions.PlayerAlreadyJoined:
 				await ctx.send(English.you_already_joined())
 			else:
-				Imaginarium.gameplay.join(Player(ctx.author))
-
 				await ctx.send(English.player_joined(ctx.author.mention))
 		except Imaginarium.exceptions.GameIsStarted:
 			await ctx.send(English.you_cannot_join_now())
@@ -592,11 +594,11 @@ class Gameplay(commands.Cog):
 	async def leave(self, ctx):
 		"""Leave the game."""
 		try:
-			if ctx.author.id not in Imaginarium.gameplay.players:
+			try:
+				Imaginarium.gameplay.leave(ctx.author.id)
+			except Imaginarium.exceptions.PlayerAlreadyLeft:
 				await ctx.send(English.you_already_left())
 			else:
-				Imaginarium.gameplay.leave(ctx.author.id)
-
 				await ctx.send(English.player_left(ctx.author.mention))
 		except Imaginarium.exceptions.GameIsStarted:
 			await ctx.send(English.you_cannot_leave_now())
@@ -630,10 +632,10 @@ class Gameplay(commands.Cog):
 		"""End the game."""
 		try:
 			Imaginarium.gameplay.end_game()
-
-			await ctx.send(English.game_will_end())
 		except Imaginarium.exceptions.GameIsStarted:
 			await ctx.send(English.game_already_ended())
+		else:
+			await ctx.send(English.game_will_end())
 
 
 def setup(bot):

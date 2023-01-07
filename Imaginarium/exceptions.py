@@ -26,3 +26,13 @@ class NotEnoughPlayers(TypeError):
 class GameIsEnded(Exception):
 	"""Raised when trying to change something that cannot be changed after the game."""
 	pass
+
+
+class PlayerAlreadyJoined(ValueError):
+	"""Raised when the player is already joined the game."""
+	pass
+
+
+class PlayerAlreadyLeft(ValueError):
+	"""Raised when the player is already left the game."""
+	pass

@@ -91,14 +91,15 @@ class SettingUpGame(commands.Cog):
 
 	@commands.command()
 	async def shuffle_players_order(self, ctx):
-		try:
-			if Imaginarium.getting_game_information.get_players():
+		if Imaginarium.getting_game_information.get_players():
+			try:
 				Imaginarium.setting_up_game.shuffle_players_order()
-				await ctx.send(English.current_following_order())
+			except Imaginarium.exceptions.GameIsStarted:
+				await ctx.send(English.you_cannot_shuffle_players_now())
 			else:
-				await ctx.send(English.no_any_players())
-		except Imaginarium.exceptions.GameIsStarted:
-			await ctx.send(English.you_cannot_shuffle_players_now())
+				await ctx.send(English.current_following_order())
+		else:
+			await ctx.send(English.no_any_players())
 
 
 def setup(bot):
