@@ -42,7 +42,7 @@ class Vk(BaseSource):
 
 	def get_random_card(self) -> str:
 		"""Return a random post from the specified group
-		and extract its random best resolution attachment.
+		and extract its random suitable attachment.
 
 		:return: Link to the attachment.
 
@@ -53,7 +53,7 @@ class Vk(BaseSource):
 		"""
 
 		def extract_content_from_attachment(attachment: Mapping) -> str:
-			"""Extract the link to the best resolution attachment from the attachment.
+			"""Extract the link to the suitable attachment from the attachment.
 
 			:param attachment: Attachment from a post.
 
@@ -67,19 +67,27 @@ class Vk(BaseSource):
 
 					return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
+		# Check if there are any posts in the specified group to look for
 		self.set_cards_quantity()
 		if self._cards_quantity == 0:
 			raise exceptions.NoAnyPosts
 
+		# Get a random post from the specified group
+		post = vk_requests.wall.get(domain=self._domain,
+		                            offset=random.randrange(self._cards_quantity),
+		                            count=1)
+
+		# Extract attachments from the received post
 		try:
-			attachments = vk_requests.wall.get(domain=self._domain,
-			                                   offset=random.randrange(self._cards_quantity),
-			                                   count=1)['items'][0]['attachments']
+			attachments = post['items'][0]['attachments']
+		# If the received post has no attachments, try the next one
 		except KeyError:
 			return self.get_random_card()
 
-		# If attachments are found, then get the random one
+		# Shuffle attachments order to get the first random suitable attachment
 		random.shuffle(attachments)
+
+		# Get the first suitable attachment
 		for a in attachments:
 			if a['type'] not in self._excluded_types:
 				if self._included_types:
@@ -87,4 +95,5 @@ class Vk(BaseSource):
 						continue
 				return extract_content_from_attachment(a)
 
+		# I do not know do I need this, but I will leave it
 		return self.get_random_card()

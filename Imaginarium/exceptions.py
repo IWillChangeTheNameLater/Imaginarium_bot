@@ -3,7 +3,12 @@ class UnexpectedSource(ValueError):
 	pass
 
 
-class NoAnyPosts(LookupError):
+class InvalidSource(ValueError):
+	"""Raised when the source does not work."""
+	pass
+
+
+class NoAnyPosts(InvalidSource, LookupError):
 	"""Raised when there are no posts in the source."""
 	pass
 
