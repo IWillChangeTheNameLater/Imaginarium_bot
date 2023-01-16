@@ -8,7 +8,7 @@ class InvalidSource(ValueError):
 	pass
 
 
-class NoAnyPosts(InvalidSource, LookupError):
+class NoAnyPosts(LookupError, InvalidSource):
 	"""Raised when there are no posts in the source."""
 	pass
 
