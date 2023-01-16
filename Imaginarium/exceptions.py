@@ -1,22 +1,43 @@
 class UnexpectedSource(ValueError):
-    pass
+	"""Raised when the source is not supported."""
+	pass
 
 
-class NoAnyPosts(LookupError):
-    pass
+class InvalidSource(ValueError):
+	"""Raised when the source does not work."""
+	pass
+
+
+class NoAnyPosts(LookupError, InvalidSource):
+	"""Raised when there are no posts in the source."""
+	pass
 
 
 class GameIsStarted(Exception):
-    pass
+	"""Raised when trying to change something that cannot be changed during the game."""
+	pass
 
 
 class NoAnyUsedSources(Exception):
-    pass
+	"""Raised when there are no sources to use."""
+	pass
 
 
 class NotEnoughPlayers(TypeError):
-    pass
+	"""Raised when there are not enough players."""
+	pass
 
 
 class GameIsEnded(Exception):
-    pass
+	"""Raised when trying to change something that cannot be changed after the game."""
+	pass
+
+
+class PlayerAlreadyJoined(ValueError):
+	"""Raised when the player is already joined the game."""
+	pass
+
+
+class PlayerAlreadyLeft(ValueError):
+	"""Raised when the player is already left the game."""
+	pass

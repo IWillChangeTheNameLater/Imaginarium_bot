@@ -2,13 +2,16 @@
 
 Board game "Imaginarium",
 which can be played
-using social networks and other ways.
+using social networks
+and other ways.
 
 ## Setup
 
-Before to run this file on your computer
-you have to create *.env* file
-in the project folder,
+Before to run this file
+on your computer
+you have to create
+*.env*
+file in the project folder,
 set the specified variable values
 and set the virtual environment.
 
@@ -21,13 +24,15 @@ and set the virtual environment.
 
 You can configure some bot parameters,
 like a command prefix
-by editing the **".\bots\discord_bot.py"** file.
+by editing the
+**".\bots\discord_bot.py"**
+file.
 
 ## Running the bots
 
 You can run any of the bots
 by running the
-**"run.py"**
+**"main.py"**
 file in the project folder and
 following its instructions.
 
