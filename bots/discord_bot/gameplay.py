@@ -25,6 +25,32 @@ class Player(Imaginarium.gameplay.Player):
 
 		self.user: discord.Member = user
 
+		self._preferred_language: str | None = None
+		"""The locale specified by the user, 
+		which does not depend on his locale in the settings."""
+
+	@property
+	def name(self) -> str:
+		return self.user.mention
+
+	@property
+	def language(self) -> str | None:
+		if self._preferred_language is None:
+			try:
+				return self.user.locale
+			except AttributeError:
+				return None
+		else:
+			return self._preferred_language
+
+	@language.setter
+	def language(self, value: str | None) -> None:
+		self._preferred_language = value
+
+	@language.deleter
+	def language(self) -> None:
+		self._preferred_language = None
+
 	async def send(self, *args, **kwargs) -> None:
 		"""Send a message to the member that is the player."""
 		await self.user.send(*args, **kwargs)
