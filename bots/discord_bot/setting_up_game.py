@@ -101,6 +101,31 @@ class SettingUpGame(commands.Cog):
 		else:
 			await ctx.send(English.no_any_players())
 
+	@commands.command()
+	async def set_language(self, ctx, language):
+		for player in Imaginarium.gameplay.players:
+			if player == ctx.author:
+				player.language = language
+				break
+
+	@commands.command()
+	async def reset_language(self, ctx):
+		for player in Imaginarium.gameplay.players:
+			if player == ctx.author:
+				player.language = None
+				break
+
+	@commands.command()
+	async def get_language(self, ctx):
+		for player in Imaginarium.gameplay.players:
+			if player == ctx.author:
+				language = player.language
+				if language:
+					await ctx.send(English.your_language_is(language))
+				else:
+					await ctx.send(English.your_language_is_not_set())
+				break
+
 
 def setup(bot):
 	bot.add_cog(SettingUpGame(bot))

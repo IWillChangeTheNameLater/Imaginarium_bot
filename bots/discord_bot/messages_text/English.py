@@ -268,4 +268,15 @@ def current_following_order(following_order: Iterable[Imaginarium.gameplay.Playe
 
 def you_cannot_shuffle_players_now() -> str:
 	return 'You cannot shuffle players now, the game is started.'
+
+
+def your_language_is_not_set() -> str:
+	return 'Your language is not set.'
+
+
+def your_language_is(language: str | None = None) -> str:
+	if language:
+		return f'Your language is: {language}.'
+	else:
+		return your_language_is_not_set()
 ##############################################################################
