@@ -2,7 +2,7 @@ from discord.ext import commands
 from discord_components import DiscordComponents
 
 import configuration
-from messages_text import *
+import messages_text as mt
 
 
 class Listeners(commands.Cog):
@@ -13,12 +13,12 @@ class Listeners(commands.Cog):
 	async def on_ready(self):
 		DiscordComponents(self.bot)
 
-		print(English.bot_ready())
+		print(mt.bot_ready())
 
 	@commands.Cog.listener()
 	async def on_command_error(self, ctx, error):
 		if isinstance(error, commands.CommandNotFound):
-			await ctx.send(English.command_does_not_exist(configuration.PREFIX))
+			await ctx.send(mt.command_does_not_exist(configuration.PREFIX))
 		else:
 			raise error
 
