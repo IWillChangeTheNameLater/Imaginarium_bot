@@ -29,6 +29,7 @@ def import_module(module_name: str,
 
 language_modules_map: dict[str, ModuleType] = {
 	'English': import_module('English'),
+	'Russian': import_module('Russian'),
 }
 
 default_language = 'English'
