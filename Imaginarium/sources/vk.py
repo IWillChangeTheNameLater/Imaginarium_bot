@@ -70,7 +70,7 @@ class Vk(BaseSource):
 		# Check if there are any posts in the specified group to look for
 		self.set_cards_quantity()
 		if self._cards_quantity == 0:
-			raise exceptions.NoAnyPosts
+			raise exceptions.NoAnyPosts()
 
 		# Get a random post from the specified group
 		post = vk_requests.wall.get(domain=self._domain,
