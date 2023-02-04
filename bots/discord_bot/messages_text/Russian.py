@@ -213,6 +213,10 @@ def you_cannot_shuffle_players_now() -> str:
 	return 'Вы не можете перемешать порядок сейчас, игра уже началась.'
 
 
+def language_is_not_supported(language: str) -> str:
+	return f'Язык "{language}" не поддерживается.'
+
+
 def your_language_is_not_set() -> str:
 	return 'Ваш язык не указан.'
 

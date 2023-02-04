@@ -4,7 +4,7 @@ from types import ModuleType
 from functools import wraps, cache
 import inspect
 from typing import Iterable, TypeAlias, Any, Callable
-import translators as ts
+import translators.server as tss
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
@@ -38,7 +38,7 @@ default_language = 'en'
 
 Arguments: TypeAlias = tuple[tuple, dict[str, Any]]
 
-ts.translate_text = cache(ts.translate_text)
+tss.translate_text = cache(tss.translate_text)
 
 
 def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
@@ -100,12 +100,12 @@ def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
 									   preprocessing_func.__name__)(*args, **kwargs)
 				# Try to translate it
 				try:
-					translation = ts.translate_text(query_text=default_text,
-													translator='google',
-													from_language=default_language,
-													to_language=language)
+					translation = tss.translate_text(query_text=default_text,
+													 translator='google',
+													 from_language=default_language,
+													 to_language=language)
 				# Return the default text if the translation failed
-				except ts.server.TranslatorError:
+				except tss.TranslatorError:
 					return default_text
 				else:
 					return translation
@@ -468,6 +468,12 @@ def you_cannot_shuffle_players_now(*, message_language=default_language):
 @translate_decorator
 def your_language_is_not_set(*, message_language=default_language):
 	return (), {}
+
+
+@translate_decorator
+def language_is_not_supported(language, *,
+							  message_language=default_language):
+	return (language,), {}
 
 
 @translate_decorator

@@ -10,12 +10,12 @@ def round_has_started(number: int) -> str:
 
 def inform_association() -> str:
 	return 'Ви повідомили асоціацію про раунд? ' \
-	       'Напишіть її нижче або підтвердіть натиснувши кнопку.'
+		   'Напишіть її нижче або підтвердіть натиснувши кнопку.'
 
 
 def round_association(association: str) -> str:
 	return f'Асоціація раунду: ' \
-	       f'{association}.'
+		   f'{association}.'
 
 
 def choose_card(cards: str) -> str:
@@ -36,7 +36,7 @@ def your_chosen_card(card: str) -> str:
 
 def card_selected_automatically(card: str) -> str:
 	return f'Ви дуже довго думали. ' \
-	       f'Карта {card} була автоматично обрана для вас.'
+		   f'Карта {card} була автоматично обрана для вас.'
 
 
 def choose_your_leaders_card(cards: str) -> str:
@@ -57,7 +57,7 @@ def loss_score(score: float) -> str:
 
 def win_score(score: float) -> str:
 	return f'Переможець, Переможець, Курка, Вечеря! ' \
-	       f'\nВи виграли з рахунком: {score}!'
+		   f'\nВи виграли з рахунком: {score}!'
 
 
 def draw_score() -> str:
@@ -217,6 +217,10 @@ def you_cannot_shuffle_players_now() -> str:
 
 def your_language_is_not_set() -> str:
 	return 'Ваша мова не встановлена.'
+
+
+def language_is_not_supported(language: str) -> str:
+	return f'Мова "{language}" не підтримується.'
 
 
 def your_language_is(language: str) -> str:

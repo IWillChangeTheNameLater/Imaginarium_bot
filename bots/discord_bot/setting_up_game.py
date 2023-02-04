@@ -12,8 +12,8 @@ def extract_file_extension(filename: str) -> str:
 
 
 async def iterate_sources(ctx: commands.Context,
-                          message: str,
-                          function: Callable[..., Coroutine]) -> None:
+						  message: str,
+						  function: Callable[..., Coroutine]) -> None:
 	"""Extract separated by break sources from the file and the message and
 	process them by the function.
 	:param ctx: The message context.
@@ -105,25 +105,27 @@ class SettingUpGame(commands.Cog):
 	async def set_language(self, ctx, language):
 		for player in Imaginarium.gameplay.players:
 			if player == ctx.author:
-				player.language = language
-				break
+				# If the language is a code
+				if 2 <= len(language) <= 3:
+					if language in mt.languages_maps.languages_codes:
+						player.language = language
+						language = mt.languages_maps.code_language_map[language]
+						await ctx.author.send(mt.your_language_is(language))
+						break
+				else:
+					language = language.lower().capitalize()
+					if language in mt.languages_maps.languages_names:
+						player.language = mt.languages_maps.language_code_map[language]
+						await ctx.author.send(mt.your_language_is(language))
+						break
+
+				await ctx.author.send(mt.language_is_not_supported(language))
 
 	@commands.command()
 	async def reset_language(self, ctx):
 		for player in Imaginarium.gameplay.players:
 			if player == ctx.author:
 				player.language = None
-				break
-
-	@commands.command()
-	async def get_language(self, ctx):
-		for player in Imaginarium.gameplay.players:
-			if player == ctx.author:
-				language = player.language
-				if language:
-					await ctx.send(mt.your_language_is(language))
-				else:
-					await ctx.send(mt.your_language_is_not_set())
 				break
 
 
