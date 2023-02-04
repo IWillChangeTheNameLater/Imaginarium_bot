@@ -10,7 +10,7 @@ def round_has_started(number: int) -> str:
 
 def inform_association() -> str:
 	return 'Вы сообщили ассоциацию раунда? ' \
-	       'Напишите ее ниже или подтвердите это, нажав на кнопку ниже.'
+		   'Напишите ее ниже или подтвердите это, нажав на кнопку ниже.'
 
 
 def round_association(association: str) -> str:
@@ -99,7 +99,7 @@ def fault_because_game_started() -> str:
 
 def game_cannot_start_game_now() -> str:
 	return 'Вы еще не можете начать игру. ' \
-	       'Укажите все требуемые параметры и попробуйте начать игру снова.'
+		   'Укажите все требуемые параметры и попробуйте начать игру снова.'
 
 
 def game_will_end() -> str:

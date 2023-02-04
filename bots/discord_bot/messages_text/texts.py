@@ -1,16 +1,17 @@
 import os
 import importlib.util
-from functools import wraps
+from types import ModuleType
+from functools import wraps, cache
 import inspect
 from typing import Iterable, TypeAlias, Any, Callable
-from types import ModuleType
+import translators as ts
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
 
 
 def import_module(module_name: str,
-                  module_directory: str = os.path.dirname(__file__)) -> ModuleType:
+				  module_directory: str = os.path.dirname(__file__)) -> ModuleType:
 	"""Import module from the specified directory and execute it to make it usable.
 
 	:param module_name: Name of the module to import.
@@ -27,15 +28,17 @@ def import_module(module_name: str,
 	return module
 
 
+# The languages are specified in "ISO 639-1" encoding
 language_modules_map: dict[str, ModuleType] = {
-	'English': import_module('English'),
-	'Russian': import_module('Russian'),
-	'Ukrainian': import_module('Ukrainian'),
+	'en': import_module('English'),
+	'ru': import_module('Russian'),
+	'uk': import_module('Ukrainian'),
 }
-
-default_language = 'English'
+default_language = 'en'
 
 Arguments: TypeAlias = tuple[tuple, dict[str, Any]]
+
+ts.translate_text = cache(ts.translate_text)
 
 
 def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
@@ -68,17 +71,15 @@ def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
 	@wraps(preprocessing_func)
 	def inner(*args, **kwargs) -> str:
 		language = None
-		# Try to extract the language from the passed or default keyword arguments.
-		try:
+		try:  # to extract the language from the passed or default keyword arguments.
 			language = kwargs.pop(language_arg_name)
 		except KeyError:
-			try:
-				for name, param in inspect.signature(preprocessing_func).parameters.items():
-					if param.default != inspect.Parameter.empty:
-						if name == language_arg_name:
-							language = param.default
-							break
-			except KeyError:
+			for name, param in inspect.signature(preprocessing_func).parameters.items():
+				if param.default != inspect.Parameter.empty:
+					if name == language_arg_name:
+						language = param.default
+						break
+			else:
 				raise ValueError(
 					f'The decorated function must have a '
 					f'passed "{language_arg_name}" keyword argument or '
@@ -88,25 +89,34 @@ def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
 		# Specify arguments without the language keyword argument.
 		args, kwargs = preprocessing_func(*args, **kwargs)
 
-		# Call the message function with the specified arguments
+		# Try to find the equivalent function
 		try:
 			return getattr(language_modules_map[language],
-			               preprocessing_func.__name__)(*args, **kwargs)
-		except AttributeError:
-			if language == default_language:
+						   preprocessing_func.__name__)(*args, **kwargs)
+		except (KeyError, AttributeError):
+			# If it makes sense to try to find the default text, then
+			if language != default_language:
+				default_text = getattr(language_modules_map[default_language],
+									   preprocessing_func.__name__)(*args, **kwargs)
+				# Try to translate it
+				try:
+					translation = ts.translate_text(query_text=default_text,
+													translator='google',
+													from_language=default_language,
+													to_language=language)
+				# Return the default text if the translation failed
+				except ts.server.TranslatorError:
+					return default_text
+				else:
+					return translation
+			else:
 				raise AttributeError(
 					'The function with the same name is not found either '
 					'in the language module or in the default language module.'
-				) from None
-			else:
-				return getattr(language_modules_map[default_language],
-				               preprocessing_func.__name__)(*args, **kwargs)
+				)
 
 	return inner
 
-
-##############################################################################
-##############################################################################
 
 # Gameplay
 ##############################################################################
@@ -117,7 +127,7 @@ def game_has_started(*, message_language=default_language):
 
 @translate_decorator
 def round_has_started(number: int = None, *,
-                      message_language=default_language):
+					  message_language=default_language):
 	if number is None:
 		number = GameCondition._round_number
 
@@ -131,7 +141,7 @@ def inform_association(*, message_language=default_language):
 
 @translate_decorator
 def round_association(association: str = None, *,
-                      message_language=default_language):
+					  message_language=default_language):
 	if association is None:
 		association = GameCondition._round_association
 
@@ -140,7 +150,7 @@ def round_association(association: str = None, *,
 
 @translate_decorator
 def choose_card(cards: Iterable[str], *,
-                message_language=default_language):
+				message_language=default_language):
 	cards = '\n'.join(card for card in cards)
 
 	return (cards,), {}
@@ -148,33 +158,33 @@ def choose_card(cards: Iterable[str], *,
 
 @translate_decorator
 def choose_first_card(cards: Iterable[str], *,
-                      message_language=default_language):
+					  message_language=default_language):
 	cards = '\n'.join(card for card in cards)
 	return (cards,), {}
 
 
 @translate_decorator
 def choose_second_card(cards: Iterable[str], *,
-                       message_language=default_language):
+					   message_language=default_language):
 	cards = '\n'.join(card for card in cards)
 	return (cards,), {}
 
 
 @translate_decorator
 def your_chosen_card(card: str, *,
-                     message_language=default_language):
+					 message_language=default_language):
 	return (card,), {}
 
 
 @translate_decorator
 def card_selected_automatically(card: str, *,
-                                message_language=default_language):
+								message_language=default_language):
 	return (card,), {}
 
 
 @translate_decorator
 def choose_your_leaders_card(cards: Iterable[str] = None, *,
-                             message_language=default_language):
+							 message_language=default_language):
 	if cards is None:
 		if GameCondition._leader is not None:
 			cards = GameCondition._leader.cards
@@ -186,7 +196,7 @@ def choose_your_leaders_card(cards: Iterable[str] = None, *,
 
 @translate_decorator
 def choose_enemy_card(cards: Iterable[str] = None, *,
-                      message_language=default_language):
+					  message_language=default_language):
 	if cards is None:
 		cards = (card[0] for card in GameCondition._discarded_cards)
 
@@ -197,7 +207,7 @@ def choose_enemy_card(cards: Iterable[str] = None, *,
 
 @translate_decorator
 def game_took_time(took: float = None, *,
-                   message_language=default_language):
+				   message_language=default_language):
 	if took is None:
 		if GameCondition._game_took_time is None:
 			took = 0
@@ -209,7 +219,7 @@ def game_took_time(took: float = None, *,
 
 @translate_decorator
 def loss_score(score: float = None, *,
-               message_language=default_language):
+			   message_language=default_language):
 	if score is None:
 		score = GameCondition._players_score
 
@@ -218,7 +228,7 @@ def loss_score(score: float = None, *,
 
 @translate_decorator
 def win_score(score: float = None, *,
-              message_language=default_language):
+			  message_language=default_language):
 	if score is None:
 		score = GameCondition._players_score
 
@@ -232,10 +242,10 @@ def draw_score(*, message_language=default_language):
 
 @translate_decorator
 def winning_rating(rating: str = None, *,
-                   message_language=default_language):
+				   message_language=default_language):
 	if rating is None:
 		rating = '\n'.join(f'{place}. {player}' for place, player in
-		                   enumerate(sorted(Imaginarium.gameplay.players)[:3], start=1))
+						   enumerate(sorted(Imaginarium.gameplay.players)[:3], start=1))
 
 	return (rating,), {}
 
@@ -247,7 +257,7 @@ def you_already_joined(*, message_language=default_language):
 
 @translate_decorator
 def player_joined(player: Imaginarium.gameplay.Player | str, *,
-                  message_language=default_language):
+				  message_language=default_language):
 	return (player,), {}
 
 
@@ -263,7 +273,7 @@ def you_already_left(*, message_language=default_language):
 
 @translate_decorator
 def player_left(player: Imaginarium.gameplay.Player | str, *,
-                message_language=default_language):
+				message_language=default_language):
 	return (player,), {}
 
 
@@ -292,6 +302,7 @@ def game_will_end(*, message_language=default_language):
 	return (), {}
 
 
+# noinspection DuplicatedCode
 @translate_decorator
 def game_already_ended(*, message_language=default_language):
 	return (), {}
@@ -325,7 +336,7 @@ def help_guidance(*, message_language=default_language):
 # noinspection DuplicatedCode
 @translate_decorator
 def players_list(players: Iterable[Imaginarium.gameplay.Player] = None, *,
-                 message_language=default_language):
+				 message_language=default_language):
 	if players is None:
 		players = Imaginarium.getting_game_information.get_players()
 
@@ -341,20 +352,20 @@ def no_any_players(*, message_language=default_language):
 
 @translate_decorator
 def players_score(score: str = None, *,
-                  message_language=default_language):
+				  message_language=default_language):
 	if score is None:
 		score = '\n'.join(f'{ps[0]}: {ps[1]}' for ps in
-		                  Imaginarium.getting_game_information.get_players_score())
+						  Imaginarium.getting_game_information.get_players_score())
 
 	return (score,), {}
 
 
 @translate_decorator
 def used_cards_list(used_cards: Iterable[str] = None, *,
-                    message_language=default_language):
+					message_language=default_language):
 	if used_cards is None:
 		used_cards = '\n'.join(str(used_card) for used_card in
-		                       Imaginarium.getting_game_information.get_used_cards())
+							   Imaginarium.getting_game_information.get_used_cards())
 
 	return (used_cards,), {}
 
@@ -366,10 +377,10 @@ def no_any_used_cards(*, message_language=default_language):
 
 @translate_decorator
 def used_sources_list(sources: Iterable = None, *,
-                      message_language=default_language):
+					  message_language=default_language):
 	if sources is None:
 		sources = '\n'.join(str(used_source) for used_source in
-		                    Imaginarium.getting_game_information.get_used_sources())
+							Imaginarium.getting_game_information.get_used_sources())
 
 	return (sources,), {}
 
@@ -392,7 +403,7 @@ def bot_ready(*, message_language=default_language):
 
 @translate_decorator
 def command_does_not_exist(command_prefix: str, *,
-                           message_language=default_language):
+						   message_language=default_language):
 	return (command_prefix,), {}
 
 
@@ -403,7 +414,7 @@ def command_does_not_exist(command_prefix: str, *,
 ##############################################################################
 @translate_decorator
 def filetype_is_not_supported(filetype: str, *,
-                              message_language=default_language):
+							  message_language=default_language):
 	return (filetype,), {}
 
 
@@ -440,7 +451,7 @@ def no_source(source: str, *, message_language=default_language):
 # noinspection DuplicatedCode
 @translate_decorator
 def current_following_order(following_order: Iterable[Imaginarium.gameplay.Player] = None, *,
-                            message_language=default_language):
+							message_language=default_language):
 	if following_order is None:
 		following_order = Imaginarium.getting_game_information.get_players()
 
@@ -461,7 +472,7 @@ def your_language_is_not_set(*, message_language=default_language):
 
 @translate_decorator
 def your_language_is(user_language: str | None = None, *,
-                     message_language=default_language):
+					 message_language=default_language):
 	if user_language is None:
 		user_language = default_language
 
