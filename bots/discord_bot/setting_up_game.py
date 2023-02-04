@@ -103,30 +103,23 @@ class SettingUpGame(commands.Cog):
 
 	@commands.command()
 	async def set_language(self, ctx, language):
-		for player in Imaginarium.gameplay.players:
-			if player == ctx.author:
-				# If the language is a code
-				if 2 <= len(language) <= 3:
-					if language in mt.languages_maps.languages_codes:
-						player.language = language
-						language = mt.languages_maps.code_language_map[language]
-						await ctx.author.send(mt.your_language_is(language))
-						break
-				else:
-					language = language.lower().capitalize()
-					if language in mt.languages_maps.languages_names:
-						player.language = mt.languages_maps.language_code_map[language]
-						await ctx.author.send(mt.your_language_is(language))
-						break
-
+		# If the language is a code
+		if 2 <= len(language) <= 3:
+			if language in mt.languages_maps.languages_codes:
+				mt.users_languages[ctx.author] = language
+				language = mt.languages_maps.code_language_map[language]
+				await ctx.author.send(mt.your_language_is(language))
+		else:
+			language = language.capitalize()
+			if language in mt.languages_maps.languages_names:
+				mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
+				await ctx.author.send(mt.your_language_is(language))
+			else:
 				await ctx.author.send(mt.language_is_not_supported(language))
 
 	@commands.command()
 	async def reset_language(self, ctx):
-		for player in Imaginarium.gameplay.players:
-			if player == ctx.author:
-				player.language = None
-				break
+		mt.users_languages[ctx.author] = None
 
 
 def setup(bot):

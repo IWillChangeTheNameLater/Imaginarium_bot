@@ -44,15 +44,12 @@ class GettingGameInformation(commands.Cog):
 
 	@commands.command()
 	async def get_language(self, ctx):
-		for player in Imaginarium.gameplay.players:
-			if player == ctx.author:
-				language = player.language
-				if language:
-					await ctx.author.send(mt.your_language_is(
-						mt.languages_maps.code_language_map[language]))
-				else:
-					await ctx.author.send(mt.your_language_is_not_set())
-				break
+		language = mt.users_languages[ctx.author]
+		if language:
+			await ctx.author.send(mt.your_language_is(
+				mt.languages_maps.code_language_map[language]))
+		else:
+			await ctx.author.send(mt.your_language_is_not_set())
 
 
 def setup(bot):
