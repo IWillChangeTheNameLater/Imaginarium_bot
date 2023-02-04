@@ -172,6 +172,10 @@ def command_does_not_exist(command_prefix: str) -> str:
 	return f'Данная команда не существует. Напишите "{command_prefix}help", чтобы получить помощь.'
 
 
+def missing_required_argument(argument: str) -> str:
+	return f'Недостает аргумента: {argument}.'
+
+
 ##############################################################################
 
 

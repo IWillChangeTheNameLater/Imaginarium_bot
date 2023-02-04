@@ -19,6 +19,8 @@ class Listeners(commands.Cog):
 	async def on_command_error(self, ctx, error):
 		if isinstance(error, commands.CommandNotFound):
 			await ctx.send(mt.command_does_not_exist(configuration.PREFIX))
+		elif isinstance(error, commands.MissingRequiredArgument):
+			await ctx.send(mt.missing_required_argument(error.args[0].split()[0]))
 		else:
 			raise error
 

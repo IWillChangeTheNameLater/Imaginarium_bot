@@ -13,6 +13,7 @@ def inform_association() -> str:
 		   'Write it below  or confirm it by pressing the button.'
 
 
+# noinspection DuplicatedCode
 def round_association(association: str) -> str:
 	return f'The association of the round is: ' \
 		   f'{association}.'
@@ -172,6 +173,10 @@ def bot_ready() -> str:
 
 def command_does_not_exist(command_prefix: str) -> str:
 	return f'The command does not exist. Write "{command_prefix}help" to get available commands.'
+
+
+def missing_required_argument(argument: str) -> str:
+	return f'{argument} is a required argument that is missing.'
 
 
 ##############################################################################

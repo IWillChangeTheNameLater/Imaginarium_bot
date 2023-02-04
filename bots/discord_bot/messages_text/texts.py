@@ -407,6 +407,12 @@ def command_does_not_exist(command_prefix: str, *,
 	return (command_prefix,), {}
 
 
+@translate_decorator
+def missing_required_argument(argument: str, *,
+							  message_language=default_language):
+	return (argument,), {}
+
+
 ##############################################################################
 
 
