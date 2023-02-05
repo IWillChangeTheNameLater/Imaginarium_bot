@@ -227,4 +227,8 @@ def your_language_is_not_set() -> str:
 
 def your_language_is(language: str) -> str:
 	return f'Ваш язык: {language}.'
+
+
+def your_language_reset() -> str:
+	return 'Ваш язык сброшен.'
 ##############################################################################

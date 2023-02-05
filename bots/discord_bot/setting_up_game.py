@@ -13,8 +13,8 @@ def extract_file_extension(filename: str) -> str:
 
 
 async def iterate_sources(ctx: commands.Context,
-                          message: str,
-                          function: Callable[..., Coroutine]) -> None:
+						  message: str,
+						  function: Callable[..., Coroutine]) -> None:
 	"""Extract separated by break sources from the file and the message and
 	process them by the function.
 	:param ctx: The message context.
@@ -110,20 +110,23 @@ class SettingUpGame(commands.Cog):
 				mt.users_languages[ctx.author] = language
 				language = mt.languages_maps.code_language_map[language]
 				await ctx.author.send(mt.your_language_is(language,
-				                                          message_language=ul[ctx.author]))
+														  message_language=ul[ctx.author]))
 		else:
 			language = language.capitalize()
 			if language in mt.languages_maps.languages_names:
 				mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
 				await ctx.author.send(mt.your_language_is(language,
-				                                          message_language=ul[ctx.author]))
+														  message_language=ul[ctx.author]))
 			else:
 				await ctx.author.send(mt.language_is_not_supported(language,
-				                                                   message_language=ul[ctx.author]))
+																   message_language=ul[ctx.author]))
 
 	@commands.command()
 	async def reset_language(self, ctx):
 		mt.users_languages[ctx.author] = None
+
+		await ctx.author.send(mt.your_language_reset(
+			message_language=ul[ctx.author]))
 
 
 def setup(bot):

@@ -230,4 +230,8 @@ def language_is_not_supported(language: str) -> str:
 
 def your_language_is(language: str) -> str:
 	return f'Your language is: {language}.'
+
+
+def your_language_reset() -> str:
+	return 'Your language is reset.'
 ##############################################################################

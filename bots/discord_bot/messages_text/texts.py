@@ -489,4 +489,9 @@ def your_language_is(user_language: str | None = None, *,
 		user_language = default_language
 
 	return (user_language,), {}
+
+
+@translate_decorator
+def your_language_reset(*, message_language=default_language):
+	return (), {}
 ##############################################################################

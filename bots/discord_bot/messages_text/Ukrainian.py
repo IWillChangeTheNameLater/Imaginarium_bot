@@ -230,4 +230,7 @@ def language_is_not_supported(language: str) -> str:
 def your_language_is(language: str) -> str:
 	return f'Ваша мова: {language}.'
 
+
+def your_language_reset() -> str:
+	return 'Ваша мова встановлена за замовчуванням.'
 ##############################################################################
