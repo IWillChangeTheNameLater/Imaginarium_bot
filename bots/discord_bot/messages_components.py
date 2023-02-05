@@ -12,7 +12,7 @@ Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
 ButtonsComponent: TypeAlias = MutableSequence[MutableSequence[Button]] | MutableSequence[Button]
 
 
-def generate_buttons(labels: Iterable[str],
+def generate_buttons(labels: Iterable[str | int],
                      styles: Iterable[int] = itertools.repeat(2),
                      urls: Iterable[str] = itertools.repeat(None),
                      disabled: Iterable[bool] = itertools.repeat(False),
