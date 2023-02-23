@@ -494,4 +494,14 @@ def your_language_is(user_language: str | None = None, *,
 @translate_decorator
 def your_language_reset(*, message_language=None):
 	return (), {}
+
+
+##############################################################################
+
+
+# Messages components
+##############################################################################
+@translate_decorator
+def confirm(*, message_language=None):
+	return (), {}
 ##############################################################################

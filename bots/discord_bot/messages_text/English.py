@@ -10,13 +10,13 @@ def round_has_started(number: int) -> str:
 
 def inform_association() -> str:
 	return 'Did you tell the association of the round? ' \
-		   'Write it below  or confirm it by pressing the button.'
+	       'Write it below  or confirm it by pressing the button.'
 
 
 # noinspection DuplicatedCode
 def round_association(association: str) -> str:
 	return f'The association of the round is: ' \
-		   f'{association}.'
+	       f'{association}.'
 
 
 def choose_card(cards: str) -> str:
@@ -37,7 +37,7 @@ def your_chosen_card(card: str) -> str:
 
 def card_selected_automatically(card: str) -> str:
 	return f'You was thinking too much. ' \
-		   f'The card {card} was automatically selected for you.'
+	       f'The card {card} was automatically selected for you.'
 
 
 def choose_your_leaders_card(cards: str) -> str:
@@ -58,7 +58,7 @@ def loss_score(score: float) -> str:
 
 def win_score(score: float) -> str:
 	return f'Winner, Winner, Chicken, Dinner! ' \
-		   f'\nYou win with score: {score}!'
+	       f'\nYou win with score: {score}!'
 
 
 def draw_score() -> str:
@@ -234,4 +234,13 @@ def your_language_is(language: str) -> str:
 
 def your_language_reset() -> str:
 	return 'Your language is reset.'
+
+
+##############################################################################
+
+
+# Messages components
+##############################################################################
+def confirm() -> str:
+	return 'Yes!'
 ##############################################################################
