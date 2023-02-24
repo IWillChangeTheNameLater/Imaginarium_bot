@@ -13,6 +13,11 @@ def inform_association() -> str:
 	       'Напишіть її нижче або підтвердіть натиснувши кнопку.'
 
 
+def association_selected_automatically(association: str) -> str:
+	return f'Ви дуже довго думали. ' \
+	       f'Асоціація {association} була автоматично обрана для вас.'
+
+
 def round_association(association: str) -> str:
 	return f'Асоціація раунду: ' \
 	       f'{association}.'

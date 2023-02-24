@@ -140,6 +140,12 @@ def inform_association(*, message_language=None):
 
 
 @translate_decorator
+def association_selected_automatically(association, *,
+                                       message_language=None):
+	return (association,), {}
+
+
+@translate_decorator
 def round_association(association: str = None, *,
                       message_language=None):
 	if association is None:

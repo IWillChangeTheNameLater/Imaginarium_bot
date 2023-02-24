@@ -381,13 +381,22 @@ def request_association_hook() -> None:
 	def button_check(interaction: Any) -> bool:
 		return True
 
-	Imaginarium.gameplay.round_association = \
-		asyncio.run(wait_for_reply(
-			recipient=GameCondition._leader,
-			message=mt.inform_association(),
-			buttons=mc.confirm_association(),
-			message_check=message_check,
-			button_check=button_check))
+	try:
+		association = \
+			asyncio.run(wait_for_reply(
+				recipient=GameCondition._leader,
+				message=mt.inform_association(message_language=ul[GameCondition._leader]),
+				buttons=mc.confirm_association(message_language=ul[GameCondition._leader]),
+				message_check=message_check,
+				button_check=button_check))
+	except asyncio.TimeoutError:
+		association = '...'
+		asyncio.run(GameCondition._leader.send(
+			mt.association_selected_automatically(
+				association=association,
+				message_language=ul[GameCondition._leader])
+		))
+	Imaginarium.gameplay.round_association = association
 
 
 def show_association_hook() -> None:
