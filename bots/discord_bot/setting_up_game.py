@@ -13,8 +13,8 @@ def extract_file_extension(filename: str) -> str:
 
 
 async def iterate_sources(ctx: commands.Context,
-						  message: str,
-						  function: Callable[..., Coroutine]) -> None:
+                          message: str,
+                          function: Callable[..., Coroutine]) -> None:
 	"""Extract separated by break sources from the file and the message and
 	process them by the function.
 	:param ctx: The message context.
@@ -106,20 +106,39 @@ class SettingUpGame(commands.Cog):
 	async def set_language(self, ctx, language):
 		# If the language is a code
 		if 2 <= len(language) <= 3:
-			if language in mt.languages_maps.languages_codes:
-				mt.users_languages[ctx.author] = language
-				language = mt.languages_maps.code_language_map[language]
-				await ctx.author.send(mt.your_language_is(language,
-														  message_language=ul[ctx.author]))
+			language_code = language.lower()
 		else:
 			language = language.capitalize()
 			if language in mt.languages_maps.languages_names:
-				mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
-				await ctx.author.send(mt.your_language_is(language,
-														  message_language=ul[ctx.author]))
-			else:
-				await ctx.author.send(mt.language_is_not_supported(language,
-																   message_language=ul[ctx.author]))
+				language_code = mt.languages_maps.language_code_map[language]
+
+		if language_code in mt.language_modules_map:
+			mt.users_languages[ctx.author] = language_code
+
+			await ctx.author.send(mt.your_language_is(
+				mt.languages_maps.code_language_map[language_code],
+				message_language=ul[ctx.author]))
+		else:
+			await ctx.author.send(mt.language_is_not_supported(
+				language,
+				message_language=ul[ctx.author]))
+
+	# If the language is a code
+	# if 2 <= len(language) <= 3:
+	# 	if language in mt.language_modules_map:
+	# 		mt.users_languages[ctx.author] = language
+	# 		language = mt.languages_maps.code_language_map[language]
+	# 		await ctx.author.send(mt.your_language_is(language,
+	# 		                                          message_language=ul[ctx.author]))
+	# else:
+	# 	language = language.capitalize()
+	# 	if language in mt.languages_maps.languages_names:
+	# 		mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
+	# 		await ctx.author.send(mt.your_language_is(language,
+	# 		                                          message_language=ul[ctx.author]))
+	# 	else:
+	# 		await ctx.author.send(mt.language_is_not_supported(language,
+	# 		                                                   message_language=ul[ctx.author]))
 
 	@commands.command()
 	async def reset_language(self, ctx):

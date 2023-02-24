@@ -1,10 +1,9 @@
 import os
 import importlib.util
 from types import ModuleType
-from functools import wraps, cache
+from functools import wraps
 import inspect
 from typing import Iterable, TypeAlias, Any, Callable
-import translators.server as tss
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
@@ -37,8 +36,6 @@ language_modules_map: dict[str, ModuleType] = {
 default_language = 'en'
 
 Arguments: TypeAlias = tuple[tuple, dict[str, Any]]
-
-tss.translate_text = cache(tss.translate_text)
 
 
 def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
@@ -94,21 +91,10 @@ def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
 			return getattr(language_modules_map[language],
 			               preprocessing_func.__name__)(*args, **kwargs)
 		except (KeyError, AttributeError):
-			# If it makes sense to try to find the default text, then
+			# Try to find the default text if it has sense
 			if language != default_language:
-				default_text = getattr(language_modules_map[default_language],
-				                       preprocessing_func.__name__)(*args, **kwargs)
-				# Try to translate it
-				try:
-					translation = tss.translate_text(query_text=default_text,
-					                                 translator='google',
-					                                 from_language=default_language,
-					                                 to_language=language)
-				# Return the default text if the translation failed
-				except tss.TranslatorError:
-					return default_text
-				else:
-					return translation
+				return getattr(language_modules_map[default_language],
+				               preprocessing_func.__name__)(*args, **kwargs)
 			else:
 				raise AttributeError(
 					'The function with the same name is not found either '
