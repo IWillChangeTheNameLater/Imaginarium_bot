@@ -1,5 +1,6 @@
 from typing import MutableSequence, Iterable, Tuple
 
+from . import exceptions
 from . import sources
 from . import gameplay
 
@@ -10,6 +11,9 @@ def get_players() -> MutableSequence[gameplay.Player]:
 
 def get_players_score() -> Iterable[Tuple[str, float]]:
 	"""Returns a list of tuples with player name and score."""
+	if not gameplay.GameCondition._game_started:
+		raise exceptions.GameIsEnded()
+
 	if len(gameplay.players) == 2:
 		return (('Players score', gameplay.GameCondition._players_score),
 		        ('Bot score', gameplay.GameCondition._bot_score))

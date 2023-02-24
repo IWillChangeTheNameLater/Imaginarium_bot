@@ -6,13 +6,15 @@ from discord_components import Button, ButtonStyle
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
+import messages_text as mt
 
 Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
 
-ButtonsComponent: TypeAlias = MutableSequence[MutableSequence[Button]] | MutableSequence[Button]
+ButtonsComponent: TypeAlias = MutableSequence[MutableSequence[Button]] | \
+                              MutableSequence[Button]
 
 
-def generate_buttons(labels: Iterable[str],
+def generate_buttons(labels: Iterable[str | int],
                      styles: Iterable[int] = itertools.repeat(2),
                      urls: Iterable[str] = itertools.repeat(None),
                      disabled: Iterable[bool] = itertools.repeat(False),
@@ -64,8 +66,10 @@ def cards_numbers(cards_count: int) -> ButtonsComponent:
 	return generate_buttons(range(1, cards_count + 1))
 
 
-def confirm_association() -> ButtonsComponent:
-	return [Button(style=ButtonStyle.green, label='Yes', emoji='✅')]
+def confirm_association(message_language=None) -> ButtonsComponent:
+	return [Button(style=ButtonStyle.green,
+	               label=mt.confirm(message_language=message_language),
+	               emoji='✅')]
 
 
 def players_cards() -> ButtonsComponent:

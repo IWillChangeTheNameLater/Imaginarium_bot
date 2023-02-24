@@ -4,7 +4,8 @@ from discord.ext import commands
 import chardet
 
 import Imaginarium
-from messages_text import *
+import messages_text as mt
+from messages_text import users_languages as ul
 
 
 def extract_file_extension(filename: str) -> str:
@@ -35,7 +36,7 @@ async def iterate_sources(ctx: commands.Context,
 			text = await attachment.read()
 			await iterate_lines(text.decode(chardet.detect(text[:1000])['encoding']), function)
 		else:
-			await ctx.send(English.filetype_is_not_supported(filetype))
+			await ctx.send(mt.filetype_is_not_supported(filetype))
 
 
 class SettingUpGame(commands.Cog):
@@ -47,26 +48,26 @@ class SettingUpGame(commands.Cog):
 		if score.isdigit():
 			Imaginarium.setting_up_game.set_winning_score(int(score))
 		else:
-			await ctx.author.send(English.score_must_be_number())
+			await ctx.send(mt.score_must_be_number())
 
 	@commands.command()
 	async def set_minutes_for_step(self, ctx, minutes):
 		if minutes.isdigit():
 			Imaginarium.setting_up_game.set_step_timeout(float(minutes * 60))
 		else:
-			await ctx.author.send(English.step_timeout_must_be_number())
+			await ctx.send(mt.step_timeout_must_be_number())
 
 	@commands.command()
 	async def reset_used_cards(self, ctx):
 		Imaginarium.setting_up_game.reset_used_cards()
 
-		await ctx.send(English.used_cards_successfully_reset())
+		await ctx.send(mt.used_cards_successfully_reset())
 
 	@commands.command()
 	async def reset_used_sources(self, ctx):
 		Imaginarium.setting_up_game.reset_used_sources()
 
-		await ctx.send(English.sources_successfully_reset())
+		await ctx.send(mt.sources_successfully_reset())
 
 	@commands.command()
 	async def add_used_sources(self, ctx, *, message=''):
@@ -75,7 +76,7 @@ class SettingUpGame(commands.Cog):
 				try:
 					Imaginarium.setting_up_game.add_used_source(source)
 				except Imaginarium.exceptions.UnexpectedSource:
-					await ctx.send(English.wrong_source(source))
+					await ctx.send(mt.wrong_source(source))
 
 		await iterate_sources(ctx, message, move_source)
 
@@ -85,7 +86,7 @@ class SettingUpGame(commands.Cog):
 			try:
 				Imaginarium.setting_up_game.remove_used_source(source)
 			except KeyError:
-				await ctx.send(English.no_source(source._link))
+				await ctx.send(mt.no_source(source._link))
 
 		await iterate_sources(ctx, message, move_source)
 
@@ -95,11 +96,56 @@ class SettingUpGame(commands.Cog):
 			try:
 				Imaginarium.setting_up_game.shuffle_players_order()
 			except Imaginarium.exceptions.GameIsStarted:
-				await ctx.send(English.you_cannot_shuffle_players_now())
+				await ctx.send(mt.you_cannot_shuffle_players_now())
 			else:
-				await ctx.send(English.current_following_order())
+				await ctx.send(mt.current_following_order())
 		else:
-			await ctx.send(English.no_any_players())
+			await ctx.send(mt.no_any_players())
+
+	@commands.command()
+	async def set_language(self, ctx, language):
+		# If the language is a code
+		if 2 <= len(language) <= 3:
+			language_code = language.lower()
+		else:
+			language = language.capitalize()
+			if language in mt.languages_maps.languages_names:
+				language_code = mt.languages_maps.language_code_map[language]
+
+		if language_code in mt.language_modules_map:
+			mt.users_languages[ctx.author] = language_code
+
+			await ctx.author.send(mt.your_language_is(
+				mt.languages_maps.code_language_map[language_code],
+				message_language=ul[ctx.author]))
+		else:
+			await ctx.author.send(mt.language_is_not_supported(
+				language,
+				message_language=ul[ctx.author]))
+
+	# If the language is a code
+	# if 2 <= len(language) <= 3:
+	# 	if language in mt.language_modules_map:
+	# 		mt.users_languages[ctx.author] = language
+	# 		language = mt.languages_maps.code_language_map[language]
+	# 		await ctx.author.send(mt.your_language_is(language,
+	# 		                                          message_language=ul[ctx.author]))
+	# else:
+	# 	language = language.capitalize()
+	# 	if language in mt.languages_maps.languages_names:
+	# 		mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
+	# 		await ctx.author.send(mt.your_language_is(language,
+	# 		                                          message_language=ul[ctx.author]))
+	# 	else:
+	# 		await ctx.author.send(mt.language_is_not_supported(language,
+	# 		                                                   message_language=ul[ctx.author]))
+
+	@commands.command()
+	async def reset_language(self, ctx):
+		mt.users_languages[ctx.author] = None
+
+		await ctx.author.send(mt.your_language_reset(
+			message_language=ul[ctx.author]))
 
 
 def setup(bot):

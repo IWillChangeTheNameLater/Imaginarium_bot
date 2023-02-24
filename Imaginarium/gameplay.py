@@ -21,10 +21,7 @@ class Player:
 		:param name: The player's name which can be generated automatically
 		if it is not specified."""
 		self.id: int = player_id
-		if name is None:
-			self.name: str = f'Player {self.id}'
-		else:
-			self.name: str = name
+		self._name = name
 
 		self.cards: MutableSequence[str] = []
 		"""The player's cards."""
@@ -79,6 +76,21 @@ class Player:
 			return self.score <= other.score
 		except AttributeError:
 			return self.score <= other
+
+	@property
+	def name(self) -> str:
+		if self._name is None:
+			return f'Player {self.id}'
+		else:
+			return self._name
+
+	@name.setter
+	def name(self, value: str) -> None:
+		self._name = value
+
+	@name.deleter
+	def name(self) -> None:
+		self._name = None
 
 	def reset_state(self) -> None:
 		"""Reset the player's state to their default values."""
@@ -370,17 +382,17 @@ def end_game() -> None:
 
 def join(player: Player) -> None:
 	if GameCondition._game_started:
-		raise exceptions.GameIsStarted
+		raise exceptions.GameIsStarted()
 	elif player in players:
-		raise exceptions.PlayerAlreadyJoined
+		raise exceptions.PlayerAlreadyJoined()
 	else:
 		players.append(player)
 
 
 def leave(player: Player) -> None:
 	if GameCondition._game_started:
-		raise exceptions.GameIsStarted
+		raise exceptions.GameIsStarted()
 	elif player not in players:
-		raise exceptions.PlayerAlreadyLeft
+		raise exceptions.PlayerAlreadyLeft()
 	else:
 		players.remove(player)
