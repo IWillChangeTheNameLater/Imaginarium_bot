@@ -14,7 +14,7 @@ from messages_text import users_languages as ul
 import messages_components as mc
 
 
-class Player(Imaginarium.gameplay.Player):
+class Player(Imaginarium.gameplay.Player, discord.abc.User):
 	"""Class that inherits from "Imaginarium.gameplay.Player"
 	and is used to work with players in discord bot."""
 
@@ -24,11 +24,22 @@ class Player(Imaginarium.gameplay.Player):
 		:param user: Discord member that is the player."""
 		super().__init__(user.id, user.mention)
 
-		self.user: discord.Member = user
+		self.user = user
 
 		self._preferred_language: str | None = None
 		"""The locale specified by the user, 
 		which does not depend on his locale in the settings."""
+
+	def __hash__(self) -> int:
+		return hash(self.user)
+
+	@property
+	def display_name(self):
+		return self.user.display_name
+
+	@property
+	def mention(self):
+		return self.user.mention
 
 	@property
 	def name(self) -> str:
