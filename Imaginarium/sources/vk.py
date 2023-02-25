@@ -29,14 +29,14 @@ class Vk(BaseSource):
 
         self._cards_quantity: int | None = None
 
-    def get_cards_quantity(self) -> int:
+    def _get_cards_quantity(self) -> int:
         """Return the number of posts in the specified group."""
         return vk_requests.wall.get(domain=self._domain, count=1)['count']
 
-    def set_cards_quantity(self, quantity: float = None) -> None:
+    def _set_cards_quantity(self, quantity: float = None) -> None:
         """Set the number of posts in the specified group."""
         if quantity is None:
-            self._cards_quantity = self.get_cards_quantity()
+            self._cards_quantity = self._get_cards_quantity()
         else:
             self._cards_quantity = quantity
 
@@ -68,7 +68,7 @@ class Vk(BaseSource):
                     return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
         # Check if there are any posts in the specified group to look for
-        self.set_cards_quantity()
+        self._set_cards_quantity()
         if self._cards_quantity == 0:
             raise exceptions.NoAnyPosts()
 

@@ -8,13 +8,9 @@ import messages_text as mt
 from messages_text import users_languages as ul
 
 
-def extract_file_extension(filename: str) -> str:
-    return filename[filename.rfind('.') + 1:]
-
-
-async def iterate_sources(ctx: Context,
-                          message: str,
-                          function: Callable[..., Coroutine]) -> None:
+async def _iterate_sources(ctx: Context,
+                           message: str,
+                           function: Callable[..., Coroutine]) -> None:
     """Extract separated by break sources from the file and the message and
     process them by the function.
     :param ctx: The message context.
@@ -27,10 +23,13 @@ async def iterate_sources(ctx: Context,
         for source in lines.replace('\r', '').split('\n'):
             await function(source)
 
+    def _extract_file_extension(filename: str) -> str:
+        return filename[filename.rfind('.') + 1:]
+
     await iterate_lines(message, function)
 
     for attachment in ctx.message.attachments:
-        filetype = extract_file_extension(attachment.filename)
+        filetype = _extract_file_extension(attachment.filename)
 
         if filetype == 'txt':
             text = await attachment.read()
@@ -78,7 +77,7 @@ class SettingUpGame(Cog):
                 except Imaginarium.exceptions.UnexpectedSource:
                     await ctx.send(mt.wrong_source(source))
 
-        await iterate_sources(ctx, message, move_source)
+        await _iterate_sources(ctx, message, move_source)
 
     @command()
     async def remove_used_sources(self, ctx, *, message=''):
@@ -88,7 +87,7 @@ class SettingUpGame(Cog):
             except KeyError:
                 await ctx.send(mt.no_source(source._link))
 
-        await iterate_sources(ctx, message, move_source)
+        await _iterate_sources(ctx, message, move_source)
 
     @command()
     async def shuffle_players_order(self, ctx):
