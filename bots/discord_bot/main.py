@@ -1,14 +1,14 @@
 import os
-import sys
+from sys import path
 from typing import Generator
 
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
     # Iterate up the directory until the "Imaginarium_bot" folder is found.
-    sys.path.append(os.sep.join(y := __file__.split(os.sep) \
+    path.append(os.sep.join(y := __file__.split(os.sep) \
         [:__file__.split(os.sep).index('Imaginarium_bot') + 1]))
 else:
-    sys.path.append(os.path.dirname(__file__))
+    path.append(os.path.dirname(__file__))
 
 import nest_asyncio
 
@@ -19,14 +19,14 @@ import discord
 from discord.ext import commands
 import dotenv
 
-import configuration
+import configuration as config
 
 dotenv.load_dotenv()
 
 # Add directory with cogs to search for
-sys.path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
+path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 
-bot = commands.Bot(command_prefix=configuration.PREFIX,
+bot = commands.Bot(command_prefix=config.PREFIX,
                    intents=discord.Intents.all())
 bot.remove_command('help')
 
@@ -55,7 +55,7 @@ def get_extensions(cogs_dir: str = None) -> Generator[str, None, None]:
         cogs_dir = os.environ['PATH_TO_DISCORD_COGS_DIRECTORY']
 
     return (filename[:-3] for filename in os.listdir(cogs_dir)
-            if all((filename[:-3] in configuration.COGS_NAMES,
+            if all((filename[:-3] in config.COGS_NAMES,
                     filename.endswith('.py'))))
 
 
