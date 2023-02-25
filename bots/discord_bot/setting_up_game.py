@@ -104,6 +104,8 @@ class SettingUpGame(Cog):
 
     @command()
     async def set_language(self, ctx, language):
+        language_code = None
+
         # If the language is a code
         if 2 <= len(language) <= 3:
             language_code = language.lower()
