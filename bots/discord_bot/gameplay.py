@@ -359,12 +359,12 @@ def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 
 def at_start_hook() -> None:
     """Send a message to the channel that the game has started."""
-    asyncio.run(Gameplay.start.ctx.channel.send(mt.game_has_started()))
+    asyncio.run(Gameplay.start.ctx.send(mt.game_has_started()))
 
 
 def at_round_start_hook() -> None:
     """Send a message to the channel that the round has started."""
-    asyncio.run(Gameplay.start.ctx.channel.send(mt.round_has_started()))
+    asyncio.run(Gameplay.start.ctx.send(mt.round_has_started()))
 
 
 # noinspection PyTypeChecker
@@ -402,7 +402,7 @@ def request_association_hook() -> None:
 def show_association_hook() -> None:
     """Send the association to the channel."""
     if GameCondition._round_association:
-        asyncio.run(Gameplay.start.ctx.channel.send(mt.round_association()))
+        asyncio.run(Gameplay.start.ctx.send(mt.round_association()))
 
 
 def request_players_cards_2_hook() -> None:
