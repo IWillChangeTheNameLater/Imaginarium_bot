@@ -130,7 +130,7 @@ def get_random_card() -> str:
 
     :returns: A link to a random card."""
     try:
-        return choice(GameCondition.used_sources).get_random_card()
+        return choice(GameCondition._used_sources).get_random_card()
     except exceptions.NoAnyPosts:
         return get_random_card()
 
@@ -157,13 +157,13 @@ class GameCondition:
     _round_association: str = None
     _game_took_time: float = None
     _players_count: int = None
-    used_cards: MutableSequence[str] = []
+    _used_cards: MutableSequence[str] = []
     """The cards that have already been used in the game."""
-    unused_cards: MutableSequence[str] = []
+    _unused_cards: MutableSequence[str] = []
     """The cards that will be used in the game."""
-    used_sources: MutableSequence[sources.BaseSource] = []
+    _used_sources: MutableSequence[sources.BaseSource] = []
     """The sources that are used in a game."""
-    players: MutableSequence[Any] = []
+    _players: MutableSequence[Any] = []
     """The players that are playing."""
 
 
@@ -226,10 +226,10 @@ def start_game(
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
             'The game is already started.')
-    if not GameCondition.used_sources:
+    if not GameCondition._used_sources:
         raise exceptions.NoAnyUsedSources(
             'Sources are not specified.')
-    GameCondition._players_count = len(GameCondition.players)
+    GameCondition._players_count = len(GameCondition._players)
     if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
@@ -237,7 +237,7 @@ def start_game(
     GameCondition._game_started_at = time()
     GameCondition._bot_score = 0
     GameCondition._players_score = 0
-    for player in GameCondition.players:
+    for player in GameCondition._players:
         player.reset_state()
     GameCondition._game_started = True
 
@@ -252,7 +252,7 @@ def start_game(
         GameCondition._circle_number += 1
         # Hand out cards
         if GameCondition._players_count >= 3:
-            for player in GameCondition.players:
+            for player in GameCondition._players:
                 # We deal one less card than the player should have,
                 # since at the beginning of each round we add one additional card.
                 player.cards = [get_random_card()
@@ -262,7 +262,7 @@ def start_game(
 
         GameCondition._round_number = 0
         # Round starts
-        for GameCondition._leader in GameCondition.players:
+        for GameCondition._leader in GameCondition._players:
             if not GameCondition._game_started:
                 break
 
@@ -272,7 +272,7 @@ def start_game(
             GameCondition._round_association = None
             # Refresh cards
             if GameCondition._players_count == 2:
-                for player in GameCondition.players:
+                for player in GameCondition._players:
                     player.cards = [get_random_card()
                                     for _ in range(rules_setup.cards_one_player_has)]
 
@@ -332,12 +332,12 @@ def start_game(
                         GameCondition._players_score += 2
             else:
                 if GameCondition._votes_for_card[GameCondition._leader.id] == 0:
-                    for player in GameCondition.players:
+                    for player in GameCondition._players:
                         player.score += GameCondition._votes_for_card[player.id]
                 else:
                     if GameCondition._votes_for_card[GameCondition._leader.id] != GameCondition._players_count:
                         GameCondition._leader.score += 3
-                    for player in GameCondition.players:
+                    for player in GameCondition._players:
                         if player != GameCondition._leader:
                             if GameCondition._discarded_cards[player.chosen_card - 1][1] == \
                                     GameCondition._leader.id:
@@ -345,7 +345,7 @@ def start_game(
 
             # Add missed cards
             if GameCondition._players_count >= 3:
-                for player in GameCondition.players:
+                for player in GameCondition._players:
                     player.cards.append(get_random_card())
 
             at_round_end_hook()
@@ -357,7 +357,7 @@ def start_game(
                 GameCondition._game_started = False
         else:
             if any(player.score >= rules_setup.winning_score
-                   for player in GameCondition.players):
+                   for player in GameCondition._players):
                 GameCondition._game_started = False
 
         at_circle_end_hook()
@@ -379,16 +379,16 @@ def end_game() -> None:
 def join(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted()
-    elif player in GameCondition.players:
+    elif player in GameCondition._players:
         raise exceptions.PlayerAlreadyJoined()
     else:
-        GameCondition.players.append(player)
+        GameCondition._players.append(player)
 
 
 def leave(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted()
-    elif player not in GameCondition.players:
+    elif player not in GameCondition._players:
         raise exceptions.PlayerAlreadyLeft()
     else:
-        GameCondition.players.remove(player)
+        GameCondition._players.remove(player)

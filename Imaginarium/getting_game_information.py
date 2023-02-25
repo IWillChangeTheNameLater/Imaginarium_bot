@@ -7,7 +7,7 @@ from . import gameplay
 
 
 def get_players() -> MutableSequence[gameplay.Player]:
-    return GameCondition.players
+    return GameCondition._players
 
 
 def get_players_score() -> Iterable[Tuple[str, float]]:
@@ -19,12 +19,12 @@ def get_players_score() -> Iterable[Tuple[str, float]]:
         return (('Players score', GameCondition._players_score),
                 ('Bot score', GameCondition._bot_score))
     else:
-        return ((str(player), player.score) for player in GameCondition.players)
+        return ((str(player), player.score) for player in GameCondition._players)
 
 
 def get_used_cards() -> MutableSequence[str]:
-    return GameCondition.used_cards
+    return GameCondition._used_cards
 
 
 def get_used_sources() -> MutableSequence[sources.BaseSource]:
-    return GameCondition.used_sources
+    return GameCondition._used_sources

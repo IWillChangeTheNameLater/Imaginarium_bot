@@ -429,7 +429,7 @@ def request_players_cards_2_hook() -> None:
             return True
         return False
 
-    for player in GameCondition.players:
+    for player in GameCondition._players:
         for message in (
                 mt.choose_first_card(
                     player.cards,
@@ -513,7 +513,7 @@ def request_players_cards_hook() -> None:
     def button_check() -> bool:
         return True
 
-    for player in GameCondition.players:
+    for player in GameCondition._players:
         if player != GameCondition._leader:
             try:
                 card = int(asyncio.run(wait_for_reply(
@@ -557,7 +557,7 @@ def vote_for_target_card_2_hook() -> None:
             return True
         return False
 
-    for player in GameCondition.players:
+    for player in GameCondition._players:
         try:
             card = int(
                 asyncio.run(wait_for_reply(
@@ -604,7 +604,7 @@ def vote_for_target_card_hook() -> None:
             return True
         return False
 
-    for player in GameCondition.players:
+    for player in GameCondition._players:
         if player != GameCondition._leader:
             try:
                 card = int(
