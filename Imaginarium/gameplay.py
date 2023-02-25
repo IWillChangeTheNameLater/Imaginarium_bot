@@ -106,8 +106,8 @@ def create_source_object(source: str) -> sources.BaseSource:
     if validators.url(source):
         domain_name = source[source.find('/') + 2:]
         domain_name = domain_name[:domain_name.find('/')]
-        domain_name = (domain_name := domain_name.split('.')) \
-            [ceil(len(domain_name) / 2) - 1]
+        domain_name = domain_name.split('.')
+        domain_name = domain_name[ceil(len(domain_name) / 2) - 1]
 
         match domain_name:
             case 'vk':
