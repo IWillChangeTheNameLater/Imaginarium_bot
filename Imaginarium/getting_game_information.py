@@ -15,7 +15,7 @@ def get_players_score() -> Iterable[Tuple[str, float]]:
     if not GameCondition._game_started:
         raise exceptions.GameIsEnded()
 
-    if len(GameCondition.players) == 2:
+    if GameCondition._players_count == 2:
         return (('Players score', GameCondition._players_score),
                 ('Bot score', GameCondition._bot_score))
     else:
