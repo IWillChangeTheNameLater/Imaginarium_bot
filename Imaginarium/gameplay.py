@@ -229,8 +229,8 @@ def start_game(
     if not GameCondition.used_sources:
         raise exceptions.NoAnyUsedSources(
             'Sources are not specified.')
-    players_count = len(GameCondition.players)
-    if players_count < 2:
+    GameCondition._players_count = len(GameCondition.players)
+    if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
 
@@ -251,7 +251,7 @@ def start_game(
 
         GameCondition._circle_number += 1
         # Hand out cards
-        if players_count >= 3:
+        if GameCondition._players_count >= 3:
             for player in GameCondition.players:
                 # We deal one less card than the player should have,
                 # since at the beginning of each round we add one additional card.
@@ -271,7 +271,7 @@ def start_game(
             GameCondition._discarded_cards = []
             GameCondition._round_association = None
             # Refresh cards
-            if players_count == 2:
+            if GameCondition._players_count == 2:
                 for player in GameCondition.players:
                     player.cards = [get_random_card()
                                     for _ in range(rules_setup.cards_one_player_has)]
@@ -279,7 +279,7 @@ def start_game(
             at_round_start_hook()
 
             # Each player discards cards to the common deck
-            if players_count == 2:
+            if GameCondition._players_count == 2:
                 # Discard the bot's card
                 GameCondition._discarded_cards.append((get_random_card(), None))
 
@@ -292,7 +292,7 @@ def start_game(
                 request_players_cards_2_hook()
 
             else:
-                if players_count == 3:
+                if GameCondition._players_count == 3:
                     for i in range(2):
                         GameCondition._discarded_cards.append((get_random_card(), None))
 
@@ -311,7 +311,7 @@ def start_game(
             show_discarded_cards_hook()
 
             # Each player votes for the target card
-            if players_count == 2:
+            if GameCondition._players_count == 2:
 
                 vote_for_target_card_2_hook()
 
@@ -320,7 +320,7 @@ def start_game(
                 vote_for_target_card_hook()
 
             # Scoring
-            if players_count == 2:
+            if GameCondition._players_count == 2:
                 # Count bot's score
                 match GameCondition._votes_for_card[None]:
                     case 0:
@@ -335,7 +335,7 @@ def start_game(
                     for player in GameCondition.players:
                         player.score += GameCondition._votes_for_card[player.id]
                 else:
-                    if GameCondition._votes_for_card[GameCondition._leader.id] != players_count:
+                    if GameCondition._votes_for_card[GameCondition._leader.id] != GameCondition._players_count:
                         GameCondition._leader.score += 3
                     for player in GameCondition.players:
                         if player != GameCondition._leader:
@@ -344,14 +344,14 @@ def start_game(
                                 player.score += 3
 
             # Add missed cards
-            if players_count >= 3:
+            if GameCondition._players_count >= 3:
                 for player in GameCondition.players:
                     player.cards.append(get_random_card())
 
             at_round_end_hook()
 
         # Check for victory
-        if players_count == 2:
+        if GameCondition._players_count == 2:
             if max(GameCondition._bot_score, GameCondition._players_score) >= \
                     rules_setup.winning_score:
                 GameCondition._game_started = False
