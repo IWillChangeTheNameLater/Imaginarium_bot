@@ -289,7 +289,7 @@ def leader_button_check_decorator(func: ButtonCheck = None,
 
     @functools.wraps(func)
     def inner(interaction):
-        if interaction.author.id == leader.id:
+        if interaction.author == leader:
             return func(interaction)
         return False
 
