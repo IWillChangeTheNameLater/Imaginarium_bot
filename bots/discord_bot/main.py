@@ -15,19 +15,19 @@ import nest_asyncio
 # The "next_asyncio.apply()" have to be called before "discord" import
 # to fix "RuntimeError: This event loop is already running".
 nest_asyncio.apply()
-import discord
-from discord.ext import commands
-import dotenv
+from discord import Intents
+from discord.ext.commands import Bot
+from dotenv import load_dotenv
 
 import configuration as config
 
-dotenv.load_dotenv()
+load_dotenv()
 
 # Add directory with cogs to search for
 path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 
-bot = commands.Bot(command_prefix=config.PREFIX,
-                   intents=discord.Intents.all())
+bot = Bot(command_prefix=config.PREFIX,
+          intents=Intents.all())
 bot.remove_command('help')
 
 
