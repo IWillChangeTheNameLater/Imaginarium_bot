@@ -18,8 +18,9 @@ def import_module(module_name: str,
     :param module_directory: Directory where the module is located.
 
     :return: The imported usable module."""
-    module_full_path = module_directory + sep + module_name + ".py"
-    spec = importlib.util.spec_from_file_location(module_name, module_full_path)
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        module_directory + sep + module_name + ".py")
     module = importlib.util.module_from_spec(spec)
     # Execute the module to make it usable
     spec.loader.exec_module(module)
