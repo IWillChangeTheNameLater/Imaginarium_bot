@@ -67,7 +67,7 @@ def translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
 
     @wraps(preprocessing_func)
     def inner(*args, **kwargs) -> str:
-        language = None
+        language_code = None
         try:  # to extract the language from the passed or default keyword arguments.
             language = kwargs.pop(language_arg_name)
         except KeyError:
