@@ -373,12 +373,12 @@ def request_association_hook() -> None:
 
     @not_bot_message_check_decorator
     @leader_message_check_decorator
-    def message_check(message: discord.Message) -> bool:
+    def message_check() -> bool:
         return True
 
     @not_bot_button_check_decorator
     @leader_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check() -> bool:
         return True
 
     try:
@@ -467,12 +467,12 @@ def request_leader_card_hook() -> None:
 
     @selected_card_message_check_decorator
     @leader_message_check_decorator
-    def message_check(message: discord.Message) -> bool:
+    def message_check() -> bool:
         return True
 
     @selected_card_button_check_decorator
     @leader_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check() -> bool:
         return True
 
     try:
@@ -505,12 +505,12 @@ def request_players_cards_hook() -> None:
 
     @selected_card_message_check_decorator
     @not_leader_message_check_decorator
-    def message_check(message: discord.Message) -> bool:
+    def message_check() -> bool:
         return True
 
     @selected_card_button_check_decorator
     @not_leader_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check() -> bool:
         return True
 
     for player in Imaginarium.gameplay.players:
