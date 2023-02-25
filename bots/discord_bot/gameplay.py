@@ -24,32 +24,32 @@ class Player(Imaginarium.gameplay.Player, discord.abc.User):
         :param user: Discord member that is the player."""
         super().__init__(user.id, user.mention)
 
-        self.user = user
+        self._user = user
 
         self._preferred_language: str | None = None
         """The locale specified by the user, 
         which does not depend on his locale in the settings."""
 
     def __hash__(self) -> int:
-        return hash(self.user)
+        return hash(self._user)
 
     @property
     def display_name(self):
-        return self.user.display_name
+        return self._user.display_name
 
     @property
     def mention(self):
-        return self.user.mention
+        return self._user.mention
 
     @property
     def name(self) -> str:
-        return self.user.mention
+        return self._user.mention
 
     @property
     def language(self) -> str | None:
         if self._preferred_language is None:
             try:
-                return self.user.locale
+                return self._user.locale
             except AttributeError:
                 return None
         else:
@@ -65,7 +65,7 @@ class Player(Imaginarium.gameplay.Player, discord.abc.User):
 
     async def send(self, *args, **kwargs) -> None:
         """Send a message to the member that is the player."""
-        await self.user.send(*args, **kwargs)
+        await self._user.send(*args, **kwargs)
 
 
 Reaction: TypeAlias = (discord.Reaction |
