@@ -13,6 +13,7 @@ def inform_association() -> str:
            'Write it below  or confirm it by pressing the button.'
 
 
+# noinspection DuplicatedCode
 def association_selected_automatically(association: str) -> str:
     return f'You was thinking too much. ' \
            f'The association {association} was automatically selected for you.'

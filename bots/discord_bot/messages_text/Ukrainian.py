@@ -10,9 +10,10 @@ def round_has_started(number: int) -> str:
 
 def inform_association() -> str:
     return 'Ви повідомили асоціацію про раунд? ' \
-           'Напишіть її нижче або підтвердіть натиснувши кнопку.'
+           'Напишіть її нижче або підтвердити натиснувши кнопку.'
 
 
+# noinspection DuplicatedCode
 def association_selected_automatically(association: str) -> str:
     return f'Ви дуже довго думали. ' \
            f'Асоціація {association} була автоматично обрана для вас.'
