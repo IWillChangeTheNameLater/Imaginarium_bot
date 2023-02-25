@@ -123,23 +123,6 @@ class SettingUpGame(Cog):
                 language,
                 message_language=ul[ctx.author]))
 
-    # If the language is a code
-    # if 2 <= len(language) <= 3:
-    # 	if language in mt.language_modules_map:
-    # 		mt.users_languages[ctx.author] = language
-    # 		language = mt.languages_maps.code_language_map[language]
-    # 		await ctx.author.send(mt.your_language_is(language,
-    # 		                                          message_language=ul[ctx.author]))
-    # else:
-    # 	language = language.capitalize()
-    # 	if language in mt.languages_maps.languages_names:
-    # 		mt.users_languages[ctx.author] = mt.languages_maps.language_code_map[language]
-    # 		await ctx.author.send(mt.your_language_is(language,
-    # 		                                          message_language=ul[ctx.author]))
-    # 	else:
-    # 		await ctx.author.send(mt.language_is_not_supported(language,
-    # 		                                                   message_language=ul[ctx.author]))
-
     @command()
     async def reset_language(self, ctx):
         mt.users_languages[ctx.author] = None
