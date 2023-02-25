@@ -234,14 +234,14 @@ def start_game(
     if not used_sources:
         raise exceptions.NoAnyUsedSources(
             'Sources are not specified.')
-    if len(players) < 2:
+    players_count = len(players)
+    if players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
 
     GameCondition._game_started_at = time()
     GameCondition._bot_score = 0
     GameCondition._players_score = 0
-    players_count = len(players)
     for player in players:
         player.reset_state()
     GameCondition._game_started = True
