@@ -238,7 +238,7 @@ def start_game(
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
 
-    GameCondition._game_started_at = time.time()
+    GameCondition._game_started_at = time()
     GameCondition._bot_score = 0
     GameCondition._players_score = 0
     players_count = len(players)
@@ -366,7 +366,7 @@ def start_game(
 
         at_circle_end_hook()
 
-    GameCondition._game_took_time = time.time() - GameCondition._game_started_at
+    GameCondition._game_took_time = time() - GameCondition._game_started_at
 
     at_end_hook()
 
