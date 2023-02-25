@@ -4,6 +4,7 @@
 # these are the languages for which I found the codes and
 # which are supported by google Translator.
 
+# noinspection SpellCheckingInspection
 language_code_name_native = [
     {'code': 'af',
      'name': 'Afrikaans',
