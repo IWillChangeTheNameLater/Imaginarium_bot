@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord_components import DiscordComponents
 
-import configuration
+import configuration as config
 import messages_text as mt
 
 
@@ -18,7 +18,7 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            await ctx.send(mt.command_does_not_exist(configuration.PREFIX))
+            await ctx.send(mt.command_does_not_exist(config.PREFIX))
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(mt.missing_required_argument(error.args[0].split()[0]))
         else:
