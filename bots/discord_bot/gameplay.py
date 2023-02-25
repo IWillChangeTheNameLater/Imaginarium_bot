@@ -429,7 +429,7 @@ def request_players_cards_2_hook() -> None:
             return True
         return False
 
-    for player in Imaginarium.gameplay.players:
+    for player in GameCondition.players:
         for message in (
                 mt.choose_first_card(
                     player.cards,
@@ -513,7 +513,7 @@ def request_players_cards_hook() -> None:
     def button_check() -> bool:
         return True
 
-    for player in Imaginarium.gameplay.players:
+    for player in GameCondition.players:
         if player != GameCondition._leader:
             try:
                 card = int(asyncio.run(wait_for_reply(
@@ -557,7 +557,7 @@ def vote_for_target_card_2_hook() -> None:
             return True
         return False
 
-    for player in Imaginarium.gameplay.players:
+    for player in GameCondition.players:
         try:
             card = int(
                 asyncio.run(wait_for_reply(
@@ -568,7 +568,7 @@ def vote_for_target_card_2_hook() -> None:
                     button_check=button_check,
                     buttons=mc.discarded_cards())))
         except asyncio.TimeoutError:
-            card = random.randint(1, len(Imaginarium.gameplay.players))
+            card = random.randint(1, len(GameCondition.players))
             asyncio.run(player.send(
                 mt.card_selected_automatically(
                     GameCondition._discarded_cards[card - 1][0],
@@ -604,7 +604,7 @@ def vote_for_target_card_hook() -> None:
             return True
         return False
 
-    for player in Imaginarium.gameplay.players:
+    for player in GameCondition.players:
         if player != GameCondition._leader:
             try:
                 card = int(
@@ -616,7 +616,7 @@ def vote_for_target_card_hook() -> None:
                         button_check=button_check,
                         buttons=mc.discarded_cards())))
             except asyncio.TimeoutError:
-                card = random.randint(1, len(Imaginarium.gameplay.players))
+                card = random.randint(1, len(GameCondition.players))
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         GameCondition._discarded_cards[card - 1][0],
@@ -636,7 +636,7 @@ def at_end_hook() -> None:
     """Announce the results of the game."""
     asyncio.run(Gameplay.start.ctx.send(mt.game_took_time()))
 
-    if len(Imaginarium.gameplay.players) == 2:
+    if len(GameCondition.players) == 2:
         if GameCondition._bot_score > GameCondition._players_score:
             asyncio.run(Gameplay.start.ctx.send(mt.loss_score()))
         elif GameCondition._bot_score < GameCondition._players_score:

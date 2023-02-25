@@ -238,7 +238,7 @@ def winning_rating(rating: str = None, *,
                    message_language=None):
     if rating is None:
         rating = '\n'.join(f'{place}. {player}' for place, player in
-                           enumerate(sorted(Imaginarium.gameplay.players)[:3], start=1))
+                           enumerate(sorted(GameCondition.players)[:3], start=1))
 
     return (rating,), {}
 

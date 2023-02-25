@@ -1,29 +1,30 @@
 from typing import MutableSequence, Iterable, Tuple
 
+from Imaginarium.gameplay import GameCondition
 from . import exceptions
 from . import sources
 from . import gameplay
 
 
 def get_players() -> MutableSequence[gameplay.Player]:
-    return gameplay.players
+    return GameCondition.players
 
 
 def get_players_score() -> Iterable[Tuple[str, float]]:
     """Returns a list of tuples with player name and score."""
-    if not gameplay.GameCondition._game_started:
+    if not GameCondition._game_started:
         raise exceptions.GameIsEnded()
 
-    if len(gameplay.players) == 2:
-        return (('Players score', gameplay.GameCondition._players_score),
-                ('Bot score', gameplay.GameCondition._bot_score))
+    if len(GameCondition.players) == 2:
+        return (('Players score', GameCondition._players_score),
+                ('Bot score', GameCondition._bot_score))
     else:
-        return ((str(player), player.score) for player in gameplay.players)
+        return ((str(player), player.score) for player in GameCondition.players)
 
 
 def get_used_cards() -> MutableSequence[str]:
-    return gameplay.used_cards
+    return GameCondition.used_cards
 
 
 def get_used_sources() -> MutableSequence[sources.BaseSource]:
-    return gameplay.used_sources
+    return GameCondition.used_sources
