@@ -366,14 +366,14 @@ language_code_name_native = [
 
 code_language_map = {}
 languages_codes = set()
-for lang in language_code_name_native:
-    code = lang['code']
-    code_language_map[code] = lang['name']
-    languages_codes.add(code)
+for _lang in language_code_name_native:
+    _code = _lang['code']
+    code_language_map[_code] = _lang['name']
+    languages_codes.add(_code)
 
 language_code_map = {}
 languages_names = set()
-for lang in language_code_name_native:
-    name = lang['name']
-    language_code_map[name] = lang['code']
-    languages_names.add(name)
+for _lang in language_code_name_native:
+    _name = _lang['name']
+    language_code_map[_name] = _lang['code']
+    languages_names.add(_name)
