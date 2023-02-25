@@ -144,9 +144,6 @@ used_sources: MutableSequence[sources.BaseSource] = []
 players: MutableSequence[Any] = []
 """The players that are playing."""
 
-player_step_timeout: float = 0
-"""The time in seconds that the player has to make a choice."""
-
 
 class GameCondition:
     """A class which contains variables
