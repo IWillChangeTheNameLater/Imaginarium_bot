@@ -1,4 +1,4 @@
-import random
+from random import randrange, shuffle
 import os
 from typing import Mapping, Container
 
@@ -74,7 +74,7 @@ class Vk(BaseSource):
 
         # Get a random post from the specified group
         post = vk_requests.wall.get(domain=self._domain,
-                                    offset=random.randrange(self._cards_quantity),
+                                    offset=randrange(self._cards_quantity),
                                     count=1)
 
         # Extract attachments from the received post
@@ -85,7 +85,7 @@ class Vk(BaseSource):
             return self.get_random_card()
 
         # Shuffle attachments order to get the first random suitable attachment
-        random.shuffle(attachments)
+        shuffle(attachments)
 
         # Get the first suitable attachment
         for a in attachments:

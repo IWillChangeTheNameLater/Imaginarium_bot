@@ -1,4 +1,4 @@
-import random
+from random import shuffle
 
 from .gameplay import GameCondition
 
@@ -45,4 +45,4 @@ def shuffle_players_order() -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted()
     else:
-        random.shuffle(gameplay.players)
+        shuffle(gameplay.players)

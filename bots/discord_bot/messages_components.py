@@ -1,24 +1,24 @@
-import itertools
+from itertools import repeat
 from typing import TypeAlias, Iterable, MutableSequence
 
-import discord
+from discord import Emoji, PartialEmoji
 from discord_components import Button, ButtonStyle
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
 import messages_text as mt
 
-Emoji: TypeAlias = discord.Emoji | discord.PartialEmoji | str
+Emoji: TypeAlias = Emoji | PartialEmoji | str
 
 ButtonsComponent: TypeAlias = MutableSequence[MutableSequence[Button]] | \
                               MutableSequence[Button]
 
 
 def generate_buttons(labels: Iterable[str | int],
-                     styles: Iterable[int] = itertools.repeat(2),
-                     urls: Iterable[str] = itertools.repeat(None),
-                     disabled: Iterable[bool] = itertools.repeat(False),
-                     emojis: Iterable[Emoji] = itertools.repeat(None)) \
+                     styles: Iterable[int] = repeat(2),
+                     urls: Iterable[str] = repeat(None),
+                     disabled: Iterable[bool] = repeat(False),
+                     emojis: Iterable[Emoji] = repeat(None)) \
         -> ButtonsComponent:
     """Generate list of lists of DiscordComponents.Button.
 

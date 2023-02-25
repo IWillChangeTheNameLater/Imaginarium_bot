@@ -1,7 +1,7 @@
-import collections
-import math
-import random
-import time
+from collections import defaultdict
+from math import ceil
+from random import choice, shuffle
+from time import time
 from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
 
 import validators
@@ -107,7 +107,7 @@ def create_source_object(source: str) -> sources.BaseSource:
         domain_name = source[source.find('/') + 2:]
         domain_name = domain_name[:domain_name.find('/')]
         domain_name = (domain_name := domain_name.split('.')) \
-            [math.ceil(len(domain_name) / 2) - 1]
+            [ceil(len(domain_name) / 2) - 1]
 
         match domain_name:
             case 'vk':
@@ -130,7 +130,7 @@ def get_random_card() -> str:
 
     :returns: A link to a random card."""
     try:
-        return random.choice(used_sources).get_random_card()
+        return choice(used_sources).get_random_card()
     except exceptions.NoAnyPosts:
         return get_random_card()
 
@@ -272,7 +272,7 @@ def start_game(
                 break
 
             GameCondition._round_number += 1
-            GameCondition._votes_for_card = collections.defaultdict(int)
+            GameCondition._votes_for_card = defaultdict(int)
             GameCondition._discarded_cards = []
             GameCondition._round_association = None
             # Refresh cards
@@ -311,7 +311,7 @@ def start_game(
 
                 request_players_cards_hook()
 
-            random.shuffle(GameCondition._discarded_cards)
+            shuffle(GameCondition._discarded_cards)
 
             show_discarded_cards_hook()
 

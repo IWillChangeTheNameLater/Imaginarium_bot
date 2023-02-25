@@ -1,4 +1,4 @@
-import os
+from os import path, sep
 import importlib.util
 from types import ModuleType
 from functools import wraps
@@ -10,7 +10,7 @@ from Imaginarium.gameplay import GameCondition
 
 
 def import_module(module_name: str,
-                  module_directory: str = os.path.dirname(__file__)) -> ModuleType:
+                  module_directory: str = path.dirname(__file__)) -> ModuleType:
     """Import module from the specified directory and execute it to make it usable.
 
     :param module_name: Name of the module to import.
@@ -18,7 +18,7 @@ def import_module(module_name: str,
     :param module_directory: Directory where the module is located.
 
     :return: The imported usable module."""
-    module_full_path = module_directory + os.sep + module_name + ".py"
+    module_full_path = module_directory + sep + module_name + ".py"
     spec = importlib.util.spec_from_file_location(module_name, module_full_path)
     module = importlib.util.module_from_spec(spec)
     # Execute the module to make it usable
