@@ -369,7 +369,7 @@ def at_round_start_hook() -> None:
 
 # noinspection PyTypeChecker
 def request_association_hook() -> None:
-    """Do not continue the game until the leader specifies an association."""
+    """Do not continue the game until the association is specified."""
 
     @not_bot_message_check_decorator
     @leader_message_check_decorator
@@ -390,7 +390,8 @@ def request_association_hook() -> None:
                 message_check=message_check,
                 button_check=button_check))
     except asyncio.TimeoutError:
-        association = '...'
+        association = '¯\_(ツ)_/¯'
+
         asyncio.run(GameCondition._leader.send(
             mt.association_selected_automatically(
                 association=association,
