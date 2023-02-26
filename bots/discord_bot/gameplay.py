@@ -1,7 +1,7 @@
 import asyncio
 import random
 import functools
-from typing import TypeAlias, Iterable, Callable, Any
+from typing import TypeAlias, Iterable, Callable
 
 import discord
 from discord.ext import commands
@@ -373,12 +373,12 @@ def request_association_hook() -> None:
 
     @not_bot_message_check_decorator
     @leader_message_check_decorator
-    def message_check() -> bool:
+    def message_check(message: discord.Message) -> bool:
         return True
 
     @not_bot_button_check_decorator
     @leader_button_check_decorator
-    def button_check() -> bool:
+    def button_check(message: discord.Message) -> bool:
         return True
 
     try:
@@ -421,7 +421,7 @@ def request_players_cards_2_hook() -> None:
         return False
 
     @selected_card_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check(interaction: Interaction) -> bool:
         number = int(interaction.component.label)
 
         # Check the number is not equal to the previous discarded card
@@ -467,12 +467,12 @@ def request_leader_card_hook() -> None:
 
     @selected_card_message_check_decorator
     @leader_message_check_decorator
-    def message_check() -> bool:
+    def message_check(message: discord.Message) -> bool:
         return True
 
     @selected_card_button_check_decorator
     @leader_button_check_decorator
-    def button_check() -> bool:
+    def button_check(interaction: Interaction) -> bool:
         return True
 
     try:
@@ -505,12 +505,12 @@ def request_players_cards_hook() -> None:
 
     @selected_card_message_check_decorator
     @not_leader_message_check_decorator
-    def message_check() -> bool:
+    def message_check(message: discord.Message) -> bool:
         return True
 
     @selected_card_button_check_decorator
     @not_leader_button_check_decorator
-    def button_check() -> bool:
+    def button_check(message: discord.Message) -> bool:
         return True
 
     for player in GameCondition._players:
@@ -551,7 +551,7 @@ def vote_for_target_card_2_hook() -> None:
         return False
 
     @selected_card_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check(interaction: Interaction) -> bool:
         if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != \
                 interaction.user.id:
             return True
@@ -568,7 +568,7 @@ def vote_for_target_card_2_hook() -> None:
                     button_check=button_check,
                     buttons=mc.discarded_cards())))
         except asyncio.TimeoutError:
-            card = random.randint(1, GameCondition._players_count)
+            card = randint(1, GameCondition._players_count)
             asyncio.run(player.send(
                 mt.card_selected_automatically(
                     GameCondition._discarded_cards[card - 1][0],
@@ -598,7 +598,7 @@ def vote_for_target_card_hook() -> None:
 
     @selected_card_button_check_decorator
     @not_leader_button_check_decorator
-    def button_check(interaction: Any) -> bool:
+    def button_check(interaction: Interaction) -> bool:
         if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != \
                 interaction.user.id:
             return True
