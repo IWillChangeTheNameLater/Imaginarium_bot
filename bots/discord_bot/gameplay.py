@@ -1,6 +1,6 @@
 import asyncio
-import random
-import functools
+from random import randrange, randint
+from functools import wraps
 from typing import TypeAlias, Iterable, Callable
 
 import discord
@@ -155,7 +155,7 @@ ButtonCheck: TypeAlias = Callable[[Interaction], bool]
 def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
     """Decorator that checks if the message author is not a bot."""
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(message):
         if not message.author.bot:
             return func(message)
@@ -167,7 +167,7 @@ def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
 def not_bot_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
     """Decorator that checks if the button author is not a bot."""
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(interaction):
         if not interaction.author.bot:
             return func(interaction)
@@ -179,7 +179,7 @@ def not_bot_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 def digit_message_check_decorator(func: MessageCheck) -> MessageCheck:
     """Decorator that checks if the message content is a digit."""
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(message):
         if message.content.isdigit():
             return func(message)
@@ -191,7 +191,7 @@ def digit_message_check_decorator(func: MessageCheck) -> MessageCheck:
 def digit_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
     """Decorator that checks if the button label is a digit."""
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(interaction):
         if interaction.component.label.isdigit():
             return func(interaction)
@@ -218,7 +218,7 @@ def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
     if stop is None:
         stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(message):
         if int(message.content) in range(start, stop, step):
             return func(message)
@@ -245,7 +245,7 @@ def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
     if stop is None:
         stop = Imaginarium.rules_setup.cards_one_player_has + 1
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(interaction):
         if int(interaction.component.label) in range(start, stop, step):
             return func(interaction)
@@ -266,7 +266,7 @@ def leader_message_check_decorator(func: MessageCheck = None,
     if leader is None:
         leader = GameCondition._leader
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(message):
         if message.author == leader:
             return func(message)
@@ -287,7 +287,7 @@ def leader_button_check_decorator(func: ButtonCheck = None,
     if leader is None:
         leader = GameCondition._leader
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(interaction):
         if interaction.author == leader:
             return func(interaction)
@@ -308,7 +308,7 @@ def not_leader_message_check_decorator(func: MessageCheck = None,
     if leader is None:
         leader = GameCondition._leader
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(message):
         if message.author != leader:
             return func(message)
@@ -328,7 +328,7 @@ def not_leader_button_check_decorator(func: ButtonCheck = None,
     if leader is None:
         leader = GameCondition._leader
 
-    @functools.wraps(func)
+    @wraps(func)
     def inner(interaction):
         if interaction.author.id != leader.id:
             return func(interaction)
@@ -445,7 +445,7 @@ def request_players_cards_2_hook() -> None:
                     button_check=button_check,
                     buttons=mc.players_cards())))
             except asyncio.TimeoutError:
-                card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
+                card = randrange(Imaginarium.rules_setup.cards_one_player_has)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
@@ -484,7 +484,7 @@ def request_leader_card_hook() -> None:
             button_check=button_check,
             buttons=mc.players_cards())))
     except asyncio.TimeoutError:
-        card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
+        card = randrange(Imaginarium.rules_setup.cards_one_player_has)
         asyncio.run(GameCondition._leader.send(
             mt.card_selected_automatically(
                 GameCondition._leader.cards[card - 1],
@@ -525,7 +525,7 @@ def request_players_cards_hook() -> None:
                     button_check=button_check,
                     buttons=mc.players_cards())))
             except asyncio.TimeoutError:
-                card = random.randrange(Imaginarium.rules_setup.cards_one_player_has)
+                card = randrange(Imaginarium.rules_setup.cards_one_player_has)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
@@ -616,7 +616,7 @@ def vote_for_target_card_hook() -> None:
                         button_check=button_check,
                         buttons=mc.discarded_cards())))
             except asyncio.TimeoutError:
-                card = random.randint(1, GameCondition._players_count)
+                card = randint(1, GameCondition._players_count)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         GameCondition._discarded_cards[card - 1][0],
