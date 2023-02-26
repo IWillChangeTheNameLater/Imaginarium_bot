@@ -39,10 +39,14 @@ class BaseSource(abc.ABC):
     def __hash__(self) -> int:
         return hash(self._link)
 
+    @property
+    @abc.abstractmethod
+    def cards_amount(self) -> int:
+        """The amount of cards the source can provide."""
+
     @abc.abstractmethod
     def get_random_card(self) -> str:
         """Get a random card from the source if it is available
         and the type of the card is not excluded.
 
         :return: A random card from the source."""
-        pass

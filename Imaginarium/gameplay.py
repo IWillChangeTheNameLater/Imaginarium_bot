@@ -1,6 +1,6 @@
 from collections import defaultdict
 from math import ceil
-from random import choice, shuffle
+from random import choices, shuffle
 from time import time
 from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
 
@@ -128,9 +128,17 @@ def create_source_object(source: str) -> sources.BaseSource:
 def get_random_card() -> str:
     """Get a random card from a source in the list of sources.
 
-    :returns: A link to a random card."""
+    :returns: A link to a random card.
+
+    .. note:: Sources are selected depending on their cards amount.
+    That is, the more cards a source has, the more often it will be selected
+    so that the same cards fall out less often."""
     try:
-        return choice(GameCondition._used_sources).get_random_card()
+        return choices(
+            population=GameCondition._used_sources,
+            weights=[source.cards_amount for
+                     source in GameCondition._used_sources]
+        )[0].get_random_card()
     except exceptions.NoAnyPosts:
         return get_random_card()
 
