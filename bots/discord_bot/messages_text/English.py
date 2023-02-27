@@ -22,7 +22,7 @@ def association_selected_automatically(association: str) -> str:
 # noinspection DuplicatedCode
 def round_association(association: str) -> str:
     return f'The association of the round is: ' \
-           f'{association}.'
+           f'{association}'
 
 
 def choose_card(cards: str) -> str:

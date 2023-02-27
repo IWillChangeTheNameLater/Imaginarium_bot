@@ -263,8 +263,8 @@ def start_game(
             for player in GameCondition._players:
                 # We deal one less card than the player should have,
                 # since at the beginning of each round we add one additional card.
-                player.cards = [get_random_card()
-                                for _ in range(rules_setup.cards_one_player_has)]
+                player.cards = [get_random_card() for
+                                _ in range(rules_setup.cards_one_player_has)]
 
         at_circle_start_hook()
 

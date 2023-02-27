@@ -5,7 +5,7 @@ from typing import TypeAlias, Iterable, Callable
 
 import discord
 from discord.ext import commands
-from discord_components import Button, Interaction
+import discord_components
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition
@@ -68,22 +68,67 @@ class Player(Imaginarium.gameplay.Player, discord.abc.User):
         await self._user.send(*args, **kwargs)
 
 
-Reaction: TypeAlias = (discord.Reaction |
-                       discord.Emoji |
-                       discord.PartialEmoji |
-                       str)
+DiscordReply: TypeAlias = (discord.Message |
+                           discord.Reaction |
+                           discord_components.Interaction)
+
+
+class Reply:
+    """represents the user's response that was given to the request
+    using some kind of interaction (message, reaction or button).
+
+    :raises AttributeError: If the init argument
+    is not one of the supported replies.
+
+    .. note:: The 'text' argument contains different information
+    for each reply type:
+    message — content,
+    reaction — emoji,
+    discord components interaction — the component's label.
+    """
+
+    def __init__(self, discord_reply: DiscordReply) -> None:
+        self.discord_reply: DiscordReply = discord_reply
+        self.text: str = ''
+        match discord_reply:
+            case discord.Message():
+                self.text = self.discord_reply.content
+            case discord.Reaction():
+                self.text = self.discord_reply.emoji
+            case discord_components.Interaction():
+                self.text = self.discord_reply.component.label
+            case _:
+                raise AttributeError(
+                    f'The "reply" argument is an unknown type.'
+                    f'It must be one of the following: '
+                    f'discord.Message, discord.Reaction, discord_components.Interaction')
+
+    def __repr__(self):
+        return self.discord_reply.__repr__()
+
+    def __str__(self):
+        return self.text
+
+    def __int__(self):
+        return int(self.text)
+
+
+ReactionAlias: TypeAlias = (discord.Reaction |
+                            discord.Emoji |
+                            discord.PartialEmoji |
+                            str)
 
 
 async def wait_for_reply(
         recipient: discord.abc.Messageable | Player,
         message: str = None,
-        reactions: Iterable[Reaction] = (),
-        buttons: Iterable[Iterable[Button]] = None,
+        reactions: Iterable[ReactionAlias] = (),
+        buttons: Iterable[Iterable[discord_components.Button]] = None,
         message_check: Callable[[discord.Message], bool] = None,
         reaction_check: Callable[[discord.Reaction], bool] = None,
-        button_check: Callable[[Interaction], bool] = None,
+        button_check: Callable[[discord_components.Interaction], bool] = None,
         timeout: float = None,
-        bot: discord.Client = None) -> str:
+        bot: discord.Client = None) -> Reply:
     """Wait for a reply from the recipient.
 
     Send a message to the recipient and wait for a correct reply
@@ -120,18 +165,15 @@ async def wait_for_reply(
 
     async def wait_for_message():
         nonlocal reply
-        reply = (await bot.wait_for('message',
-                                    check=message_check)).content
+        reply = await bot.wait_for('message', check=message_check)
 
     async def wait_for_reaction_add():
         nonlocal reply
-        reply = (await bot.wait_for('reaction_add',
-                                    check=reaction_check))[0].emoji
+        reply = (await bot.wait_for('reaction_add', check=reaction_check))[0]
 
     async def wait_for_button_click():
         nonlocal reply
-        reply = (await bot.wait_for('button_click',
-                                    check=button_check)).component.label
+        reply = await bot.wait_for('button_click', check=button_check)
 
     pending_tasks = (wait_for_message(),
                      wait_for_reaction_add(),
@@ -143,13 +185,14 @@ async def wait_for_reply(
         task.cancel()
 
     if reply:
-        return str(reply)
-
-    raise asyncio.TimeoutError()
+        # noinspection PyTypeChecker
+        return Reply(reply)
+    else:
+        raise asyncio.TimeoutError()
 
 
 MessageCheck: TypeAlias = Callable[[discord.Message], bool]
-ButtonCheck: TypeAlias = Callable[[Interaction], bool]
+ButtonCheck: TypeAlias = Callable[[discord_components.Interaction], bool]
 
 
 def not_bot_message_check_decorator(func: MessageCheck) -> MessageCheck:
@@ -389,6 +432,8 @@ def request_association_hook() -> None:
                 buttons=mc.confirm_association(message_language=ul[GameCondition._leader]),
                 message_check=message_check,
                 button_check=button_check))
+        if isinstance(association.discord_reply, discord_components.Interaction):
+            association = '¯\_(ツ)_/¯'
     except asyncio.TimeoutError:
         association = '¯\_(ツ)_/¯'
 
@@ -397,7 +442,8 @@ def request_association_hook() -> None:
                 association=association,
                 message_language=ul[GameCondition._leader])
         ))
-    Imaginarium.gameplay.round_association = association
+
+    GameCondition._round_association = association
 
 
 def show_association_hook() -> None:
@@ -422,7 +468,7 @@ def request_players_cards_2_hook() -> None:
         return False
 
     @selected_card_button_check_decorator
-    def button_check(interaction: Interaction) -> bool:
+    def button_check(interaction: discord_components.Interaction) -> bool:
         number = int(interaction.component.label)
 
         # Check the number is not equal to the previous discarded card
@@ -473,7 +519,7 @@ def request_leader_card_hook() -> None:
 
     @selected_card_button_check_decorator
     @leader_button_check_decorator
-    def button_check(interaction: Interaction) -> bool:
+    def button_check(interaction: discord_components.Interaction) -> bool:
         return True
 
     try:
@@ -552,7 +598,7 @@ def vote_for_target_card_2_hook() -> None:
         return False
 
     @selected_card_button_check_decorator
-    def button_check(interaction: Interaction) -> bool:
+    def button_check(interaction: discord_components.Interaction) -> bool:
         if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != \
                 interaction.user.id:
             return True
@@ -599,7 +645,7 @@ def vote_for_target_card_hook() -> None:
 
     @selected_card_button_check_decorator
     @not_leader_button_check_decorator
-    def button_check(interaction: Interaction) -> bool:
+    def button_check(interaction: discord_components.Interaction) -> bool:
         if GameCondition._discarded_cards[int(interaction.component.label) - 1][1] != \
                 interaction.user.id:
             return True
@@ -656,31 +702,29 @@ class Gameplay(commands.Cog):
     async def join(self, ctx):
         """Join the game."""
         try:
-            try:
-                Imaginarium.gameplay.join(Player(ctx.author))
-            except Imaginarium.exceptions.PlayerAlreadyJoined:
-                await ctx.author.send(mt.you_already_joined(
-                    message_language=ul[ctx.author]))
-            else:
-                await ctx.send(mt.player_joined(ctx.author.mention))
+            Imaginarium.gameplay.join(Player(ctx.author))
         except Imaginarium.exceptions.GameIsStarted:
             await ctx.author.send(mt.you_cannot_join_now(
                 message_language=ul[ctx.author]))
+        except Imaginarium.exceptions.PlayerAlreadyJoined:
+            await ctx.author.send(mt.you_already_joined(
+                message_language=ul[ctx.author]))
+        else:
+            await ctx.send(mt.player_joined(ctx.author.mention))
 
     @commands.command()
     async def leave(self, ctx):
         """Leave the game."""
         try:
-            try:
-                Imaginarium.gameplay.leave(ctx.author.id)
-            except Imaginarium.exceptions.PlayerAlreadyLeft:
-                await ctx.author.send(mt.you_already_left(
-                    message_language=ul[ctx.author]))
-            else:
-                await ctx.send(mt.player_left(ctx.author.mention))
+            Imaginarium.gameplay.leave(ctx.author.id)
         except Imaginarium.exceptions.GameIsStarted:
             await ctx.author.send(mt.you_cannot_leave_now(
                 message_language=ul[ctx.author]))
+        except Imaginarium.exceptions.PlayerAlreadyLeft:
+            await ctx.author.send(mt.you_already_left(
+                message_language=ul[ctx.author]))
+        else:
+            await ctx.send(mt.player_left(ctx.author.mention))
 
     @commands.command()
     async def start(self, ctx):

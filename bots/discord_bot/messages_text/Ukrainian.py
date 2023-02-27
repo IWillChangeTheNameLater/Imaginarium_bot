@@ -20,8 +20,7 @@ def association_selected_automatically(association: str) -> str:
 
 
 def round_association(association: str) -> str:
-    return f'Асоціація раунду: ' \
-           f'{association}.'
+    return f'Асоціація раунду: {association}'
 
 
 def choose_card(cards: str) -> str:
