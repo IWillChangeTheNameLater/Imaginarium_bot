@@ -112,6 +112,18 @@ class Reply:
     def __int__(self):
         return int(self.text)
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.discord_reply == other.discord_reply
+        else:
+            return self.text == other
+
+    def __ne__(self, other):
+        if isinstance(other, type(self)):
+            return self.discord_reply != other.discord_reply
+        else:
+            return self.text != other
+
 
 ReactionAlias: TypeAlias = (discord.Reaction |
                             discord.Emoji |
