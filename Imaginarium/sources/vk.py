@@ -1,6 +1,6 @@
 from random import randrange, shuffle
 import os
-from typing import Mapping, Container
+from typing import Mapping, Container, MutableSequence
 
 import dotenv
 import vk_api
@@ -44,18 +44,34 @@ class Vk(BaseSource):
         so it can do it forever.
         """
 
+        def extract_attachments_from_post(post: Mapping) -> MutableSequence:
+            """Extract attachments from the post.
+
+            :param post: JSON with a VK post.
+
+            :return: JSON with an attachments from the post.
+
+            :raise KeyError: If there is no attachments to be extracted."""
+            items = post['items'][0]
+            if 'copy_history' in items:
+                items = items['copy_history'][0]
+
+            return items['attachments']
+
         def extract_content_from_attachment(attachment: Mapping) -> str:
             """Extract the link to the suitable attachment from the attachment.
 
-            :param attachment: Attachment from a post.
+            :param attachment: JSON with an attachment from a post.
 
             :return: Link to the attachment."""
-            match attachment['type']:
+            attachment_type = attachment['type']
+            multimedia = attachment[attachment_type]
+            match attachment_type:
                 case 'photo':
-                    return attachment[attachment['type']]['sizes'][-1]['url']
+                    return multimedia['sizes'][-1]['url']
                 case 'video':
-                    video_id = str(attachment[attachment['type']]['owner_id'])
-                    video_id += '_' + str(attachment[attachment['type']]['id'])
+                    video_id = str(multimedia['owner_id'])
+                    video_id += '_' + str(multimedia['id'])
 
                     return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
@@ -70,8 +86,10 @@ class Vk(BaseSource):
 
         # Extract attachments from the received post
         try:
-            attachments = post['items'][0]['attachments']
-        # If the received post has no attachments, try the next one
+            attachments = extract_attachments_from_post(post)
+        # VK post JSON contains empty attachments list instead of NULL,
+        # so the error will never be raised,
+        # but I'll leave it here just in case.
         except KeyError:
             return self.get_random_card()
 
@@ -79,12 +97,11 @@ class Vk(BaseSource):
         shuffle(attachments)
 
         # Get the first suitable attachment
-        for a in attachments:
-            if a['type'] not in self._excluded_types:
-                if self._included_types:
-                    if a['type'] not in self._included_types:
-                        continue
-                return extract_content_from_attachment(a)
+        for attachment in attachments:
+            if attachment['type'] not in self._excluded_types:
+                if self._included_types and attachment['type'] not in self._included_types:
+                    continue
+                return extract_content_from_attachment(attachment)
 
-        # I do not know do I need this, but I will leave it
+        # Search for the next card if there were no suitable attachments
         return self.get_random_card()
