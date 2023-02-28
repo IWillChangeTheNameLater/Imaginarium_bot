@@ -75,7 +75,6 @@ class Vk(BaseSource):
 
                     return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
-        # Check if there are any posts in the specified group to look for
         if self.cards_amount == 0:
             raise exceptions.NoAnyPosts()
 
@@ -84,13 +83,12 @@ class Vk(BaseSource):
                                     offset=randrange(self.cards_amount),
                                     count=1)
 
-        # Extract attachments from the received post
         try:
             attachments = extract_attachments_from_post(post)
         # VK post JSON contains empty attachments list instead of NULL,
         # so the error will never be raised,
         # but I'll leave it here just in case.
-        except KeyError:
+        except (KeyError, IndexError):
             return self.get_random_card()
 
         # Shuffle attachments order to get the first random suitable attachment
@@ -101,7 +99,7 @@ class Vk(BaseSource):
             if attachment['type'] not in self._excluded_types:
                 if self._included_types and attachment['type'] not in self._included_types:
                     continue
+
                 return extract_content_from_attachment(attachment)
 
-        # Search for the next card if there were no suitable attachments
         return self.get_random_card()
