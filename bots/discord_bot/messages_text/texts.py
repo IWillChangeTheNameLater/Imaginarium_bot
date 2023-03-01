@@ -409,6 +409,19 @@ def missing_required_argument(argument: str, *,
 ##############################################################################
 
 
+# Main
+##############################################################################
+@_translate_decorator
+def extension_does_not_exist(extension: str, available_extensions: Iterable, *,
+                             message_language: str = None):
+    available_extensions = '\n'.join(available_extensions)
+
+    return (extension, available_extensions), {}
+
+
+##############################################################################
+
+
 # Setting up game
 ##############################################################################
 @_translate_decorator

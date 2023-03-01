@@ -1,6 +1,7 @@
 import os
 from sys import path
-from typing import Generator
+from typing import Generator, Callable
+from functools import wraps
 
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
@@ -16,38 +17,25 @@ import nest_asyncio
 # to fix "RuntimeError: This event loop is already running".
 nest_asyncio.apply()
 from discord import Intents
-from discord.ext.commands import Bot
+from discord.ext import commands
 from dotenv import load_dotenv
 
 import configuration as config
+import messages_text as mt
+from messages_text import users_languages as ul
 
 load_dotenv()
 
 # Add directory with cogs to search for
 path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 
-bot = Bot(command_prefix=config.PREFIX,
-          intents=Intents.all())
+bot = commands.Bot(command_prefix=config.PREFIX,
+                   intents=Intents.all())
 bot.remove_command('help')
 
 
-@bot.command()
-async def load_extension(ctx, extension):
-    bot.load_extension(extension)
-
-
-@bot.command()
-async def unload_extension(ctx, extension):
-    bot.unload_extension(extension)
-
-
-@bot.command()
-async def reload_extension(ctx, extension):
-    bot.reload_extension(extension)
-
-
 def get_extensions(cogs_dir: str = None) -> Generator[str, None, None]:
-    """Get the names of all the extensions in the directory.
+    """Get the names of all available the extensions in the directory.
 
     :param cogs_dir: The directory with cogs.
     """
@@ -57,6 +45,39 @@ def get_extensions(cogs_dir: str = None) -> Generator[str, None, None]:
     return (filename[:-3] for filename in os.listdir(cogs_dir)
             if all((filename[:-3] in config.COGS_NAMES,
                     filename.endswith('.py'))))
+
+
+def handle_extension_errors(func: Callable) -> Callable:
+    @wraps(func)
+    async def inner(ctx, extension):
+        try:
+            await func(ctx, extension)
+        except commands.errors.ExtensionNotFound as e:
+            await ctx.author.send(mt.extension_does_not_exist(
+                extension=extension,
+                available_extensions=get_extensions(),
+                message_language=ul[ctx.author]
+            ))
+
+    return inner
+
+
+@bot.command()
+@handle_extension_errors
+async def load_extension(ctx, extension):
+    bot.load_extension(extension)
+
+
+@bot.command()
+@handle_extension_errors
+async def unload_extension(ctx, extension):
+    bot.unload_extension(extension)
+
+
+@bot.command()
+@handle_extension_errors
+async def reload_extension(ctx, extension):
+    bot.reload_extension(extension)
 
 
 @bot.command()

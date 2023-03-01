@@ -186,6 +186,16 @@ def missing_required_argument(argument: str) -> str:
 ##############################################################################
 
 
+# Main
+##############################################################################
+def extension_does_not_exist(extension: str, available_extensions: str) -> str:
+    return f'Розширення "{extension}" не існує. ' \
+           f'Спробуйте одне з наступних: \n{available_extensions}'
+
+
+##############################################################################
+
+
 # Setting up game
 ##############################################################################
 def filetype_is_not_supported(filetype: str) -> str:
