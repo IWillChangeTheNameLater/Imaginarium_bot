@@ -406,6 +406,12 @@ def missing_required_argument(argument: str, *,
     return (argument,), {}
 
 
+@_translate_decorator
+def missing_required_role(role: str, *,
+                          message_language: str = None):
+    return (role,), {}
+
+
 ##############################################################################
 
 

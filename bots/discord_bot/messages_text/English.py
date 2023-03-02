@@ -185,13 +185,17 @@ def missing_required_argument(argument: str) -> str:
     return f'{argument} is a required argument that is missing.'
 
 
+def missing_required_role(role: str) -> str:
+    return f'You do not have "{role}" role to perform this action.'
+
+
 ##############################################################################
 
 
 # Main
 ##############################################################################
 def extension_does_not_exist(extension: str, available_extensions: str) -> str:
-    return f'The "{extension}" extension does not exist.' \
+    return f'The "{extension}" extension does not exist. ' \
            f'Try one of the following: \n{available_extensions}'
 
 

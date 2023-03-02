@@ -21,6 +21,9 @@ class Listeners(commands.Cog):
             await ctx.send(mt.command_does_not_exist(config.PREFIX))
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(mt.missing_required_argument(error.args[0].split()[0]))
+        elif isinstance(error, commands.MissingRole):
+            await ctx.send(mt.missing_required_role(
+                ctx.guild.get_role(error.missing_role)))
         else:
             raise error
 

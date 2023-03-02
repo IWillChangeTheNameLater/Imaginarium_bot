@@ -183,6 +183,10 @@ def missing_required_argument(argument: str) -> str:
     return f"{argument} — це обов'язковий аргумент, який відсутній."
 
 
+def missing_required_role(role: str) -> str:
+    return f'У вас відсутня роль "{role}", необхідна для даної дії.'
+
+
 ##############################################################################
 
 

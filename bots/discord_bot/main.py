@@ -63,36 +63,42 @@ def handle_extension_errors(func: Callable) -> Callable:
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 @handle_extension_errors
 async def load_extension(ctx, extension):
     bot.load_extension(extension)
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 @handle_extension_errors
 async def unload_extension(ctx, extension):
     bot.unload_extension(extension)
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 @handle_extension_errors
 async def reload_extension(ctx, extension):
     bot.reload_extension(extension)
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 async def load_extensions(ctx):
     for extension in get_extensions():
         bot.load_extension(extension)
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 async def unload_extensions(ctx):
     for extension in get_extensions():
         bot.unload_extension(extension)
 
 
 @bot.command()
+@commands.has_role(config.EXTENSIONS_ROLE)
 async def reload_extensions(ctx):
     for extension in get_extensions():
         bot.reload_extension(extension)

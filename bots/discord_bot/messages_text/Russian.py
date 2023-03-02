@@ -173,11 +173,17 @@ def bot_ready() -> str:
 
 
 def command_does_not_exist(command_prefix: str) -> str:
-    return f'Данная команда не существует. Напишите "{command_prefix}help", чтобы получить помощь.'
+    return f'Данная команда не существует. ' \
+           f'Напишите "{command_prefix}help", чтобы получить помощь.'
 
 
 def missing_required_argument(argument: str) -> str:
     return f'Недостает аргумента: {argument}.'
+
+
+def missing_required_role(role: str) -> str:
+    return f'У вас отсутствует роль "{role}", ' \
+           f'необходимая для выполнения данного действия.'
 
 
 ##############################################################################
@@ -186,7 +192,7 @@ def missing_required_argument(argument: str) -> str:
 # Main
 ##############################################################################
 def extension_does_not_exist(extension: str, available_extensions: str) -> str:
-    return f'Расширение "{extension}" не существует.' \
+    return f'Расширение "{extension}" не существует. ' \
            f'Попробуйте одно из следующих: \n{available_extensions}'
 
 
