@@ -186,6 +186,18 @@ def missing_required_role(role: str) -> str:
            f'необходимая для выполнения данного действия.'
 
 
+def command_is_disabled() -> str:
+    return 'Данная команда отключена.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'Бот отдыхает, попробуйте снова через {retry_after} секунд.'
+
+
+def command_is_in_private_message():
+    return 'Данная команда не может быть использована в личных сообщениях.'
+
+
 ##############################################################################
 
 

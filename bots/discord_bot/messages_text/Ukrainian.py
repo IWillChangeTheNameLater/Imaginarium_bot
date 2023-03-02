@@ -188,6 +188,18 @@ def missing_required_role(role: str) -> str:
     return f'У вас відсутня роль "{role}", необхідна для даної дії.'
 
 
+def command_is_disabled() -> str:
+    return 'Ця команда відключена.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'Бот відпочиває, спробуйте ще раз через {retry_after} секунд.'
+
+
+def command_is_in_private_message():
+    return 'Дана команда не може бути використана в особистих повідомленнях.'
+
+
 ##############################################################################
 
 

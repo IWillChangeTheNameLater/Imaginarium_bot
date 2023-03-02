@@ -17,7 +17,7 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        # if command has local error handler, return
+        # Do not handle command errors if the command has its own
         try:
             _ = ctx.command.on_error
             return
@@ -26,12 +26,22 @@ class Listeners(commands.Cog):
 
         match error:
             case commands.CommandNotFound():
-                await ctx.send(mt.command_does_not_exist(config.PREFIX))
+                await ctx.send(mt.command_does_not_exist(
+                    config.PREFIX))
             case commands.MissingRequiredArgument():
-                await ctx.send(mt.missing_required_argument(error.args[0].split()[0]))
+                await ctx.send(mt.missing_required_argument(
+                    error.args[0].split()[0]))
             case commands.MissingRole():
                 await ctx.send(mt.missing_required_role(
                     ctx.guild.get_role(error.missing_role)))
+            case commands.DisabledCommand():
+                await ctx.send(mt.command_is_disabled())
+            case commands.CommandOnCooldown():
+                await ctx.send(mt.command_is_on_cooldown(
+                    error.cooldown,
+                    error.retry_after))
+            case commands.NoPrivateMessage():
+                await ctx.author.send(mt.command_is_in_private_message())
             case _:
                 raise error
 

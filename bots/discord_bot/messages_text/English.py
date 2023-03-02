@@ -178,7 +178,8 @@ def bot_ready() -> str:
 
 
 def command_does_not_exist(command_prefix: str) -> str:
-    return f'The command does not exist. Write "{command_prefix}help" to get available commands.'
+    return f'The command does not exist. ' \
+           f'Write "{command_prefix}help" to get available commands.'
 
 
 def missing_required_argument(argument: str) -> str:
@@ -187,6 +188,18 @@ def missing_required_argument(argument: str) -> str:
 
 def missing_required_role(role: str) -> str:
     return f'You do not have "{role}" role to perform this action.'
+
+
+def command_is_disabled() -> str:
+    return 'This command is disabled.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'This command is on cooldown, retry after {retry_after} seconds.'
+
+
+def command_is_in_private_message():
+    return 'This command cannot be used in private messages.'
 
 
 ##############################################################################

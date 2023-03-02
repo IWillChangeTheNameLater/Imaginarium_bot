@@ -412,6 +412,22 @@ def missing_required_role(role: str, *,
     return (role,), {}
 
 
+@_translate_decorator
+def command_is_disabled(*, message_language: str = None):
+    return (), {}
+
+
+@_translate_decorator
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float, *,
+                           message_language: str = None):
+    return (cooldown, retry_after), {}
+
+
+@_translate_decorator
+def command_is_in_private_message(*, message_language: str = None):
+    return (), {}
+
+
 ##############################################################################
 
 
