@@ -182,7 +182,7 @@ def command_does_not_exist(command_prefix: str) -> str:
 
 
 def missing_required_argument(argument: str) -> str:
-    return f'{argument} is a required argument that is missing.'
+    return f'"{argument}" is a required argument that is missing.'
 
 
 def missing_required_role(role: str) -> str:

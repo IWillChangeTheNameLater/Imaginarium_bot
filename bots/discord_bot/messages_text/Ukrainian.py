@@ -180,7 +180,8 @@ def command_does_not_exist(command_prefix: str) -> str:
 
 
 def missing_required_argument(argument: str) -> str:
-    return f"{argument} — це обов'язковий аргумент, який відсутній."
+    workaround_for_f_string = "обов'язковий"
+    return f'"{argument}" - це {workaround_for_f_string} аргумент, який відсутній.'
 
 
 def missing_required_role(role: str) -> str:
