@@ -18,6 +18,7 @@ import nest_asyncio
 nest_asyncio.apply()
 from discord import Intents
 from discord.ext import commands
+from discord_components import DiscordComponents
 from dotenv import load_dotenv
 
 import configuration as config
@@ -60,6 +61,13 @@ def handle_extension_errors(func: Callable) -> Callable:
             ))
 
     return inner
+
+
+@bot.event
+async def on_ready():
+    DiscordComponents(bot)
+
+    print(mt.bot_ready())
 
 
 @bot.command()
