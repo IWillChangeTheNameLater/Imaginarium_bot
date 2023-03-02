@@ -17,6 +17,13 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        # if command has local error handler, return
+        try:
+            _ = ctx.command.on_error
+            return
+        except AttributeError:
+            pass
+
         if isinstance(error, commands.CommandNotFound):
             await ctx.send(mt.command_does_not_exist(config.PREFIX))
         elif isinstance(error, commands.MissingRequiredArgument):
