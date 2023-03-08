@@ -130,13 +130,13 @@ def get_random_card() -> str:
 
     :returns: A link to a random card.
 
-    .. note:: Sources are selected depending on their cards amount.
+    .. note:: Sources are selected depending on their cards count.
     That is, the more cards a source has, the more often it will be selected
     so that the same cards fall out less often."""
     try:
         return choices(
             population=GameCondition._used_sources,
-            weights=[source.cards_amount for
+            weights=[source.cards_count for
                      source in GameCondition._used_sources]
         )[0].get_random_card()
     except exceptions.NoAnyPosts:
@@ -149,8 +149,8 @@ class GameCondition:
     the state of the game."""
     _leader: Any = None
     """The player who is the leader in the current round."""
-    _circle_number: int = None
-    _round_number: int = None
+    _circle_num: int = None
+    _round_num: int = None
     _discarded_cards: MutableSequence[Tuple[str, Player | int | None]] = None
     """The tuples of cards and the players who discarded them.
     The player is None if the card was discarded by the bot."""
@@ -251,13 +251,13 @@ def start_game(
 
     at_start_hook()
 
-    GameCondition._circle_number = 0
+    GameCondition._circle_num = 0
     # Circle starts
     while True:
         if not GameCondition._game_started:
             break
 
-        GameCondition._circle_number += 1
+        GameCondition._circle_num += 1
         # Hand out cards
         if GameCondition._players_count >= 3:
             for player in GameCondition._players:
@@ -268,13 +268,13 @@ def start_game(
 
         at_circle_start_hook()
 
-        GameCondition._round_number = 0
+        GameCondition._round_num = 0
         # Round starts
         for GameCondition._leader in GameCondition._players:
             if not GameCondition._game_started:
                 break
 
-            GameCondition._round_number += 1
+            GameCondition._round_num += 1
             GameCondition._votes_for_card = defaultdict(int)
             GameCondition._discarded_cards = []
             GameCondition._round_association = None

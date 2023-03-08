@@ -4,8 +4,8 @@ def game_has_started() -> str:
     return 'Игра началась'
 
 
-def round_has_started(number: int) -> str:
-    return f'{number}-й раунд начался.'
+def round_has_started(num: int) -> str:
+    return f'{num}-й раунд начался.'
 
 
 def inform_association() -> str:

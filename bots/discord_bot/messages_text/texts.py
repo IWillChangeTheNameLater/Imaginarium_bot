@@ -113,12 +113,12 @@ def game_has_started(*, message_language: str = None):
 
 
 @_translate_decorator
-def round_has_started(number: int = None, *,
+def round_has_started(num: int = None, *,
                       message_language: str = None):
-    if number is None:
-        number = GameCondition._round_number
+    if num is None:
+        num = GameCondition._round_num
 
-    return (number,), {}
+    return (num,), {}
 
 
 @_translate_decorator

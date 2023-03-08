@@ -56,7 +56,7 @@ def generate_buttons(labels: Iterable[str | int],
     return buttons
 
 
-def cards_numbers(cards_count: int) -> ButtonsComponent:
+def cards_nums(cards_count: int) -> ButtonsComponent:
     """Generate list of DiscordComponents.Button with cards
     and its numbers.
 
@@ -75,10 +75,10 @@ def confirm_association(message_language=None) -> ButtonsComponent:
 def players_cards() -> ButtonsComponent:
     """Generate a list of lists of DiscordComponents.Button with
     player's cards he can choose from."""
-    return cards_numbers(Imaginarium.rules_setup.cards_one_player_has)
+    return cards_nums(Imaginarium.rules_setup.cards_one_player_has)
 
 
 def discarded_cards() -> ButtonsComponent:
     """Generate a list of lists of DiscordComponents.Button with
     discarded cards players can vote for."""
-    return cards_numbers(len(GameCondition._discarded_cards))
+    return cards_nums(len(GameCondition._discarded_cards))

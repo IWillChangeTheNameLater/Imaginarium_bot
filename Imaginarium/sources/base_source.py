@@ -41,8 +41,8 @@ class BaseSource(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def cards_amount(self) -> int:
-        """The amount of cards the source can provide."""
+    def cards_count(self) -> int:
+        """The cards count the source can provide."""
 
     @abc.abstractmethod
     def get_random_card(self) -> str:

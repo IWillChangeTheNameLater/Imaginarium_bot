@@ -28,7 +28,7 @@ class Vk(BaseSource):
         self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types_map.get(i))}
 
     @property
-    def cards_amount(self) -> int:
+    def cards_count(self) -> int:
         """Return the number of posts in the specified group."""
         return vk_requests.wall.get(domain=self._domain, count=1)['count']
 
@@ -75,12 +75,12 @@ class Vk(BaseSource):
 
                     return vk_requests.video.get(videos=video_id)['items'][0]['player']
 
-        if self.cards_amount == 0:
+        if self.cards_count == 0:
             raise exceptions.NoAnyPosts()
 
         # Get a random post from the specified group
         post = vk_requests.wall.get(domain=self._domain,
-                                    offset=randrange(self.cards_amount),
+                                    offset=randrange(self.cards_count),
                                     count=1)
 
         try:

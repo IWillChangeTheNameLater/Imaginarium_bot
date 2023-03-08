@@ -262,7 +262,7 @@ def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
                                               step: int = 1) \
         -> MessageCheck | Callable[[], MessageCheck]:
     """Decorator that checks if the message content is a digit
-    that is in range of cards quantity."""
+    that is in range of cards count."""
     if func is None:
         return lambda func: in_range_of_cards_message_check_decorator(
             func,
@@ -290,7 +290,7 @@ def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
                                              step: int = 1) \
         -> ButtonCheck | Callable[[], ButtonCheck]:
     """Decorator that checks if the button label is a digit
-    that is in range of cards quantity."""
+    that is in range of cards count."""
     if func is None:
         return lambda func: in_range_of_cards_button_check_decorator(func,
                                                                      start=start,
@@ -472,19 +472,19 @@ def request_players_cards_2_hook() -> None:
 
     @selected_card_message_check_decorator
     def message_check(message: discord.Message) -> bool:
-        number = int(message.content)
+        num = int(message.content)
 
         # Check the number is not equal to the previous discarded card
-        if number != discarded_card:
+        if num != discarded_card:
             return True
         return False
 
     @selected_card_button_check_decorator
     def button_check(interaction: discord_components.Interaction) -> bool:
-        number = int(interaction.component.label)
+        num = int(interaction.component.label)
 
         # Check the number is not equal to the previous discarded card
-        if number != discarded_card:
+        if num != discarded_card:
             return True
         return False
 
