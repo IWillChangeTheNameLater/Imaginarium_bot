@@ -2,6 +2,7 @@ from discord.ext import commands
 
 import configuration as config
 import messages_text as mt
+from messages_text import users_languages as ul
 
 
 class Listeners(commands.Cog):
@@ -19,22 +20,28 @@ class Listeners(commands.Cog):
 
         match error:
             case commands.CommandNotFound():
-                await ctx.send(mt.command_does_not_exist(
-                    config.PREFIX))
+                await ctx.author.send(mt.command_does_not_exist(
+                    config.PREFIX,
+                    message_language=ul[ctx.author]))
             case commands.MissingRequiredArgument():
-                await ctx.send(mt.missing_required_argument(
-                    error.args[0].split()[0]))
+                await ctx.author.send(mt.missing_required_argument(
+                    error.args[0].split()[0],
+                    message_language=ul[ctx.author]))
             case commands.MissingRole():
-                await ctx.send(mt.missing_required_role(
-                    ctx.guild.get_role(error.missing_role)))
+                await ctx.author.send(mt.missing_required_role(
+                    ctx.guild.get_role(error.missing_role),
+                    message_language=ul[ctx.author]))
             case commands.DisabledCommand():
-                await ctx.send(mt.command_is_disabled())
+                await ctx.author.send(mt.command_is_disabled(
+                    message_language=ul[ctx.author]))
             case commands.CommandOnCooldown():
-                await ctx.send(mt.command_is_on_cooldown(
+                await ctx.author.send(mt.command_is_on_cooldown(
                     error.cooldown,
-                    error.retry_after))
+                    error.retry_after,
+                    message_language=ul[ctx.author]))
             case commands.NoPrivateMessage():
-                await ctx.author.send(mt.command_is_in_private_message())
+                await ctx.author.send(mt.command_is_in_private_message(
+                    message_language=ul[ctx.author]))
             case _:
                 raise error
 
