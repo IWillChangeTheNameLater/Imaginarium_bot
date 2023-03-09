@@ -144,35 +144,44 @@ def get_random_card() -> str:
 
 
 class GameCondition:
-    """A class which contains variables
-    with information about
-    the state of the game."""
+    """Contains variables with information about the state of the game.
+
+    :param _leader: The player who is the leader in the current round.
+    :param _circle_num: The number of the current circle.
+    :param _round_num: The number of the current round.
+    :param _discarded_cards: The tuples of cards and
+    the players who discarded them.
+    The player is None if the card was discarded by the bot.
+    :param _votes_for_card: The map of players and
+    the number of votes for their cards.
+    :param _game_started_at: The moment at which the game was started.
+    :param _bot_score: The bot's score in two-person mode.
+    :param _players_score: The players' score in two-person mode.
+    :param _game_started: Whether the game has started.
+    :param _round_association: The association of the current round,
+    which is set by the leader.
+    :param _game_took_time: The time that the game lasted.
+    :param _players_count: The count of players in the game.
+    :param _used_cards: The cards that have already been used in the game.
+    :param _unused_cards: The cards that will be used in the game.
+    :param _used_sources: The sources that are used in a game.
+    :param _players: The players that are playing."""
     _leader: Any = None
-    """The player who is the leader in the current round."""
     _circle_num: int = None
     _round_num: int = None
     _discarded_cards: MutableSequence[Tuple[str, Player | int | None]] = None
-    """The tuples of cards and the players who discarded them.
-    The player is None if the card was discarded by the bot."""
     _votes_for_card: Mapping[Player | int | None, int] = None
-    """The map of players and the number of votes for their cards."""
     _game_started_at: float = None
     _bot_score: float = None
-    """The bot's score in two-person mode."""
     _players_score: float = None
-    """The players' score in two-person mode."""
     _game_started: bool = None
     _round_association: str = None
     _game_took_time: float = None
     _players_count: int = None
     _used_cards: MutableSequence[str] = []
-    """The cards that have already been used in the game."""
     _unused_cards: MutableSequence[str] = []
-    """The cards that will be used in the game."""
     _used_sources: MutableSequence[sources.BaseSource] = []
-    """The sources that are used in a game."""
     _players: MutableSequence[Any] = []
-    """The players that are playing."""
 
 
 EmptyHook: TypeAlias = Callable[[], None]
