@@ -1,8 +1,10 @@
 import asyncio
+from io import BytesIO
 from random import randrange, randint
 from functools import wraps
 from typing import TypeAlias, Iterable, Callable
 
+from aiohttp import ClientSession
 import discord
 from discord.ext import commands
 import discord_components
@@ -201,6 +203,25 @@ async def wait_for_reply(
         return Reply(reply)
     else:
         raise asyncio.TimeoutError()
+
+
+async def discord_file_from_url(url: str) -> discord.File:
+    """Create a discord.File from an url."""
+    async with ClientSession() as session:
+        async with session.get(url) as response:
+            img = await response.read()
+            with BytesIO(img) as file:
+                filename = url[url.rfind('/'):]
+                if filename.rfind('?') != -1:
+                    filename = filename[:filename.rfind('?')]
+
+                return discord.File(file, filename)
+
+
+async def discord_files_from_urls(urls: Iterable) -> list[discord.File]:
+    """Apply the discord_file_from_url function on the Iterable."""
+    # noinspection PyTypeChecker
+    return await asyncio.gather(*(discord_file_from_url(url) for url in urls))
 
 
 MessageCheck: TypeAlias = Callable[[discord.Message], bool]
