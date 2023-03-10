@@ -1,6 +1,6 @@
 from collections import defaultdict
 from math import ceil
-from random import choices, shuffle
+from random import choice, shuffle
 from time import time
 from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
 
@@ -125,6 +125,9 @@ def create_source_object(source: str) -> sources.BaseSource:
         'The specified source is unsupported.')
 
 
+default_source = sources.DefaultSource()
+
+
 def get_random_card() -> str:
     """Get a random card from a source in the list of sources.
 
@@ -132,15 +135,34 @@ def get_random_card() -> str:
 
     .. note:: Sources are selected depending on their cards count.
     That is, the more cards a source has, the more often it will be selected
-    so that the same cards fall out less often."""
-    try:
-        return choices(
+    so that the same cards fall out less often.
+    But if the source returns an infinite number
+    (that is, the number of cards in it is unlimited),
+    then its weight is set as the average weight of all resources."""
+    if len(GameCondition._used_sources) >= 1:
+        weights = []
+        for source in GameCondition._used_sources:
+            weight = source.cards_count
+            if weight != float('inf'):
+                weights.append(weight)
+            else:
+                weights_sum = sum(s.cards_count for s in GameCondition._used_sources)
+                weights_count = len(GameCondition._used_sources)
+                weights.append(weights_sum / weights_count)
+
+        source = choice(
             population=GameCondition._used_sources,
-            weights=[source.cards_count for
-                     source in GameCondition._used_sources]
-        )[0].get_random_card()
-    except exceptions.NoAnyPosts:
-        return get_random_card()
+            weights=weights)
+
+        try:
+            source.get_random_card()
+        except exceptions.InvalidSource:
+            GameCondition._used_sources.remove(source)
+            return get_random_card()
+    else:
+        # If there are no any valid sources,
+        # then use the default source.
+        return default_source.get_random_card()
 
 
 class GameCondition:
@@ -243,10 +265,6 @@ def start_game(
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
             'The game is already started.')
-    if not GameCondition._used_sources:
-        raise exceptions.NoAnyUsedSources(
-            'Sources are not specified.')
-    GameCondition._players_count = len(GameCondition._players)
     if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
