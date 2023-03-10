@@ -1,6 +1,7 @@
 from random import randrange, shuffle
 import os
 from typing import Mapping, Container, MutableSequence
+from functools import wraps
 
 import dotenv
 import vk_api
@@ -11,6 +12,24 @@ from .. import exceptions
 dotenv.load_dotenv()
 
 vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
+
+
+def is_valid_request(func):
+    """Make the function check if the source is valid.
+
+    Make the passed function raise the InvalidSource exception
+    if the source is invalid because of vk_api error."""
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except vk_api.exceptions.VkApiError as e:
+            raise exceptions.InvalidSource(
+                f'The resource is unavailable due to the VK API side issues.'
+            ) from e
+
+    return inner
 
 
 class Vk(BaseSource):
@@ -28,10 +47,28 @@ class Vk(BaseSource):
         self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types_map.get(i))}
 
     @property
+    @is_valid_request
     def cards_count(self) -> int:
         """Return the number of posts in the specified group."""
         return vk_requests.wall.get(domain=self._domain, count=1)['count']
 
+    @is_valid_request
+    def is_valid(self) -> True:
+        """Check if the source itself is valid.
+
+		:return: True if the source is valid, False otherwise.
+
+		:raises InvalidSource: If the source is invalid for some reason.
+		:raises NoAnyPosts: If the source is invalid due to
+		the lack of single card.
+
+		.. note:: The source is invalid if it does not exist or is closed."""
+        if self.cards_count == 0:
+            raise exceptions.NoAnyPosts
+
+        return True
+
+    @is_valid_request
     def get_random_card(self) -> str:
         """Return a random post from the specified group
         and extract its random suitable attachment.

@@ -41,8 +41,21 @@ class BaseSource(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def cards_count(self) -> int:
-        """The cards count the source can provide."""
+    def cards_count(self) -> int | float:
+        """The cards count the source can provide.
+
+        ..note:: The result is infinity if the number of cards that
+        the source can provide is unlimited."""
+
+    @abc.abstractmethod
+    def is_valid(self) -> True:
+        """Check if the source itself is valid.
+
+		:return: True if the source is valid, False otherwise.
+
+		:raises InvalidSource: If the source is invalid.
+
+		.. note:: The source is invalid if it does not exist or is closed."""
 
     @abc.abstractmethod
     def get_random_card(self) -> str:
