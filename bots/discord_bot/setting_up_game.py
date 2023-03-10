@@ -15,8 +15,7 @@ async def _iterate_sources(ctx: Context,
     process them by the function.
     :param ctx: The message context.
     :param message: The message with sources.
-    :param function: The function to process the sources.
-    """
+    :param function: The function to process the sources. """
 
     async def iterate_lines(lines: str, function: Callable[[str], Coroutine]) -> None:
         """Iterate over the lines and process them by the function."""
@@ -74,7 +73,7 @@ class SettingUpGame(Cog):
             if source:
                 try:
                     Imaginarium.setting_up_game.add_used_source(source)
-                except Imaginarium.exceptions.UnexpectedSource:
+                except Imaginarium.exceptions.UnsupportedSource:
                     await ctx.send(mt.wrong_source(source))
 
         await _iterate_sources(ctx, message, move_source)

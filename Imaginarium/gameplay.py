@@ -121,7 +121,7 @@ def create_source_object(source: str) -> sources.BaseSource:
     elif validators.email(source):
         pass
 
-    raise exceptions.UnexpectedSource(
+    raise exceptions.UnsupportedSource(
         'The specified source is unsupported.')
 
 

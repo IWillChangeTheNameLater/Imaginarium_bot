@@ -1,9 +1,9 @@
-class UnexpectedSource(ValueError):
+class UnsupportedSource(ValueError):
     """Raised when the source is not supported."""
     pass
 
 
-class InvalidSource(ValueError):
+class InvalidSource(UnsupportedSource):
     """Raised when the source does not work."""
     pass
 
