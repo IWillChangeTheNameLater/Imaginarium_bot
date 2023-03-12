@@ -265,6 +265,7 @@ def start_game(
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
             'The game is already started.')
+    GameCondition._players_count = len(GameCondition._players)
     if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
