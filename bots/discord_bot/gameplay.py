@@ -1,8 +1,8 @@
 import asyncio
 from io import BytesIO
 from random import randrange, randint
-from functools import wraps
-from typing import TypeAlias, Iterable, Callable
+from functools import wraps, partial
+from typing import TypeAlias, Iterable, Callable, Any
 
 from aiohttp import ClientSession
 import discord
@@ -222,6 +222,17 @@ async def discord_files_from_urls(urls: Iterable) -> list[discord.File]:
     """Apply the discord_file_from_url function on the Iterable."""
     # noinspection PyTypeChecker
     return await asyncio.gather(*(discord_file_from_url(url) for url in urls))
+
+
+def try_until(action: Callable[[], Any], check: Callable[[Any], bool]):
+    """Execute the action until its result passes check.
+
+    :param action: A function which returns the result to be checked.
+    :param check: A predicate that checks the result for correctness."""
+    while True:
+        result = action()
+        if check(result):
+            return result
 
 
 MessageCheck: TypeAlias = Callable[[discord.Message], bool]
@@ -525,7 +536,9 @@ def request_players_cards_2_hook() -> None:
                     button_check=button_check,
                     buttons=mc.players_cards())))
             except asyncio.TimeoutError:
-                card = randrange(Imaginarium.rules_setup.cards_one_player_has)
+                card = try_until(
+                    partial(randrange, Imaginarium.rules_setup.cards_one_player_has),
+                    lambda num: num != discarded_card)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
@@ -619,6 +632,13 @@ def request_players_cards_hook() -> None:
                                                    player.id))
 
 
+def select_target_card_automatically(player: Player) -> int:
+    """Select a card that was not discarded by the player himself."""
+    return try_until(
+        partial(randint, 1, GameCondition._players_count),
+        lambda num: GameCondition._discarded_cards[num - 1][1] != player.id)
+
+
 # noinspection DuplicatedCode
 def vote_for_target_card_2_hook() -> None:
     """Request each player to vote for the bot's card in two-player mode."""
@@ -648,7 +668,7 @@ def vote_for_target_card_2_hook() -> None:
                     button_check=button_check,
                     buttons=mc.discarded_cards())))
         except asyncio.TimeoutError:
-            card = randint(1, GameCondition._players_count)
+            card = select_target_card_automatically(player)
             asyncio.run(player.send(
                 mt.card_selected_automatically(
                     GameCondition._discarded_cards[card - 1][0],
@@ -696,7 +716,7 @@ def vote_for_target_card_hook() -> None:
                         button_check=button_check,
                         buttons=mc.discarded_cards())))
             except asyncio.TimeoutError:
-                card = randint(1, GameCondition._players_count)
+                card = select_target_card_automatically(player)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         GameCondition._discarded_cards[card - 1][0],
