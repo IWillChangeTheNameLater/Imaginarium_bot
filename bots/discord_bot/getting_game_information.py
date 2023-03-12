@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 import Imaginarium
+from Imaginarium.gameplay import GameCondition
 import messages_text as mt
 from messages_text import users_languages as ul
 
@@ -25,7 +26,7 @@ class GettingGameInformation(commands.Cog):
 
     @commands.command()
     async def get_players_score(self, ctx):
-        if not Imaginarium.gameplay.GameCondition._game_started:
+        if not GameCondition._game_started:
             await ctx.author.send(mt.fault_because_game_ended(
                 message_language=ul[ctx.author]))
         elif not Imaginarium.getting_game_information.get_players_score():

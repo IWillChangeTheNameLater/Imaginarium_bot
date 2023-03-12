@@ -1,7 +1,7 @@
-import collections
-import math
-import random
-import time
+from collections import defaultdict
+from math import ceil
+from random import choice, shuffle
+from time import time
 from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
 
 import validators
@@ -106,8 +106,8 @@ def create_source_object(source: str) -> sources.BaseSource:
     if validators.url(source):
         domain_name = source[source.find('/') + 2:]
         domain_name = domain_name[:domain_name.find('/')]
-        domain_name = (domain_name := domain_name.split('.')) \
-            [math.ceil(len(domain_name) / 2) - 1]
+        domain_name = domain_name.split('.')
+        domain_name = domain_name[ceil(len(domain_name) / 2) - 1]
 
         match domain_name:
             case 'vk':
@@ -121,55 +121,89 @@ def create_source_object(source: str) -> sources.BaseSource:
     elif validators.email(source):
         pass
 
-    raise exceptions.UnexpectedSource(
+    raise exceptions.UnsupportedSource(
         'The specified source is unsupported.')
+
+
+default_source = sources.DefaultSource()
 
 
 def get_random_card() -> str:
     """Get a random card from a source in the list of sources.
 
-    :returns: A link to a random card."""
-    try:
-        return random.choice(used_sources).get_random_card()
-    except exceptions.NoAnyPosts:
-        return get_random_card()
+    :returns: A link to a random card.
 
+    .. note:: Sources are selected depending on their cards count.
+    That is, the more cards a source has, the more often it will be selected
+    so that the same cards fall out less often.
+    But if the source returns an infinite number
+    (that is, the number of cards in it is unlimited),
+    then its weight is set as the average weight of all resources."""
+    if len(GameCondition._used_sources) >= 1:
+        weights = []
+        for source in GameCondition._used_sources:
+            weight = source.cards_count
+            if weight != float('inf'):
+                weights.append(weight)
+            else:
+                weights_sum = sum(s.cards_count for s in GameCondition._used_sources)
+                weights_count = len(GameCondition._used_sources)
+                weights.append(weights_sum / weights_count)
 
-used_cards: MutableSequence[str] = []
-"""The cards that have already been used in the game."""
-unused_cards: MutableSequence[str] = []
-"""The cards that will be used in the game."""
-used_sources: MutableSequence[sources.BaseSource] = []
-"""The sources that are used in a game."""
-players: MutableSequence[Any] = []
-"""The players that are playing."""
+        source = choice(
+            population=GameCondition._used_sources,
+            weights=weights)
 
-player_step_timeout: float = 0
-"""The time in seconds that the player has to make a choice."""
+        try:
+            source.get_random_card()
+        except exceptions.InvalidSource:
+            GameCondition._used_sources.remove(source)
+            return get_random_card()
+    else:
+        # If there are no any valid sources,
+        # then use the default source.
+        return default_source.get_random_card()
 
 
 class GameCondition:
-    """A class which contains variables
-    with information about
-    the state of the game."""
+    """Contains variables with information about the state of the game.
+
+    :param _leader: The player who is the leader in the current round.
+    :param _circle_num: The number of the current circle.
+    :param _round_num: The number of the current round.
+    :param _discarded_cards: The tuples of cards and
+    the players who discarded them.
+    The player is None if the card was discarded by the bot.
+    :param _votes_for_card: The map of players and
+    the number of votes for their cards.
+    :param _game_started_at: The moment at which the game was started.
+    :param _bot_score: The bot's score in two-person mode.
+    :param _players_score: The players' score in two-person mode.
+    :param _game_started: Whether the game has started.
+    :param _round_association: The association of the current round,
+    which is set by the leader.
+    :param _game_took_time: The time that the game lasted.
+    :param _players_count: The count of players in the game.
+    :param _used_cards: The cards that have already been used in the game.
+    :param _unused_cards: The cards that will be used in the game.
+    :param _used_sources: The sources that are used in a game.
+    :param _players: The players that are playing."""
     _leader: Any = None
-    """The player who is the leader in the current round."""
-    _circle_number: int = None
-    _round_number: int = None
+    _circle_num: int = None
+    _round_num: int = None
     _discarded_cards: MutableSequence[Tuple[str, Player | int | None]] = None
-    """The tuples of cards and the players who discarded them.
-    The player is None if the card was discarded by the bot."""
     _votes_for_card: Mapping[Player | int | None, int] = None
-    """The map of players and the number of votes for their cards."""
     _game_started_at: float = None
     _bot_score: float = None
-    """The bot's score in two-person mode."""
     _players_score: float = None
-    """The players' score in two-person mode."""
     _game_started: bool = None
     _round_association: str = None
     _game_took_time: float = None
     _players_count: int = None
+    _used_cards: MutableSequence[str] = []
+    _unused_cards: MutableSequence[str] = []
+    _used_sources: MutableSequence[sources.BaseSource] = []
+    _players: MutableSequence[Any] = []
 
 
 EmptyHook: TypeAlias = Callable[[], None]
@@ -231,60 +265,57 @@ def start_game(
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
             'The game is already started.')
-    if not used_sources:
-        raise exceptions.NoAnyUsedSources(
-            'Sources are not specified.')
-    if len(players) < 2:
+    GameCondition._players_count = len(GameCondition._players)
+    if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
             'There are not enough players to start.')
 
-    GameCondition._game_started_at = time.time()
+    GameCondition._game_started_at = time()
     GameCondition._bot_score = 0
     GameCondition._players_score = 0
-    players_count = len(players)
-    for player in players:
+    for player in GameCondition._players:
         player.reset_state()
     GameCondition._game_started = True
 
     at_start_hook()
 
-    GameCondition._circle_number = 0
+    GameCondition._circle_num = 0
     # Circle starts
     while True:
         if not GameCondition._game_started:
             break
 
-        GameCondition._circle_number += 1
+        GameCondition._circle_num += 1
         # Hand out cards
-        if players_count >= 3:
-            for player in players:
+        if GameCondition._players_count >= 3:
+            for player in GameCondition._players:
                 # We deal one less card than the player should have,
                 # since at the beginning of each round we add one additional card.
-                player.cards = [get_random_card()
-                                for _ in range(rules_setup.cards_one_player_has)]
+                player.cards = [get_random_card() for
+                                _ in range(rules_setup.cards_one_player_has)]
 
         at_circle_start_hook()
 
-        GameCondition._round_number = 0
+        GameCondition._round_num = 0
         # Round starts
-        for GameCondition._leader in players:
+        for GameCondition._leader in GameCondition._players:
             if not GameCondition._game_started:
                 break
 
-            GameCondition._round_number += 1
-            GameCondition._votes_for_card = collections.defaultdict(int)
+            GameCondition._round_num += 1
+            GameCondition._votes_for_card = defaultdict(int)
             GameCondition._discarded_cards = []
             GameCondition._round_association = None
             # Refresh cards
-            if players_count == 2:
-                for player in players:
+            if GameCondition._players_count == 2:
+                for player in GameCondition._players:
                     player.cards = [get_random_card()
                                     for _ in range(rules_setup.cards_one_player_has)]
 
             at_round_start_hook()
 
             # Each player discards cards to the common deck
-            if players_count == 2:
+            if GameCondition._players_count == 2:
                 # Discard the bot's card
                 GameCondition._discarded_cards.append((get_random_card(), None))
 
@@ -297,7 +328,7 @@ def start_game(
                 request_players_cards_2_hook()
 
             else:
-                if players_count == 3:
+                if GameCondition._players_count == 3:
                     for i in range(2):
                         GameCondition._discarded_cards.append((get_random_card(), None))
 
@@ -311,12 +342,12 @@ def start_game(
 
                 request_players_cards_hook()
 
-            random.shuffle(GameCondition._discarded_cards)
+            shuffle(GameCondition._discarded_cards)
 
             show_discarded_cards_hook()
 
             # Each player votes for the target card
-            if players_count == 2:
+            if GameCondition._players_count == 2:
 
                 vote_for_target_card_2_hook()
 
@@ -325,7 +356,7 @@ def start_game(
                 vote_for_target_card_hook()
 
             # Scoring
-            if players_count == 2:
+            if GameCondition._players_count == 2:
                 # Count bot's score
                 match GameCondition._votes_for_card[None]:
                     case 0:
@@ -337,36 +368,37 @@ def start_game(
                         GameCondition._players_score += 2
             else:
                 if GameCondition._votes_for_card[GameCondition._leader.id] == 0:
-                    for player in players:
+                    for player in GameCondition._players:
                         player.score += GameCondition._votes_for_card[player.id]
                 else:
-                    if GameCondition._votes_for_card[GameCondition._leader.id] != players_count:
+                    if GameCondition._votes_for_card[GameCondition._leader.id] != GameCondition._players_count:
                         GameCondition._leader.score += 3
-                    for player in players:
+                    for player in GameCondition._players:
                         if player != GameCondition._leader:
                             if GameCondition._discarded_cards[player.chosen_card - 1][1] == \
                                     GameCondition._leader.id:
                                 player.score += 3
 
             # Add missed cards
-            if players_count >= 3:
-                for player in players:
+            if GameCondition._players_count >= 3:
+                for player in GameCondition._players:
                     player.cards.append(get_random_card())
 
             at_round_end_hook()
 
         # Check for victory
-        if players_count == 2:
+        if GameCondition._players_count == 2:
             if max(GameCondition._bot_score, GameCondition._players_score) >= \
                     rules_setup.winning_score:
                 GameCondition._game_started = False
         else:
-            if any(player.score >= rules_setup.winning_score for player in players):
+            if any(player.score >= rules_setup.winning_score
+                   for player in GameCondition._players):
                 GameCondition._game_started = False
 
         at_circle_end_hook()
 
-    GameCondition._game_took_time = time.time() - GameCondition._game_started_at
+    GameCondition._game_took_time = time() - GameCondition._game_started_at
 
     at_end_hook()
 
@@ -383,16 +415,16 @@ def end_game() -> None:
 def join(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted()
-    elif player in players:
+    elif player in GameCondition._players:
         raise exceptions.PlayerAlreadyJoined()
     else:
-        players.append(player)
+        GameCondition._players.append(player)
 
 
 def leave(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted()
-    elif player not in players:
+    elif player not in GameCondition._players:
         raise exceptions.PlayerAlreadyLeft()
     else:
-        players.remove(player)
+        GameCondition._players.remove(player)

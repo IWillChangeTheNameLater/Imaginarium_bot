@@ -4,8 +4,8 @@ def game_has_started() -> str:
     return 'Игра началась'
 
 
-def round_has_started(number: int) -> str:
-    return f'{number}-й раунд начался.'
+def round_has_started(num: int) -> str:
+    return f'{num}-й раунд начался.'
 
 
 def inform_association() -> str:
@@ -18,7 +18,7 @@ def association_selected_automatically(association: str) -> str:
 
 
 def round_association(association: str) -> str:
-    return f'Ассоциация раунда: {association}.'
+    return f'Ассоциация раунда: {association}'
 
 
 def choose_card(cards: str) -> str:
@@ -173,11 +173,39 @@ def bot_ready() -> str:
 
 
 def command_does_not_exist(command_prefix: str) -> str:
-    return f'Данная команда не существует. Напишите "{command_prefix}help", чтобы получить помощь.'
+    return f'Данная команда не существует. ' \
+           f'Напишите "{command_prefix}help", чтобы получить помощь.'
 
 
 def missing_required_argument(argument: str) -> str:
-    return f'Недостает аргумента: {argument}.'
+    return f'Недостает аргумента: "{argument}".'
+
+
+def missing_required_role(role: str) -> str:
+    return f'У вас отсутствует роль "{role}", ' \
+           f'необходимая для выполнения данного действия.'
+
+
+def command_is_disabled() -> str:
+    return 'Данная команда отключена.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'Бот отдыхает, попробуйте снова через {retry_after} секунд.'
+
+
+def command_is_in_private_message():
+    return 'Данная команда не может быть использована в личных сообщениях.'
+
+
+##############################################################################
+
+
+# Main
+##############################################################################
+def extension_does_not_exist(extension: str, available_extensions: str) -> str:
+    return f'Расширение "{extension}" не существует. ' \
+           f'Попробуйте одно из следующих: \n{available_extensions}'
 
 
 ##############################################################################

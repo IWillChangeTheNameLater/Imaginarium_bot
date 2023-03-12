@@ -4,8 +4,8 @@ def game_has_started() -> str:
     return 'The game has started.'
 
 
-def round_has_started(number: int) -> str:
-    return f'The round {number} has started.'
+def round_has_started(num: int) -> str:
+    return f'The round {num} has started.'
 
 
 def inform_association() -> str:
@@ -13,6 +13,7 @@ def inform_association() -> str:
            'Write it below  or confirm it by pressing the button.'
 
 
+# noinspection DuplicatedCode
 def association_selected_automatically(association: str) -> str:
     return f'You was thinking too much. ' \
            f'The association {association} was automatically selected for you.'
@@ -21,7 +22,7 @@ def association_selected_automatically(association: str) -> str:
 # noinspection DuplicatedCode
 def round_association(association: str) -> str:
     return f'The association of the round is: ' \
-           f'{association}.'
+           f'{association}'
 
 
 def choose_card(cards: str) -> str:
@@ -177,11 +178,38 @@ def bot_ready() -> str:
 
 
 def command_does_not_exist(command_prefix: str) -> str:
-    return f'The command does not exist. Write "{command_prefix}help" to get available commands.'
+    return f'The command does not exist. ' \
+           f'Write "{command_prefix}help" to get available commands.'
 
 
 def missing_required_argument(argument: str) -> str:
-    return f'{argument} is a required argument that is missing.'
+    return f'"{argument}" is a required argument that is missing.'
+
+
+def missing_required_role(role: str) -> str:
+    return f'You do not have "{role}" role to perform this action.'
+
+
+def command_is_disabled() -> str:
+    return 'This command is disabled.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'This command is on cooldown, retry after {retry_after} seconds.'
+
+
+def command_is_in_private_message():
+    return 'This command cannot be used in private messages.'
+
+
+##############################################################################
+
+
+# Main
+##############################################################################
+def extension_does_not_exist(extension: str, available_extensions: str) -> str:
+    return f'The "{extension}" extension does not exist. ' \
+           f'Try one of the following: \n{available_extensions}'
 
 
 ##############################################################################

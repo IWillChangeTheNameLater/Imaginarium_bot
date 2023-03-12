@@ -1,9 +1,9 @@
-class UnexpectedSource(ValueError):
+class UnsupportedSource(ValueError):
     """Raised when the source is not supported."""
     pass
 
 
-class InvalidSource(ValueError):
+class InvalidSource(UnsupportedSource):
     """Raised when the source does not work."""
     pass
 
@@ -18,6 +18,11 @@ class GameIsStarted(Exception):
     pass
 
 
+class GameIsEnded(Exception):
+    """Raised when trying to change something that cannot be changed after the game."""
+    pass
+
+
 class NoAnyUsedSources(Exception):
     """Raised when there are no sources to use."""
     pass
@@ -25,11 +30,6 @@ class NoAnyUsedSources(Exception):
 
 class NotEnoughPlayers(TypeError):
     """Raised when there are not enough players."""
-    pass
-
-
-class GameIsEnded(Exception):
-    """Raised when trying to change something that cannot be changed after the game."""
     pass
 
 

@@ -4,23 +4,23 @@ def game_has_started() -> str:
     return 'Гра почалася.'
 
 
-def round_has_started(number: int) -> str:
-    return f'Раунд {number} почався.'
+def round_has_started(num: int) -> str:
+    return f'Раунд {num} почався.'
 
 
 def inform_association() -> str:
     return 'Ви повідомили асоціацію про раунд? ' \
-           'Напишіть її нижче або підтвердіть натиснувши кнопку.'
+           'Напишіть її нижче або підтвердити натиснувши кнопку.'
 
 
+# noinspection DuplicatedCode
 def association_selected_automatically(association: str) -> str:
     return f'Ви дуже довго думали. ' \
            f'Асоціація {association} була автоматично обрана для вас.'
 
 
 def round_association(association: str) -> str:
-    return f'Асоціація раунду: ' \
-           f'{association}.'
+    return f'Асоціація раунду: {association}'
 
 
 def choose_card(cards: str) -> str:
@@ -180,7 +180,34 @@ def command_does_not_exist(command_prefix: str) -> str:
 
 
 def missing_required_argument(argument: str) -> str:
-    return f"{argument} — це обов'язковий аргумент, який відсутній."
+    workaround_for_f_string = "обов'язковий"
+    return f'"{argument}" - це {workaround_for_f_string} аргумент, який відсутній.'
+
+
+def missing_required_role(role: str) -> str:
+    return f'У вас відсутня роль "{role}", необхідна для даної дії.'
+
+
+def command_is_disabled() -> str:
+    return 'Ця команда відключена.'
+
+
+def command_is_on_cooldown(cooldown: str | float, retry_after: str | float) -> str:
+    return f'Бот відпочиває, спробуйте ще раз через {retry_after} секунд.'
+
+
+def command_is_in_private_message():
+    return 'Дана команда не може бути використана в особистих повідомленнях.'
+
+
+##############################################################################
+
+
+# Main
+##############################################################################
+def extension_does_not_exist(extension: str, available_extensions: str) -> str:
+    return f'Розширення "{extension}" не існує. ' \
+           f'Спробуйте одне з наступних: \n{available_extensions}'
 
 
 ##############################################################################
