@@ -63,7 +63,7 @@ def _translate_decorator(preprocessing_func: Callable[[...], Arguments]) \
     :raise AttributeError: If the function with the same name is not found
     either in the language module or in the default language module.
 
-    ::note: The decorated function must have a language keyword argument."""
+    .. note: The decorated function must have a language keyword argument."""
     language_arg_name = 'message_language'
 
     @wraps(preprocessing_func)
