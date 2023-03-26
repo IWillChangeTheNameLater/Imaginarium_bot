@@ -1,15 +1,18 @@
-import os
-from sys import path
+from os import environ
+from pathlib import Path
+import sys
 from typing import Generator, Callable
 from functools import wraps
 
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
     # Iterate up the directory until the "Imaginarium_bot" folder is found.
-    path.append(os.sep.join(y := __file__.split(os.sep) \
-        [:__file__.split(os.sep).index('Imaginarium_bot') + 1]))
+    for parent in Path(__file__).parents:
+        if parent.name == 'Imaginarium_bot':
+            sys.path.append(str(parent))
+            break
 else:
-    path.append(os.path.dirname(__file__))
+    sys.path.append(str(Path(__file__).parent.resolve()))
 
 import nest_asyncio
 
@@ -28,24 +31,25 @@ from messages_text import users_languages as ul
 load_dotenv()
 
 # Add directory with cogs to search for
-path.append(os.environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
+sys.path.append(environ['PATH_TO_DISCORD_COGS_DIRECTORY'])
 
 bot = commands.Bot(command_prefix=config.PREFIX,
                    intents=Intents.all())
 bot.remove_command('help')
 
 
-def get_extensions(cogs_dir: str = None) -> Generator[str, None, None]:
+def get_extensions(cogs_dir: Path | str = None) -> Generator[str, None, None]:
     """Get the names of all available the extensions in the directory.
 
     :param cogs_dir: The directory with cogs.
     """
     if cogs_dir is None:
-        cogs_dir = os.environ['PATH_TO_DISCORD_COGS_DIRECTORY']
+        cogs_dir = environ['PATH_TO_DISCORD_COGS_DIRECTORY']
+    cogs_dir = Path(cogs_dir)
 
-    return (filename[:-3] for filename in os.listdir(cogs_dir)
-            if all((filename[:-3] in config.COGS_NAMES,
-                    filename.endswith('.py'))))
+    return (filename.stem for filename in cogs_dir.iterdir()
+            if filename.stem in config.COGS_NAMES and
+            filename.suffix == '.py')
 
 
 def handle_extension_errors(func: Callable) -> Callable:
@@ -116,7 +120,7 @@ def main():
     for extension in get_extensions():
         bot.load_extension(extension)
 
-    bot.run(os.environ['DISCORD_BOT_TOKEN'])
+    bot.run(environ['DISCORD_BOT_TOKEN'])
 
 
 if __name__ == '__main__':

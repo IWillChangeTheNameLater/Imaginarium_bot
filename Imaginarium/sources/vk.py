@@ -1,5 +1,5 @@
 from random import randrange, shuffle
-import os
+from os import environ
 from typing import Mapping, Container, MutableSequence
 from functools import wraps
 
@@ -11,7 +11,7 @@ from .. import exceptions
 
 dotenv.load_dotenv()
 
-vk_requests = vk_api.VkApi(token=os.environ['VK_PARSER_TOKEN']).get_api()
+vk_requests = vk_api.VkApi(token=environ['VK_PARSER_TOKEN']).get_api()
 
 
 def is_valid_request(func):

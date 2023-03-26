@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Coroutine
 
 from discord.ext.commands import Context, Cog, command
@@ -22,19 +23,17 @@ async def _iterate_sources(ctx: Context,
         for source in lines.replace('\r', '').split('\n'):
             await function(source)
 
-    def _extract_file_extension(filename: str) -> str:
-        return filename[filename.rfind('.') + 1:]
-
     await iterate_lines(message, function)
 
     for attachment in ctx.message.attachments:
-        filetype = _extract_file_extension(attachment.filename)
+        filetype = Path(attachment.filename).suffix[1:]
 
-        if filetype == 'txt':
-            text = await attachment.read()
-            await iterate_lines(text.decode(detect(text[:1000])['encoding']), function)
-        else:
-            await ctx.send(mt.filetype_is_not_supported(filetype))
+        match filetype:
+            case 'txt':
+                text = await attachment.read()
+                await iterate_lines(text.decode(detect(text[:1000])['encoding']), function)
+            case _:
+                await ctx.send(mt.filetype_is_not_supported(filetype))
 
 
 class SettingUpGame(Cog):
