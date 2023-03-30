@@ -19,6 +19,7 @@ import nest_asyncio
 # The "next_asyncio.apply()" have to be called before "discord" import
 # to fix "RuntimeError: This event loop is already running".
 nest_asyncio.apply()
+
 from discord import Intents
 from discord.ext import commands
 from discord_components import DiscordComponents
