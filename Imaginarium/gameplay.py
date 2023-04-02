@@ -128,10 +128,13 @@ def create_source_object(source: str) -> sources.BaseSource:
 default_source = sources.DefaultSource()
 
 
-def get_random_card() -> str:
-    """Get a random card from a source in the list of sources.
+def get_random_source() -> sources.BaseSource:
+    """Get a random source from the list of sources.
 
-    :returns: A link to a random card.
+    :returns: A random source.
+
+    :raise NoAnyUsedSources: If there are no sources in
+    the list of sources.
 
     .. note:: Sources are selected depending on their cards count.
     That is, the more cards a source has, the more often it will be selected
@@ -139,7 +142,11 @@ def get_random_card() -> str:
     But if the source returns an infinite number
     (that is, the number of cards in it is unlimited),
     then its weight is set as the average weight of all resources."""
-    if len(GameCondition._used_sources) >= 1:
+    if len(GameCondition._used_sources) == 0:
+        raise exceptions.NoAnyUsedSources('There are no sources to use.')
+    elif len(GameCondition._used_sources) == 1:
+        return GameCondition._used_sources[0]
+    else:
         weights = []
         for source in GameCondition._used_sources:
             weight = source.cards_count
@@ -150,19 +157,26 @@ def get_random_card() -> str:
                 weights_count = len(GameCondition._used_sources)
                 weights.append(weights_sum / weights_count)
 
-        source = choice(
-            population=GameCondition._used_sources,
-            weights=weights)
+        return choice(population=GameCondition._used_sources,
+                      weights=weights)
 
+
+def get_random_card() -> str:
+    """Get a random card from a random source in the list of sources.
+
+    :returns: A link to a random card."""
+    try:
+        source = get_random_source()
+    except exceptions.NoAnyUsedSources:
+        # If there are no any valid sources,
+        # then use the default source.
+        source = default_source
+    else:
         try:
-            source.get_random_card()
+            return source.get_random_card()
         except exceptions.InvalidSource:
             GameCondition._used_sources.remove(source)
             return get_random_card()
-    else:
-        # If there are no any valid sources,
-        # then use the default source.
-        return default_source.get_random_card()
 
 
 class GameCondition:
@@ -358,6 +372,7 @@ def start_game(
             # Scoring
             if GameCondition._players_count == 2:
                 # Count bot's score
+                # noinspection PyTypeChecker
                 match GameCondition._votes_for_card[None]:
                     case 0:
                         GameCondition._bot_score += 3

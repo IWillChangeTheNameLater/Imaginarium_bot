@@ -101,7 +101,7 @@ class Reply:
                 self.text = self.discord_reply.component.label
             case _:
                 raise AttributeError(
-                    f'The "reply" argument is an unknown type.'
+                    f'The "reply" argument is an unknown type. '
                     f'It must be one of the following: '
                     f'discord.Message, discord.Reaction, discord_components.Interaction')
 
