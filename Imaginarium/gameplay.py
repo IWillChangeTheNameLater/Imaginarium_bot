@@ -182,7 +182,6 @@ async def get_random_card() -> str:
     try:
         return await source.get_random_card()
     except exceptions.InvalidSource:
-        GameCondition._used_sources.remove(source)
         return await get_random_card()
 
 
