@@ -4,14 +4,15 @@ from typing import Mapping, Container, MutableSequence
 from functools import wraps
 
 import dotenv
-import vk_api
+import aiovk2
+from aiovk2.exceptions import VkException
 
 from . import BaseSource
 from .. import exceptions
 
 dotenv.load_dotenv()
 
-vk_requests = vk_api.VkApi(token=environ['VK_PARSER_TOKEN']).get_api()
+aiovk_api = aiovk2.API(aiovk2.TokenSession(access_token=environ['VK_PARSER_TOKEN']))
 
 
 def is_valid_request(func):
@@ -21,10 +22,10 @@ def is_valid_request(func):
     if the source is invalid because of vk_api error."""
 
     @wraps(func)
-    def inner(*args, **kwargs):
+    async def inner(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
-        except vk_api.exceptions.VkApiError as e:
+            return await func(*args, **kwargs)
+        except VkException as e:
             raise exceptions.InvalidSource(
                 f'The resource is unavailable due to the VK API side issues.'
             ) from e
@@ -46,14 +47,13 @@ class Vk(BaseSource):
         self._included_types: Container = {y for i in self._included_types if (y := Vk._types_map.get(i))}
         self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types_map.get(i))}
 
-    @property
     @is_valid_request
-    def cards_count(self) -> int:
+    async def get_cards_count(self) -> int:
         """Return the number of posts in the specified group."""
-        return vk_requests.wall.get(domain=self._domain, count=1)['count']
+        return (await aiovk_api.wall.get(domain=self._domain, count=1))['count']
 
     @is_valid_request
-    def is_valid(self) -> True:
+    async def is_valid(self) -> True:
         """Check if the source itself is valid.
 
 		:return: True if the source is valid, False otherwise.
@@ -63,13 +63,13 @@ class Vk(BaseSource):
 		the lack of single card.
 
 		.. note:: The source is invalid if it does not exist or is closed."""
-        if self.cards_count == 0:
+        if await self.get_cards_count() == 0:
             raise exceptions.NoAnyPosts
 
         return True
 
     @is_valid_request
-    def get_random_card(self) -> str:
+    async def get_random_card(self) -> str:
         """Return a random post from the specified group
         and extract its random suitable attachment.
 
@@ -95,7 +95,7 @@ class Vk(BaseSource):
 
             return items['attachments']
 
-        def extract_content_from_attachment(attachment: Mapping) -> str:
+        async def extract_content_from_attachment(attachment: Mapping) -> str:
             """Extract the link to the suitable attachment from the attachment.
 
             :param attachment: JSON with an attachment from a post.
@@ -110,15 +110,15 @@ class Vk(BaseSource):
                     video_id = str(multimedia['owner_id'])
                     video_id += '_' + str(multimedia['id'])
 
-                    return vk_requests.video.get(videos=video_id)['items'][0]['player']
+                    return (await aiovk_api.video.get(video_id=video_id))['items'][0]['player']
 
-        if self.cards_count == 0:
+        if await self.get_cards_count() == 0:
             raise exceptions.NoAnyPosts()
 
         # Get a random post from the specified group
-        post = vk_requests.wall.get(domain=self._domain,
-                                    offset=randrange(self.cards_count),
-                                    count=1)
+        post = await aiovk_api.wall.get(domain=self._domain,
+                                        offset=randrange(await self.get_cards_count()),
+                                        count=1)
 
         try:
             attachments = extract_attachments_from_post(post)
@@ -126,7 +126,7 @@ class Vk(BaseSource):
         # so the error will never be raised,
         # but I'll leave it here just in case.
         except (KeyError, IndexError):
-            return self.get_random_card()
+            return await self.get_random_card()
 
         # Shuffle attachments order to get the first random suitable attachment
         shuffle(attachments)
@@ -137,6 +137,6 @@ class Vk(BaseSource):
                 if self._included_types and attachment['type'] not in self._included_types:
                     continue
 
-                return extract_content_from_attachment(attachment)
+                return await extract_content_from_attachment(attachment)
 
-        return self.get_random_card()
+        return await self.get_random_card()

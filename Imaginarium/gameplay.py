@@ -2,7 +2,14 @@ from collections import defaultdict
 from math import ceil
 from random import choice, shuffle
 from time import time
-from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
+from typing import (
+    MutableSequence,
+    Tuple,
+    Mapping,
+    Any,
+    TypeAlias,
+    Callable,
+    Awaitable)
 
 import validators
 
@@ -128,7 +135,7 @@ def create_source_object(source: str) -> sources.BaseSource:
 default_source = sources.DefaultSource()
 
 
-def get_random_source() -> sources.BaseSource:
+async def get_random_source() -> sources.BaseSource:
     """Get a random source from the list of sources.
 
     :returns: A random source.
@@ -149,11 +156,11 @@ def get_random_source() -> sources.BaseSource:
     else:
         weights = []
         for source in GameCondition._used_sources:
-            weight = source.cards_count
+            weight = await source.get_cards_count()
             if weight != float('inf'):
                 weights.append(weight)
             else:
-                weights_sum = sum(s.cards_count for s in GameCondition._used_sources)
+                weights_sum = sum(await s.get_cards_count() for s in GameCondition._used_sources)
                 weights_count = len(GameCondition._used_sources)
                 weights.append(weights_sum / weights_count)
 
@@ -161,22 +168,22 @@ def get_random_source() -> sources.BaseSource:
                       weights=weights)
 
 
-def get_random_card() -> str:
+async def get_random_card() -> str:
     """Get a random card from a random source in the list of sources.
 
     :returns: A link to a random card."""
     try:
-        source = get_random_source()
+        source = await get_random_source()
     except exceptions.NoAnyUsedSources:
         # If there are no any valid sources,
         # then use the default source.
         source = default_source
-    else:
-        try:
-            return source.get_random_card()
-        except exceptions.InvalidSource:
-            GameCondition._used_sources.remove(source)
-            return get_random_card()
+
+    try:
+        return await source.get_random_card()
+    except exceptions.InvalidSource:
+        GameCondition._used_sources.remove(source)
+        return await get_random_card()
 
 
 class GameCondition:
@@ -220,16 +227,16 @@ class GameCondition:
     _players: MutableSequence[Any] = []
 
 
-EmptyHook: TypeAlias = Callable[[], None]
+EmptyHook: TypeAlias = Callable[[], Awaitable[None]]
 
 
-def empty_hook() -> None:
+async def empty_hook() -> None:
     """Do nothing perfectly."""
     pass
 
 
 # This is already some kind of bullshit
-def start_game(
+async def start_game(
         at_start_hook: EmptyHook = empty_hook,
         at_circle_start_hook: EmptyHook = empty_hook,
         at_round_start_hook: EmptyHook = empty_hook,
@@ -291,7 +298,7 @@ def start_game(
         player.reset_state()
     GameCondition._game_started = True
 
-    at_start_hook()
+    await at_start_hook()
 
     GameCondition._circle_num = 0
     # Circle starts
@@ -305,10 +312,10 @@ def start_game(
             for player in GameCondition._players:
                 # We deal one less card than the player should have,
                 # since at the beginning of each round we add one additional card.
-                player.cards = [get_random_card() for
+                player.cards = [await get_random_card() for
                                 _ in range(rules_setup.cards_one_player_has)]
 
-        at_circle_start_hook()
+        await at_circle_start_hook()
 
         GameCondition._round_num = 0
         # Round starts
@@ -323,51 +330,51 @@ def start_game(
             # Refresh cards
             if GameCondition._players_count == 2:
                 for player in GameCondition._players:
-                    player.cards = [get_random_card()
+                    player.cards = [await get_random_card()
                                     for _ in range(rules_setup.cards_one_player_has)]
 
-            at_round_start_hook()
+            await at_round_start_hook()
 
             # Each player discards cards to the common deck
             if GameCondition._players_count == 2:
                 # Discard the bot's card
-                GameCondition._discarded_cards.append((get_random_card(), None))
+                GameCondition._discarded_cards.append((await get_random_card(), None))
 
-                request_association_hook()
+                await request_association_hook()
 
-                show_association_hook()
+                await show_association_hook()
 
-                show_players_cards_hook()
+                await show_players_cards_hook()
 
-                request_players_cards_2_hook()
+                await request_players_cards_2_hook()
 
             else:
                 if GameCondition._players_count == 3:
                     for i in range(2):
-                        GameCondition._discarded_cards.append((get_random_card(), None))
+                        GameCondition._discarded_cards.append((await get_random_card(), None))
 
-                show_players_cards_hook()
+                await show_players_cards_hook()
 
-                request_leader_card_hook()
+                await request_leader_card_hook()
 
-                request_association_hook()
+                await request_association_hook()
 
-                show_association_hook()
+                await show_association_hook()
 
-                request_players_cards_hook()
+                await request_players_cards_hook()
 
             shuffle(GameCondition._discarded_cards)
 
-            show_discarded_cards_hook()
+            await show_discarded_cards_hook()
 
             # Each player votes for the target card
             if GameCondition._players_count == 2:
 
-                vote_for_target_card_2_hook()
+                await vote_for_target_card_2_hook()
 
             else:
 
-                vote_for_target_card_hook()
+                await vote_for_target_card_hook()
 
             # Scoring
             if GameCondition._players_count == 2:
@@ -397,9 +404,9 @@ def start_game(
             # Add missed cards
             if GameCondition._players_count >= 3:
                 for player in GameCondition._players:
-                    player.cards.append(get_random_card())
+                    player.cards.append(await get_random_card())
 
-            at_round_end_hook()
+            await at_round_end_hook()
 
         # Check for victory
         if GameCondition._players_count == 2:
@@ -411,11 +418,11 @@ def start_game(
                    for player in GameCondition._players):
                 GameCondition._game_started = False
 
-        at_circle_end_hook()
+        await at_circle_end_hook()
 
     GameCondition._game_took_time = time() - GameCondition._game_started_at
 
-    at_end_hook()
+    await at_end_hook()
 
 
 def end_game() -> None:

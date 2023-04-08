@@ -28,12 +28,12 @@ def reset_used_sources() -> None:
     GameCondition._used_sources = set()
 
 
-def add_used_source(source: str) -> None:
+async def add_used_source(source: str) -> None:
     """Add source to sources that are used in the game.
 
     :raises InvalidSource: If the source is invalid for some reason."""
     source = gameplay.create_source_object(source)
-    if source.is_valid():
+    if await source.is_valid():
         GameCondition._used_sources.append(source)
 
 

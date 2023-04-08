@@ -39,16 +39,15 @@ class BaseSource(abc.ABC):
     def __hash__(self) -> int:
         return hash(self._link)
 
-    @property
     @abc.abstractmethod
-    def cards_count(self) -> int | float:
+    async def get_cards_count(self) -> int | float:
         """The cards count the source can provide.
 
         ..note:: The result is infinity if the number of cards that
         the source can provide is unlimited."""
 
     @abc.abstractmethod
-    def is_valid(self) -> True:
+    async def is_valid(self) -> True:
         """Check if the source itself is valid.
 
 		:return: True if the source is valid, False otherwise.
@@ -58,7 +57,7 @@ class BaseSource(abc.ABC):
 		.. note:: The source is invalid if it does not exist or is closed."""
 
     @abc.abstractmethod
-    def get_random_card(self) -> str:
+    async def get_random_card(self) -> str:
         """Get a random card from the source if it is available
         and the type of the card is not excluded.
 

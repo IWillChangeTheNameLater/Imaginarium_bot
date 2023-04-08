@@ -444,18 +444,18 @@ def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
     return func
 
 
-def at_start_hook() -> None:
+async def at_start_hook():
     """Send a message to the channel that the game has started."""
     asyncio.run(Gameplay.start.ctx.send(mt.game_has_started()))
 
 
-def at_round_start_hook() -> None:
+async def at_round_start_hook():
     """Send a message to the channel that the round has started."""
     asyncio.run(Gameplay.start.ctx.send(mt.round_has_started()))
 
 
 # noinspection PyTypeChecker
-def request_association_hook() -> None:
+async def request_association_hook():
     """Do not continue the game until the association is specified."""
 
     @not_bot_message_check_decorator
@@ -490,13 +490,13 @@ def request_association_hook() -> None:
     GameCondition._round_association = association
 
 
-def show_association_hook() -> None:
+async def show_association_hook():
     """Send the association to the channel."""
     if GameCondition._round_association:
         asyncio.run(Gameplay.start.ctx.send(mt.round_association()))
 
 
-def request_players_cards_2_hook() -> None:
+async def request_players_cards_2_hook():
     """Request each player to choose 2 cards to discard in two-player mode
     or choose the cards automatically if the player's time is up."""
     # Remember discarded card to not allow the player to choose it again.
@@ -555,7 +555,7 @@ def request_players_cards_2_hook() -> None:
             discarded_card = card
 
 
-def request_leader_card_hook() -> None:
+async def request_leader_card_hook():
     """Request the leader to choose a card to discard."""
 
     @selected_card_message_check_decorator
@@ -592,7 +592,7 @@ def request_leader_card_hook() -> None:
          GameCondition._leader.id))
 
 
-def request_players_cards_hook() -> None:
+async def request_players_cards_hook():
     """Request each player except the leader to choose a card to discard
     or choose the card automatically if the player's time is up."""
 
@@ -640,7 +640,7 @@ def select_target_card_automatically(player: Player) -> int:
 
 
 # noinspection DuplicatedCode
-def vote_for_target_card_2_hook() -> None:
+async def vote_for_target_card_2_hook():
     """Request each player to vote for the bot's card in two-player mode."""
 
     @selected_card_message_check_decorator
@@ -685,7 +685,7 @@ def vote_for_target_card_2_hook() -> None:
 
 
 # noinspection DuplicatedCode
-def vote_for_target_card_hook() -> None:
+async def vote_for_target_card_hook():
     """Request each player to vote for the leader's card."""
 
     @selected_card_message_check_decorator
@@ -732,7 +732,7 @@ def vote_for_target_card_hook() -> None:
             player.chosen_card = card
 
 
-def at_end_hook() -> None:
+async def at_end_hook():
     """Announce the results of the game."""
     asyncio.run(Gameplay.start.ctx.send(mt.game_took_time()))
 
@@ -785,7 +785,7 @@ class Gameplay(commands.Cog):
         Gameplay.start.ctx = ctx
 
         try:
-            Imaginarium.gameplay.start_game(
+            await Imaginarium.gameplay.start_game(
                 at_start_hook=at_start_hook,
                 at_round_start_hook=at_round_start_hook,
                 request_association_hook=request_association_hook,
