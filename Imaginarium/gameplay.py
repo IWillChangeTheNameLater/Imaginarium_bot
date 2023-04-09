@@ -109,7 +109,7 @@ def create_source_object(source: str) -> sources.BaseSource:
     and create a BaseSource object that can be used to get cards.
 
     :param source: A link to the source.
-    :returns: A BaseSource object that can be used to get cards."""
+    :return: A BaseSource object that can be used to get cards."""
     if validators.url(source):
         domain_name = source[source.find('/') + 2:]
         domain_name = domain_name[:domain_name.find('/')]
@@ -138,7 +138,7 @@ default_source = sources.DefaultSource()
 async def get_random_source() -> sources.BaseSource:
     """Get a random source from the list of sources.
 
-    :returns: A random source.
+    :return: A random source.
 
     :raise NoAnyUsedSources: If there are no sources in
     the list of sources.
@@ -171,7 +171,7 @@ async def get_random_source() -> sources.BaseSource:
 async def get_random_card() -> str:
     """Get a random card from a random source in the list of sources.
 
-    :returns: A link to a random card."""
+    :return: A link to a random card."""
     try:
         source = await get_random_source()
     except exceptions.NoAnyUsedSources:
