@@ -1,3 +1,5 @@
+import asyncio
+from asyncio import Future
 from collections import defaultdict
 from math import ceil
 from random import choice, shuffle
@@ -9,7 +11,8 @@ from typing import (
     Any,
     TypeAlias,
     Callable,
-    Awaitable)
+    Awaitable,
+    AsyncIterable)
 
 import validators
 
@@ -185,6 +188,27 @@ async def get_random_card() -> str:
         return await get_random_card()
 
 
+async def async_generate_random_cards(cards_count: int) -> AsyncIterable[Future[str]]:
+    """Return an asynchronous iterator with random cards.
+
+    The iterator returns cards received by the get_random_card function.
+
+    :param cards_count: The count of cards that have to be received.
+
+    :return: An asynchronous iterator."""
+    tasks = [get_random_card() for _ in range(cards_count)]
+    for future in asyncio.as_completed(tasks): yield future
+
+
+async def get_random_cards(cards_count: int) -> list[str]:
+    """Get random cards from a random source in the list of sources.
+
+    :param cards_count: The count of cards that have to be received.
+
+    :return: Links to random cards."""
+    return [await f async for f in async_generate_random_cards(cards_count)]
+
+
 class GameCondition:
     """Contains variables with information about the state of the game.
 
@@ -308,9 +332,11 @@ async def start_game(
         GameCondition._circle_num += 1
         # Hand out cards
         if GameCondition._players_count >= 3:
-            for player in GameCondition._players:
-                player.cards = [await get_random_card() for
-                                _ in range(rules_setup.cards_one_player_has)]
+            cards = await get_random_cards(rules_setup.cards_one_player_has *
+                                           GameCondition._players_count)
+            for i, player in enumerate(GameCondition._players):
+                player.cards = cards[i * rules_setup.cards_one_player_has:
+                                     (i + 1) * rules_setup.cards_one_player_has]
 
         await at_circle_start_hook()
 
@@ -326,9 +352,11 @@ async def start_game(
             GameCondition._round_association = None
             # Refresh cards
             if GameCondition._players_count == 2:
-                for player in GameCondition._players:
-                    player.cards = [await get_random_card()
-                                    for _ in range(rules_setup.cards_one_player_has)]
+                cards = await get_random_cards(rules_setup.cards_one_player_has *
+                                               GameCondition._players_count)
+                for i, player in enumerate(GameCondition._players):
+                    player.cards = cards[i * rules_setup.cards_one_player_has:
+                                         (i + 1) * rules_setup.cards_one_player_has]
 
             await at_round_start_hook()
 
@@ -347,8 +375,8 @@ async def start_game(
 
             else:
                 if GameCondition._players_count == 3:
-                    for i in range(2):
-                        GameCondition._discarded_cards.append((await get_random_card(), None))
+                    for card in await get_random_cards(2):
+                        GameCondition._discarded_cards.append((card, None))
 
                 await show_players_cards_hook()
 
@@ -400,8 +428,10 @@ async def start_game(
 
             # Add missed cards
             if GameCondition._players_count >= 3:
-                for player in GameCondition._players:
-                    player.cards.append(await get_random_card())
+                for player, card in zip(
+                        GameCondition._players,
+                        await get_random_cards(GameCondition._players_count)):
+                    player.cards.append(card)
 
             await at_round_end_hook()
 
