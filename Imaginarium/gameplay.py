@@ -309,8 +309,6 @@ async def start_game(
         # Hand out cards
         if GameCondition._players_count >= 3:
             for player in GameCondition._players:
-                # We deal one less card than the player should have,
-                # since at the beginning of each round we add one additional card.
                 player.cards = [await get_random_card() for
                                 _ in range(rules_setup.cards_one_player_has)]
 
