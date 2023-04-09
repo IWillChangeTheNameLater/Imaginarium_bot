@@ -332,11 +332,11 @@ async def start_game(
         GameCondition._circle_num += 1
         # Hand out cards
         if GameCondition._players_count >= 3:
-            cards = await get_random_cards(rules_setup.cards_one_player_has *
+            cards = await get_random_cards(rules_setup.cards_per_player *
                                            GameCondition._players_count)
             for i, player in enumerate(GameCondition._players):
-                player.cards = cards[i * rules_setup.cards_one_player_has:
-                                     (i + 1) * rules_setup.cards_one_player_has]
+                player.cards = cards[i * rules_setup.cards_per_player:
+                                     (i + 1) * rules_setup.cards_per_player]
 
         await at_circle_start_hook()
 
@@ -352,11 +352,11 @@ async def start_game(
             GameCondition._round_association = None
             # Refresh cards
             if GameCondition._players_count == 2:
-                cards = await get_random_cards(rules_setup.cards_one_player_has *
+                cards = await get_random_cards(rules_setup.cards_per_player *
                                                GameCondition._players_count)
                 for i, player in enumerate(GameCondition._players):
-                    player.cards = cards[i * rules_setup.cards_one_player_has:
-                                         (i + 1) * rules_setup.cards_one_player_has]
+                    player.cards = cards[i * rules_setup.cards_per_player:
+                                         (i + 1) * rules_setup.cards_per_player]
 
             await at_round_start_hook()
 

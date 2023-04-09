@@ -75,7 +75,7 @@ def confirm_association(message_language=None) -> ButtonsComponent:
 def players_cards() -> ButtonsComponent:
     """Generate a list of lists of DiscordComponents.Button with
     player's cards he can choose from."""
-    return cards_nums(Imaginarium.rules_setup.cards_one_player_has)
+    return cards_nums(Imaginarium.rules_setup.cards_per_player)
 
 
 def discarded_cards() -> ButtonsComponent:

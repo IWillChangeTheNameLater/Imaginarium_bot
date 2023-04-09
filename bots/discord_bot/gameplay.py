@@ -303,7 +303,7 @@ def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
             step=step)
 
     if stop is None:
-        stop = Imaginarium.rules_setup.cards_one_player_has + 1
+        stop = Imaginarium.rules_setup.cards_per_player + 1
 
     @wraps(func)
     def inner(message):
@@ -330,7 +330,7 @@ def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
                                                                      step=step)
 
     if stop is None:
-        stop = Imaginarium.rules_setup.cards_one_player_has + 1
+        stop = Imaginarium.rules_setup.cards_per_player + 1
 
     @wraps(func)
     def inner(interaction):
@@ -537,7 +537,7 @@ async def request_players_cards_2_hook():
                     buttons=mc.players_cards())))
             except asyncio.TimeoutError:
                 card = try_until(
-                    partial(randrange, Imaginarium.rules_setup.cards_one_player_has),
+                    partial(randrange, Imaginarium.rules_setup.cards_per_player),
                     lambda num: num != discarded_card)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
@@ -577,7 +577,7 @@ async def request_leader_card_hook():
             button_check=button_check,
             buttons=mc.players_cards())))
     except asyncio.TimeoutError:
-        card = randrange(Imaginarium.rules_setup.cards_one_player_has)
+        card = randrange(Imaginarium.rules_setup.cards_per_player)
         asyncio.run(GameCondition._leader.send(
             mt.card_selected_automatically(
                 GameCondition._leader.cards[card - 1],
@@ -618,7 +618,7 @@ async def request_players_cards_hook():
                     button_check=button_check,
                     buttons=mc.players_cards())))
             except asyncio.TimeoutError:
-                card = randrange(Imaginarium.rules_setup.cards_one_player_has)
+                card = randrange(Imaginarium.rules_setup.cards_per_player)
                 asyncio.run(player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
