@@ -446,12 +446,12 @@ def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
 
 async def at_start_hook():
     """Send a message to the channel that the game has started."""
-    asyncio.run(Gameplay.start.ctx.send(mt.game_has_started()))
+    await Gameplay.start.ctx.send(mt.game_has_started())
 
 
 async def at_round_start_hook():
     """Send a message to the channel that the round has started."""
-    asyncio.run(Gameplay.start.ctx.send(mt.round_has_started()))
+    await Gameplay.start.ctx.send(mt.round_has_started())
 
 
 # noinspection PyTypeChecker
@@ -470,22 +470,22 @@ async def request_association_hook():
 
     try:
         association = \
-            asyncio.run(wait_for_reply(
+            await wait_for_reply(
                 recipient=GameCondition._leader,
                 message=mt.inform_association(message_language=ul[GameCondition._leader]),
                 buttons=mc.confirm_association(message_language=ul[GameCondition._leader]),
                 message_check=message_check,
-                button_check=button_check))
+                button_check=button_check)
         if isinstance(association.discord_reply, discord_components.Interaction):
             association = '¯\_(ツ)_/¯'
     except asyncio.TimeoutError:
         association = '¯\_(ツ)_/¯'
 
-        asyncio.run(GameCondition._leader.send(
+        await GameCondition._leader.send(
             mt.association_selected_automatically(
                 association=association,
                 message_language=ul[GameCondition._leader])
-        ))
+        )
 
     GameCondition._round_association = association
 
@@ -493,7 +493,7 @@ async def request_association_hook():
 async def show_association_hook():
     """Send the association to the channel."""
     if GameCondition._round_association:
-        asyncio.run(Gameplay.start.ctx.send(mt.round_association()))
+        await Gameplay.start.ctx.send(mt.round_association())
 
 
 async def request_players_cards_2_hook():
@@ -529,24 +529,24 @@ async def request_players_cards_2_hook():
                     player.cards,
                     message_language=ul[player])):
             try:
-                card = int(asyncio.run(wait_for_reply(
+                card = int(await wait_for_reply(
                     recipient=player,
                     message=message,
                     message_check=message_check,
                     button_check=button_check,
-                    buttons=mc.players_cards())))
+                    buttons=mc.players_cards()))
             except asyncio.TimeoutError:
                 card = try_until(
                     partial(randrange, Imaginarium.rules_setup.cards_per_player),
                     lambda num: num != discarded_card)
-                asyncio.run(player.send(
+                await player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
-                        message_language=ul[player])))
+                        message_language=ul[player]))
             else:
-                asyncio.run(player.send(mt.your_chosen_card(
+                await player.send(mt.your_chosen_card(
                     player.cards[card - 1],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
 
             GameCondition._discarded_cards.append((player.cards[card - 1],
                                                    player.id))
@@ -569,23 +569,23 @@ async def request_leader_card_hook():
         return True
 
     try:
-        card = int(asyncio.run(wait_for_reply(
+        card = int(await wait_for_reply(
             recipient=GameCondition._leader,
             message=mt.choose_your_leaders_card(
                 message_language=ul[GameCondition._leader]),
             message_check=message_check,
             button_check=button_check,
-            buttons=mc.players_cards())))
+            buttons=mc.players_cards()))
     except asyncio.TimeoutError:
         card = randrange(Imaginarium.rules_setup.cards_per_player)
-        asyncio.run(GameCondition._leader.send(
+        await GameCondition._leader.send(
             mt.card_selected_automatically(
                 GameCondition._leader.cards[card - 1],
-                message_language=ul[GameCondition._leader])))
+                message_language=ul[GameCondition._leader]))
     else:
-        asyncio.run(GameCondition._leader.send(mt.your_chosen_card(
+        await GameCondition._leader.send(mt.your_chosen_card(
             GameCondition._leader.cards[card - 1],
-            message_language=ul[GameCondition._leader])))
+            message_language=ul[GameCondition._leader]))
 
     GameCondition._discarded_cards.append(
         (GameCondition._leader.cards.pop(card - 1),
@@ -609,24 +609,24 @@ async def request_players_cards_hook():
     for player in GameCondition._players:
         if player != GameCondition._leader:
             try:
-                card = int(asyncio.run(wait_for_reply(
+                card = int(await wait_for_reply(
                     recipient=player,
                     message=mt.choose_card(
                         player.cards,
                         message_language=ul[player]),
                     message_check=message_check,
                     button_check=button_check,
-                    buttons=mc.players_cards())))
+                    buttons=mc.players_cards()))
             except asyncio.TimeoutError:
                 card = randrange(Imaginarium.rules_setup.cards_per_player)
-                asyncio.run(player.send(
+                await player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
-                        message_language=ul[player])))
+                        message_language=ul[player]))
             else:
-                asyncio.run(player.send(mt.your_chosen_card(
+                await player.send(mt.your_chosen_card(
                     player.cards[card - 1],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
 
             GameCondition._discarded_cards.append((player.cards.pop(card - 1),
                                                    player.id))
@@ -660,23 +660,23 @@ async def vote_for_target_card_2_hook():
     for player in GameCondition._players:
         try:
             card = int(
-                asyncio.run(wait_for_reply(
+                await wait_for_reply(
                     recipient=player,
                     message=mt.choose_enemy_card(
                         message_language=ul[player]),
                     message_check=message_check,
                     button_check=button_check,
-                    buttons=mc.discarded_cards())))
+                    buttons=mc.discarded_cards()))
         except asyncio.TimeoutError:
             card = select_target_card_automatically(player)
-            asyncio.run(player.send(
+            await player.send(
                 mt.card_selected_automatically(
                     GameCondition._discarded_cards[card - 1][0],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
         else:
-            asyncio.run(player.send(mt.your_chosen_card(
+            await player.send(mt.your_chosen_card(
                 GameCondition._discarded_cards[card - 1][0],
-                message_language=ul[player])))
+                message_language=ul[player]))
 
         GameCondition._votes_for_card[
             GameCondition._discarded_cards[card - 1][1]] += 1
@@ -708,23 +708,23 @@ async def vote_for_target_card_hook():
         if player != GameCondition._leader:
             try:
                 card = int(
-                    asyncio.run(wait_for_reply(
+                    await wait_for_reply(
                         recipient=player,
                         message=mt.choose_enemy_card(
                             message_language=ul[player]),
                         message_check=message_check,
                         button_check=button_check,
-                        buttons=mc.discarded_cards())))
+                        buttons=mc.discarded_cards()))
             except asyncio.TimeoutError:
                 card = select_target_card_automatically(player)
-                asyncio.run(player.send(
+                await player.send(
                     mt.card_selected_automatically(
                         GameCondition._discarded_cards[card - 1][0],
-                        message_language=ul[player])))
+                        message_language=ul[player]))
             else:
-                asyncio.run(player.send(mt.your_chosen_card(
+                await player.send(mt.your_chosen_card(
                     GameCondition._discarded_cards[card - 1][0],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
 
             GameCondition._votes_for_card[
                 GameCondition._discarded_cards[card - 1][1]] += 1
@@ -734,17 +734,17 @@ async def vote_for_target_card_hook():
 
 async def at_end_hook():
     """Announce the results of the game."""
-    asyncio.run(Gameplay.start.ctx.send(mt.game_took_time()))
+    await Gameplay.start.ctx.send(mt.game_took_time())
 
     if GameCondition._players_count == 2:
         if GameCondition._bot_score > GameCondition._players_score:
-            asyncio.run(Gameplay.start.ctx.send(mt.loss_score()))
+            await Gameplay.start.ctx.send(mt.loss_score())
         elif GameCondition._bot_score < GameCondition._players_score:
-            asyncio.run(Gameplay.start.ctx.send(mt.win_score()))
+            await Gameplay.start.ctx.send(mt.win_score())
         else:
-            asyncio.run(Gameplay.start.ctx.send(mt.draw_score()))
+            await Gameplay.start.ctx.send(mt.draw_score())
     else:
-        asyncio.run(Gameplay.start.ctx.send(mt.winning_rating()))
+        await Gameplay.start.ctx.send(mt.winning_rating())
 
 
 class Gameplay(commands.Cog):

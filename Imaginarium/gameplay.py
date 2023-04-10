@@ -1,5 +1,4 @@
-import asyncio
-from asyncio import Future
+from asyncio import as_completed, Future
 from collections import defaultdict
 from math import ceil
 from random import choice, shuffle
@@ -197,7 +196,7 @@ async def async_generate_random_cards(cards_count: int) -> AsyncIterable[Future[
 
     :return: An asynchronous iterator."""
     tasks = [get_random_card() for _ in range(cards_count)]
-    for future in asyncio.as_completed(tasks): yield future
+    for future in as_completed(tasks): yield future
 
 
 async def get_random_cards(cards_count: int) -> list[str]:
