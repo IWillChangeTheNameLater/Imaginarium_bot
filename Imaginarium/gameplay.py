@@ -187,7 +187,7 @@ async def get_random_card() -> str:
         return await get_random_card()
 
 
-async def async_generate_random_cards(cards_count: int) -> AsyncIterable[Future[str]]:
+async def async_generate_random_cards(cards_count: int) -> AsyncIterable[str]:
     """Return an asynchronous iterator with random cards.
 
     The iterator returns cards received by the get_random_card function.
@@ -196,7 +196,7 @@ async def async_generate_random_cards(cards_count: int) -> AsyncIterable[Future[
 
     :return: An asynchronous iterator."""
     tasks = [get_random_card() for _ in range(cards_count)]
-    for future in as_completed(tasks): yield future
+    for future in as_completed(tasks): yield await future
 
 
 async def get_random_cards(cards_count: int) -> list[str]:
@@ -205,7 +205,7 @@ async def get_random_cards(cards_count: int) -> list[str]:
     :param cards_count: The count of cards that have to be received.
 
     :return: Links to random cards."""
-    return [await f async for f in async_generate_random_cards(cards_count)]
+    return [f async for f in async_generate_random_cards(cards_count)]
 
 
 class GameCondition:
@@ -393,11 +393,9 @@ async def start_game(
 
             # Each player votes for the target card
             if GameCondition._players_count == 2:
-
                 await vote_for_target_card_2_hook()
 
             else:
-
                 await vote_for_target_card_hook()
 
             # Scoring

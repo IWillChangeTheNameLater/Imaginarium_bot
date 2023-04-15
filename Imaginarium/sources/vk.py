@@ -3,14 +3,14 @@ from os import environ
 from typing import Mapping, Container, MutableSequence
 from functools import wraps
 
-import dotenv
+from dotenv import load_dotenv
 import aiovk2
 from aiovk2.exceptions import VkException
 
 from . import BaseSource
 from .. import exceptions
 
-dotenv.load_dotenv()
+load_dotenv()
 
 aiovk_api = aiovk2.API(aiovk2.TokenSession(access_token=environ['VK_PARSER_TOKEN']))
 
