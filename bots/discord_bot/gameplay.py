@@ -163,7 +163,13 @@ async def wait_for_reply(
     emoji of the reaction.
 
     :raise asyncio.TimeoutError: If the time is up and
-    no correct reply was received."""
+    no correct reply was received.
+
+    .. note:: This function waits for messages only in the recipient context.
+    That is, if the message was sent to the channel,
+    then only messages from the same channel will be expected,
+    and if the message was sent directly to the user,
+    then messages in a private channel with this user will be expected."""
     if bot is None:
         # noinspection PyUnresolvedReferences
         bot = wait_for_reply.bot

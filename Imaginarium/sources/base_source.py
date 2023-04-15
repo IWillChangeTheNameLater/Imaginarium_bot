@@ -43,7 +43,7 @@ class BaseSource(abc.ABC):
     async def get_cards_count(self) -> int | float:
         """The cards count the source can provide.
 
-        ..note:: The result is infinity if the number of cards that
+        .. note:: The result is infinity if the number of cards that
         the source can provide is unlimited."""
 
     @abc.abstractmethod
