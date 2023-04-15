@@ -249,31 +249,31 @@ class GameCondition:
     _players: MutableSequence[Any] = []
 
 
-EmptyHook: TypeAlias = Callable[[], Awaitable[None]]
+AsyncEmptyHook: TypeAlias = Callable[[], Awaitable[None]]
 
 
-async def empty_hook() -> None:
+async def async_empty_hook() -> None:
     """Do nothing perfectly."""
     pass
 
 
 # This is already some kind of bullshit
 async def start_game(
-        at_start_hook: EmptyHook = empty_hook,
-        at_circle_start_hook: EmptyHook = empty_hook,
-        at_round_start_hook: EmptyHook = empty_hook,
-        request_association_hook: EmptyHook = empty_hook,
-        show_association_hook: EmptyHook = empty_hook,
-        show_players_cards_hook: EmptyHook = empty_hook,
-        request_players_cards_2_hook: EmptyHook = empty_hook,
-        request_leader_card_hook: EmptyHook = empty_hook,
-        request_players_cards_hook: EmptyHook = empty_hook,
-        show_discarded_cards_hook: EmptyHook = empty_hook,
-        vote_for_target_card_2_hook: EmptyHook = empty_hook,
-        vote_for_target_card_hook: EmptyHook = empty_hook,
-        at_round_end_hook: EmptyHook = empty_hook,
-        at_circle_end_hook: EmptyHook = empty_hook,
-        at_end_hook: EmptyHook = empty_hook) -> None:
+        at_start_hook: AsyncEmptyHook = async_empty_hook,
+        at_circle_start_hook: AsyncEmptyHook = async_empty_hook,
+        at_round_start_hook: AsyncEmptyHook = async_empty_hook,
+        request_association_hook: AsyncEmptyHook = async_empty_hook,
+        show_association_hook: AsyncEmptyHook = async_empty_hook,
+        show_players_cards_hook: AsyncEmptyHook = async_empty_hook,
+        request_players_cards_2_hook: AsyncEmptyHook = async_empty_hook,
+        request_leader_card_hook: AsyncEmptyHook = async_empty_hook,
+        request_players_cards_hook: AsyncEmptyHook = async_empty_hook,
+        show_discarded_cards_hook: AsyncEmptyHook = async_empty_hook,
+        vote_for_target_card_2_hook: AsyncEmptyHook = async_empty_hook,
+        vote_for_target_card_hook: AsyncEmptyHook = async_empty_hook,
+        at_round_end_hook: AsyncEmptyHook = async_empty_hook,
+        at_circle_end_hook: AsyncEmptyHook = async_empty_hook,
+        at_end_hook: AsyncEmptyHook = async_empty_hook) -> None:
     """Call the function inside another module to start the game
     with following order and the module's own hooks.
 
