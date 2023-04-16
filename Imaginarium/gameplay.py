@@ -1,7 +1,7 @@
 from asyncio import as_completed, Future
 from collections import defaultdict
 from math import ceil
-from random import choice, shuffle
+from random import choices, shuffle
 from time import time
 from typing import (
     MutableSequence,
@@ -166,8 +166,8 @@ async def get_random_source() -> sources.BaseSource:
                 weights_count = len(GameCondition._used_sources)
                 weights.append(weights_sum / weights_count)
 
-        return choice(population=GameCondition._used_sources,
-                      weights=weights)
+        return choices(population=GameCondition._used_sources,
+                       weights=weights)[0]
 
 
 async def get_random_card() -> str:
