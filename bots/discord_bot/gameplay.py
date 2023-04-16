@@ -181,8 +181,6 @@ async def wait_for_reply(
     if timeout is None:
         timeout = Imaginarium.rules_setup.step_timeout
 
-    reply = None
-
     sent_message = await recipient.send(message_text, components=buttons)
     for r in reactions:
         await sent_message.add_reaction(r)
@@ -203,29 +201,26 @@ async def wait_for_reply(
             button_check(button))) else False
 
     async def wait_for_message():
-        nonlocal reply
-        reply = await bot.wait_for('message', check=wrapped_message_check)
+        return await bot.wait_for('message', check=wrapped_message_check)
 
     async def wait_for_reaction_add():
-        nonlocal reply
-        reply = (await bot.wait_for('reaction_add', check=wrapped_reaction_check))[0]
+        return (await bot.wait_for('reaction_add', check=wrapped_reaction_check))[0]
 
     async def wait_for_button_click():
-        nonlocal reply
-        reply = await bot.wait_for('button_click', check=wrapped_button_check)
+        return await bot.wait_for('button_click', check=wrapped_button_check)
 
-    pending_tasks = (wait_for_message(),
-                     wait_for_reaction_add(),
-                     wait_for_button_click())
-    pending_tasks = (await asyncio.wait(pending_tasks,
-                                        timeout=timeout,
-                                        return_when=asyncio.FIRST_COMPLETED))[1]
-    for task in pending_tasks:
-        task.cancel()
+    tasks = (
+        wait_for_message(),
+        wait_for_reaction_add(),
+        wait_for_button_click())
+    tasks = [asyncio.create_task(c) for c in tasks]
+    done, _ = await asyncio.wait(
+        tasks,
+        timeout=timeout,
+        return_when=asyncio.FIRST_COMPLETED)
 
-    if reply:
-        # noinspection PyTypeChecker
-        return Reply(reply)
+    if done:
+        return Reply(done.pop().result())
     else:
         raise asyncio.TimeoutError()
 
