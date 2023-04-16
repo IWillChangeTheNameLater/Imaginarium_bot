@@ -17,7 +17,7 @@ load_dotenv()
 
 async def async_handle_vk_exception(func: Callable[[None], Awaitable[Any]]) \
         -> Awaitable[Any]:
-    """Handle VK API errors caused by the function.
+    """Handle Vk API errors caused by the function.
 
     Handle VkException from aiovk2 which are caused by the passed function.
     Raise the InvalidSource exception instead of the occurred VkException.
@@ -40,7 +40,7 @@ async def async_handle_vk_exception(func: Callable[[None], Awaitable[Any]]) \
                 return await async_handle_vk_exception(func)
             case _:
                 raise InvalidSource(
-                    f'The source is unavailable due to the VK API side issues.'
+                    f'The source is unavailable due to the Vk API side issues.'
                 ) from e
 
 
@@ -85,7 +85,7 @@ class Vk(BaseSource):
     """Class that inherits from "BaseSource" and is used to get cards from vk.com."""
     _types_map = {'photo': 'photo',
                   'video': 'video'}
-    """Map of types that are supported by vk.com and types that are used in the code."""
+    """Map of types that are supported by a Vk API and types that are used in the code."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -129,7 +129,7 @@ class Vk(BaseSource):
         def extract_attachments_from_post(post: Mapping) -> MutableSequence:
             """Extract attachments from the post.
 
-            :param post: JSON with a VK post.
+            :param post: JSON with a Vk post.
 
             :return: JSON with an attachments from the post.
 
@@ -167,7 +167,7 @@ class Vk(BaseSource):
 
         try:
             attachments = extract_attachments_from_post(post)
-        # VK post JSON contains empty attachments list instead of NULL,
+        # Vk post JSON contains empty attachments list instead of NULL,
         # so the error will never be raised,
         # but I'll leave it here just in case.
         except (KeyError, IndexError):
