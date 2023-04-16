@@ -1,7 +1,6 @@
 from asyncio import sleep
 from random import randrange, shuffle
 from os import environ
-from functools import partial
 from typing import (
     Mapping,
     Container,
@@ -63,9 +62,26 @@ class VkRequest(Request):
     async def __call__(self, **method_args):
         """Overrides the method of Request class.
 
-        Handle Vk API errors caused by the aiovk2."""
-        return await async_handle_vk_exception(
-            partial(super().__call__, **method_args))
+        Handle VkException exceptions caused by the aiovk2.
+        Raise the InvalidSource exception instead of the occurred VkException.
+
+        Wait 1 second if an error code of the occurred exception is 6
+        (too many requrests per second).
+
+        :return: The result of the overriden method.
+
+        :raise InvalidSource: If the VkException has occurred."""
+        try:
+            return await super().__call__(**method_args)
+        except VkException as e:
+            match e.args[0]['error_code']:
+                case 6:
+                    await sleep(1)
+                    return await self.__call__(**method_args)
+                case _:
+                    raise InvalidSource(
+                        f'The source is unavailable due to the Vk API side issues.'
+                    ) from e
 
 
 class VkAPI(aiovk2.API):
@@ -77,12 +93,12 @@ class VkAPI(aiovk2.API):
         Return VkRequest instead of aiovk2.Request class."""
         return VkRequest(self, method_name)
 
-    async def __call__(self, method_name, **method_kwargs):
-        """Overrides the method of Request class.
-
-        Handle Vk API errors caused by the aiovk2."""
-        return await async_handle_vk_exception(
-            partial(super().__call__, method_name, **method_kwargs))
+    # async def __call__(self, method_name, **method_kwargs):
+    #     """Overrides the method of Request class.
+    #
+    #     Handle Vk API errors caused by the aiovk2."""
+    #     return await async_handle_vk_exception(
+    #         partial(super().__call__, method_name, **method_kwargs))
 
 
 vk_api = VkAPI(aiovk2.TokenSession(access_token=environ['VK_PARSER_TOKEN']))
