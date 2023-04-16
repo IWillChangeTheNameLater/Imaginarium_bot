@@ -1,36 +1,84 @@
+from asyncio import sleep
 from random import randrange, shuffle
 from os import environ
-from typing import Mapping, Container, MutableSequence
-from functools import wraps
+from typing import Mapping, Container, MutableSequence, Callable, Awaitable, Any
+from functools import partial
 
 from dotenv import load_dotenv
 import aiovk2
 from aiovk2.exceptions import VkException
+from aiovk2.api import Request
 
 from . import BaseSource
-from .. import exceptions
+from ..exceptions import InvalidSource, NoAnyPosts
 
 load_dotenv()
 
-aiovk_api = aiovk2.API(aiovk2.TokenSession(access_token=environ['VK_PARSER_TOKEN']))
+
+async def async_handle_vk_exception(func: Callable[[None], Awaitable[Any]]) \
+        -> Awaitable[Any]:
+    """Handle VK API errors caused by the function.
+
+    Handle VkException from aiovk2 which are caused by the passed function.
+    Raise the InvalidSource exception instead of the occurred VkException.
+
+    Wait 1 second if an error code of the occurred exception is 6
+    (too many requrests per second).
+
+    :param func: The asynchronous function that might raise VkException
+    from the aiovk2 library.
+
+    :return: The result of the passed function.
+
+    :raise InvalidSource: If the VkException has occurred."""
+    try:
+        return await func()
+    except VkException as e:
+        match e.args[0]['error_code']:
+            case 6:
+                await sleep(1)
+                return await async_handle_vk_exception(func)
+            case _:
+                raise InvalidSource(
+                    f'The source is unavailable due to the VK API side issues.'
+                ) from e
 
 
-def is_valid_request(func):
-    """Make the function check if the source is valid.
+class VkRequest(Request):
+    """A subclass which overrides the Request class methods."""
 
-    Make the passed function raise the InvalidSource exception
-    if the source is invalid because of vk_api error."""
+    def __getattr__(self, method_name):
+        """Overrides the method of Request class.
 
-    @wraps(func)
-    async def inner(*args, **kwargs):
-        try:
-            return await func(*args, **kwargs)
-        except VkException as e:
-            raise exceptions.InvalidSource(
-                f'The resource is unavailable due to the VK API side issues.'
-            ) from e
+        Return VkRequest instead of aiovk2.Request class."""
+        return VkRequest(self._api, self._method_name + '.' + method_name)
 
-    return inner
+    async def __call__(self, **method_args):
+        """Overrides the method of Request class.
+
+        Handle Vk API errors caused by the aiovk2."""
+        return await async_handle_vk_exception(
+            partial(super().__call__, **method_args))
+
+
+class VkAPI(aiovk2.API):
+    """A subclass which overrides the Request class methods."""
+
+    def __getattr__(self, method_name):
+        """Overrides the method of Request class.
+
+        Return VkRequest instead of aiovk2.Request class."""
+        return VkRequest(self, method_name)
+
+    async def __call__(self, method_name, **method_kwargs):
+        """Overrides the method of Request class.
+
+        Handle Vk API errors caused by the aiovk2."""
+        return await async_handle_vk_exception(
+            partial(super().__call__, method_name, **method_kwargs))
+
+
+vk_api = VkAPI(aiovk2.TokenSession(access_token=environ['VK_PARSER_TOKEN']))
 
 
 class Vk(BaseSource):
@@ -47,12 +95,10 @@ class Vk(BaseSource):
         self._included_types: Container = {y for i in self._included_types if (y := Vk._types_map.get(i))}
         self._excluded_types: Container = {y for i in self._excluded_types if (y := Vk._types_map.get(i))}
 
-    @is_valid_request
     async def get_cards_count(self) -> int:
         """Return the number of posts in the specified group."""
-        return (await aiovk_api.wall.get(domain=self._domain, count=1))['count']
+        return (await vk_api.wall.get(domain=self._domain, count=1))['count']
 
-    @is_valid_request
     async def is_valid(self) -> True:
         """Check if the source itself is valid.
 
@@ -64,11 +110,10 @@ class Vk(BaseSource):
 
 		.. note:: The source is invalid if it does not exist or is closed."""
         if await self.get_cards_count() == 0:
-            raise exceptions.NoAnyPosts
+            raise NoAnyPosts()
 
         return True
 
-    @is_valid_request
     async def get_random_card(self) -> str:
         """Return a random post from the specified group
         and extract its random suitable attachment.
@@ -110,15 +155,15 @@ class Vk(BaseSource):
                     video_id = str(multimedia['owner_id'])
                     video_id += '_' + str(multimedia['id'])
 
-                    return (await aiovk_api.video.get(video_id=video_id))['items'][0]['player']
+                    return (await vk_api.video.get(video_id=video_id))['items'][0]['player']
 
         if await self.get_cards_count() == 0:
-            raise exceptions.NoAnyPosts()
+            raise NoAnyPosts()
 
         # Get a random post from the specified group
-        post = await aiovk_api.wall.get(domain=self._domain,
-                                        offset=randrange(await self.get_cards_count()),
-                                        count=1)
+        post = await vk_api.wall.get(domain=self._domain,
+                                     offset=randrange(await self.get_cards_count()),
+                                     count=1)
 
         try:
             attachments = extract_attachments_from_post(post)

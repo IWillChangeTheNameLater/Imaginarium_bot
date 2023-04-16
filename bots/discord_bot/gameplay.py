@@ -76,7 +76,7 @@ DiscordReply: TypeAlias = (discord.Message |
 
 
 class Reply:
-    """represents the user's response that was given to the request
+    """Represents the user's response that was given to the request
     using some kind of interaction (message, reaction or button).
 
     :raises AttributeError: If the init argument
