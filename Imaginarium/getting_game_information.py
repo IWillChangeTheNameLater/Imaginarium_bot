@@ -1,4 +1,8 @@
-from typing import MutableSequence, Iterable, Tuple
+from typing import (
+    MutableSequence,
+    Iterable,
+    Tuple
+)
 
 from Imaginarium.gameplay import GameCondition
 from . import exceptions

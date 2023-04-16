@@ -1,8 +1,15 @@
 from asyncio import sleep
 from random import randrange, shuffle
 from os import environ
-from typing import Mapping, Container, MutableSequence, Callable, Awaitable, Any
 from functools import partial
+from typing import (
+    Mapping,
+    Container,
+    MutableSequence,
+    Callable,
+    Awaitable,
+    Any
+)
 
 from dotenv import load_dotenv
 import aiovk2

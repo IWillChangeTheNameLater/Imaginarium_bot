@@ -1,5 +1,9 @@
 from itertools import repeat
-from typing import TypeAlias, Iterable, MutableSequence
+from typing import (
+    TypeAlias,
+    Iterable,
+    MutableSequence
+)
 
 from discord import Emoji, PartialEmoji
 from discord_components import Button, ButtonStyle

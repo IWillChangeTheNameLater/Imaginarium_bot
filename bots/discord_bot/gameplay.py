@@ -2,7 +2,12 @@ import asyncio
 from functools import wraps, partial
 from io import BytesIO
 from random import randrange, randint
-from typing import TypeAlias, Iterable, Callable, Any
+from typing import (
+    TypeAlias,
+    Iterable,
+    Callable,
+    Any
+)
 
 import discord
 import discord_components

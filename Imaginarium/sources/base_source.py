@@ -1,5 +1,8 @@
 import abc
-from typing import Collection, Any
+from typing import (
+    Collection,
+    Any
+)
 
 from .. import rules_setup
 

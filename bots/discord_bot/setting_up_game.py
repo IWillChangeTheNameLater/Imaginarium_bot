@@ -1,5 +1,8 @@
 from pathlib import Path
-from typing import Callable, Coroutine
+from typing import (
+    Callable,
+    Coroutine
+)
 
 from discord.ext.commands import Context, Cog, command
 from chardet import detect

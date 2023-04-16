@@ -1,8 +1,12 @@
 from sys import executable
 from subprocess import Popen
 from pathlib import Path
-from typing import Callable, Mapping, MutableMapping
 from time import sleep
+from typing import (
+    Callable,
+    Mapping,
+    MutableMapping
+)
 
 bots_init_files: Mapping[str, Path | str] = {
     'Discord': Path(__file__).parent / 'bots' / 'discord_bot' / 'main.py',
