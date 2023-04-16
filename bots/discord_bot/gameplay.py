@@ -222,7 +222,9 @@ async def wait_for_reply(
     if done:
         return Reply(done.pop().result())
     else:
-        raise asyncio.TimeoutError()
+        raise asyncio.TimeoutError(
+            'Time is up and no correct reply was received.'
+        )
 
 
 async def discord_file_from_url(url: str) -> discord.File:
