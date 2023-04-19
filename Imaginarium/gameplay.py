@@ -187,7 +187,9 @@ async def get_random_card(
     :return: A link to a random card.
     .. note:: The card will not necessarily be received before the timeout,
     but after the timeout, attempts will begin to get some card
-    as soon as possible."""
+    as soon as possible.
+
+    :raise asyncio.TimeoutError: If the timeout is exceeded."""
     try:
         source = await get_random_source()
     except exceptions.NoAnyUsedSources:
@@ -236,7 +238,9 @@ async def async_generate_random_cards(
     :param raise_timeout_error: If True, then if some card timeout is exceeded,
     the asyncio.TimeoutError exception is raised.
 
-    :return: An asynchronous iterator."""
+    :return: An asynchronous iterator.
+
+    :raise asyncio.TimeoutError: If the timeout is exceeded."""
     tasks = [get_random_card(timeout=timeout,
                              raise_timeout_error=raise_timeout_error)
              for _ in range(cards_count)]
@@ -256,7 +260,9 @@ async def get_random_cards(
     :param raise_timeout_error: If True, then if some card timeout is exceeded,
     the asyncio.TimeoutError exception is raised.
 
-    :return: Links to random cards."""
+    :return: Links to random cards.
+
+    :raise asyncio.TimeoutError: If the timeout is exceeded."""
     return [f async for f in
             async_generate_random_cards(
                 cards_count,
