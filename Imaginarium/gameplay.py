@@ -1,4 +1,4 @@
-from asyncio import as_completed, Future
+import asyncio
 from collections import defaultdict
 from math import ceil
 from random import choices, shuffle
@@ -170,42 +170,98 @@ async def get_random_source() -> sources.BaseSource:
                        weights=weights)[0]
 
 
-async def get_random_card() -> str:
+async def get_random_card(
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> str:
     """Get a random card from a random source in the list of sources.
 
-    :return: A link to a random card."""
+    Try to get a random card from a random source in a certain amount of time,
+    but if it comes out, try to get a card as quickly as possible
+    from this random source or the default source.
+
+    :param timeout: The time in seconds for which the card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if the card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
+
+    :return: A link to a random card.
+    .. note:: The card will not necessarily be received before the timeout,
+    but after the timeout, attempts will begin to get some card
+    as soon as possible."""
     try:
         source = await get_random_source()
     except exceptions.NoAnyUsedSources:
-        # If there are no any valid sources,
-        # then use the default source.
         source = default_source
 
     try:
-        return await source.get_random_card()
+        if raise_timeout_error:
+            return await asyncio.wait_for(
+                asyncio.create_task(source.get_random_card()),
+                timeout=timeout)
+        # If we do not have to raise the "TimeoutError" exception,
+        # then just in case, run both tasks at the same time.
+        else:
+            source_task = asyncio.create_task(
+                source.get_random_card())
+            default_source_task = asyncio.create_task(
+                default_source.get_random_card())
+
+            done, _ = await asyncio.wait((source_task,), timeout=timeout)
+
+            # If the selected source has been waiting too long,
+            # then try to get the result as soon as possible from both sources.
+            if not done:
+                done, pending = await asyncio.wait(
+                    (source_task, default_source_task),
+                    return_when=asyncio.FIRST_COMPLETED)
+                for task in pending:
+                    task.cancel()
+
+            return done.pop().result()
     except exceptions.InvalidSource:
         return await get_random_card()
 
 
-async def async_generate_random_cards(cards_count: int) -> AsyncIterable[str]:
+async def async_generate_random_cards(
+        cards_count: int,
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> AsyncIterable[str]:
     """Return an asynchronous iterator with random cards.
 
     The iterator returns cards received by the get_random_card function.
 
     :param cards_count: The count of cards that have to be received.
+    :param timeout: The time in seconds for which each card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if some card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
 
     :return: An asynchronous iterator."""
-    tasks = [get_random_card() for _ in range(cards_count)]
-    for future in as_completed(tasks): yield await future
+    tasks = [get_random_card(timeout=timeout,
+                             raise_timeout_error=raise_timeout_error)
+             for _ in range(cards_count)]
+    for future in asyncio.as_completed(tasks):
+        yield await future
 
 
-async def get_random_cards(cards_count: int) -> list[str]:
+async def get_random_cards(
+        cards_count: int,
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> list[str]:
     """Get random cards from a random source in the list of sources.
 
     :param cards_count: The count of cards that have to be received.
+    :param timeout: The time in seconds for which each card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if some card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
 
     :return: Links to random cards."""
-    return [f async for f in async_generate_random_cards(cards_count)]
+    return [f async for f in
+            async_generate_random_cards(
+                cards_count,
+                timeout=timeout,
+                raise_timeout_error=raise_timeout_error)]
 
 
 class GameCondition:

@@ -34,8 +34,7 @@ def generate_buttons(labels: Iterable[str | int],
 
     :return: List of lists of DiscordComponents.Button.
 
-    .. note:: The maximum size of the list is 5x5.
-    """
+    .. note:: The maximum size of the list is 5x5."""
     labels = iter(labels)
     styles = iter(styles)
     urls = iter(urls)

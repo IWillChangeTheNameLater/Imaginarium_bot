@@ -53,11 +53,11 @@ class BaseSource(abc.ABC):
     async def is_valid(self) -> True:
         """Check if the source itself is valid.
 
-		:return: True if the source is valid, False otherwise.
+        :return: True if the source is valid, False otherwise.
 
-		:raises InvalidSource: If the source is invalid.
+        :raises InvalidSource: If the source is invalid.
 
-		.. note:: The source is invalid if it does not exist or is closed."""
+        .. note:: The source is invalid if it does not exist or is closed."""
 
     @abc.abstractmethod
     async def get_random_card(self) -> str:
