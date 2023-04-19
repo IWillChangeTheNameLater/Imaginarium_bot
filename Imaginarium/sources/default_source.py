@@ -1,12 +1,9 @@
 from typing import Collection
 
-from dotenv import load_dotenv
 import aiohttp
 
 from . import BaseSource
 from .. import rules_setup
-
-load_dotenv()
 
 
 class DefaultSource(BaseSource):
