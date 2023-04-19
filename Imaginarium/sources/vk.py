@@ -125,13 +125,13 @@ class Vk(BaseSource):
     async def is_valid(self) -> True:
         """Check if the source itself is valid.
 
-		:return: True if the source is valid, False otherwise.
+        :return: True if the source is valid, False otherwise.
 
-		:raises InvalidSource: If the source is invalid for some reason.
-		:raises NoAnyPosts: If the source is invalid due to
-		the lack of single card.
+        :raises InvalidSource: If the source is invalid for some reason.
+        :raises NoAnyPosts: If the source is invalid due to
+        the lack of single card.
 
-		.. note:: The source is invalid if it does not exist or is closed."""
+        .. note:: The source is invalid if it does not exist or is closed."""
         if await self.get_cards_count() == 0:
             raise NoAnyPosts()
 
