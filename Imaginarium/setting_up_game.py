@@ -42,11 +42,11 @@ def remove_used_source(source: sources.BaseSource) -> None:
     if not gameplay.GameCondition._game_started:
         GameCondition._used_sources.remove(source)
     else:
-        raise exceptions.GameIsStarted()
+        raise exceptions.GameIsStarted
 
 
 def shuffle_players_order() -> None:
     if GameCondition._game_started:
-        raise exceptions.GameIsStarted()
+        raise exceptions.GameIsStarted
     else:
         shuffle(GameCondition._players)

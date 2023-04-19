@@ -17,7 +17,7 @@ def get_players() -> MutableSequence[gameplay.Player]:
 def get_players_score() -> Iterable[Tuple[str, float]]:
     """Return a list of tuples with player name and score."""
     if not GameCondition._game_started:
-        raise exceptions.GameIsEnded()
+        raise exceptions.GameIsEnded
 
     if GameCondition._players_count == 2:
         return (('Players score', GameCondition._players_score),

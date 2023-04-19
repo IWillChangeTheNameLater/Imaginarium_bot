@@ -133,7 +133,7 @@ class Vk(BaseSource):
 
         .. note:: The source is invalid if it does not exist or is closed."""
         if await self.get_cards_count() == 0:
-            raise NoAnyPosts()
+            raise NoAnyPosts
 
         return True
 
@@ -181,7 +181,7 @@ class Vk(BaseSource):
                     return (await vk_api.video.get(video_id=video_id))['items'][0]['player']
 
         if await self.get_cards_count() == 0:
-            raise NoAnyPosts()
+            raise NoAnyPosts
 
         # Get a random post from the specified group
         post = await vk_api.wall.get(domain=self._domain,
