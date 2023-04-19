@@ -499,9 +499,9 @@ async def request_association_hook():
                 message_check=message_check,
                 button_check=button_check)
         if isinstance(association.discord_reply, discord_components.Interaction):
-            association = '¯\_(ツ)_/¯'
+            association = r'¯\_(ツ)_/¯'
     except asyncio.TimeoutError:
-        association = '¯\_(ツ)_/¯'
+        association = r'¯\_(ツ)_/¯'
 
         await GameCondition._leader.send(
             mt.association_selected_automatically(
