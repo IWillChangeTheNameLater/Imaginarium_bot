@@ -214,10 +214,12 @@ async def wait_for_reply(
         wait_for_reaction_add(),
         wait_for_button_click())
     tasks = [asyncio.create_task(c) for c in tasks]
-    done, _ = await asyncio.wait(
+    done, pending = await asyncio.wait(
         tasks,
         timeout=timeout,
         return_when=asyncio.FIRST_COMPLETED)
+    for task in pending:
+        task.cancel()
 
     if done:
         return Reply(done.pop().result())
