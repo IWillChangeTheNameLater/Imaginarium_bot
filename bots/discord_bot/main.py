@@ -1,8 +1,11 @@
 from os import environ
 from pathlib import Path
 import sys
-from typing import Generator, Callable
 from functools import wraps
+from typing import (
+    Generator,
+    Callable
+)
 
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
@@ -19,6 +22,7 @@ import nest_asyncio
 # The "next_asyncio.apply()" have to be called before "discord" import
 # to fix "RuntimeError: This event loop is already running".
 nest_asyncio.apply()
+
 from discord import Intents
 from discord.ext import commands
 from discord_components import DiscordComponents

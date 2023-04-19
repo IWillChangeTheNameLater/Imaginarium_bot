@@ -1,5 +1,9 @@
 from itertools import repeat
-from typing import TypeAlias, Iterable, MutableSequence
+from typing import (
+    TypeAlias,
+    Iterable,
+    MutableSequence
+)
 
 from discord import Emoji, PartialEmoji
 from discord_components import Button, ButtonStyle
@@ -30,8 +34,7 @@ def generate_buttons(labels: Iterable[str | int],
 
     :return: List of lists of DiscordComponents.Button.
 
-    .. note:: The maximum size of the list is 5x5.
-    """
+    .. note:: The maximum size of the list is 5x5."""
     labels = iter(labels)
     styles = iter(styles)
     urls = iter(urls)
@@ -75,7 +78,7 @@ def confirm_association(message_language=None) -> ButtonsComponent:
 def players_cards() -> ButtonsComponent:
     """Generate a list of lists of DiscordComponents.Button with
     player's cards he can choose from."""
-    return cards_nums(Imaginarium.rules_setup.cards_one_player_has)
+    return cards_nums(Imaginarium.rules_setup.cards_per_player)
 
 
 def discarded_cards() -> ButtonsComponent:

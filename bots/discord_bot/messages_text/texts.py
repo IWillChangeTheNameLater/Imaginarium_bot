@@ -3,7 +3,12 @@ import importlib.util
 from types import ModuleType
 from functools import wraps
 import inspect
-from typing import Iterable, TypeAlias, Any, Callable
+from typing import (
+    Iterable,
+    TypeAlias,
+    Any,
+    Callable
+)
 
 import Imaginarium
 from Imaginarium.gameplay import GameCondition

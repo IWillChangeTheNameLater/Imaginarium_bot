@@ -1,8 +1,17 @@
+import asyncio
 from collections import defaultdict
 from math import ceil
-from random import choice, shuffle
+from random import choices, shuffle
 from time import time
-from typing import MutableSequence, Tuple, Mapping, Callable, Any, TypeAlias
+from typing import (
+    MutableSequence,
+    Tuple,
+    Mapping,
+    Any,
+    TypeAlias,
+    Callable,
+    Awaitable,
+    AsyncIterable)
 
 import validators
 
@@ -102,7 +111,7 @@ def create_source_object(source: str) -> sources.BaseSource:
     and create a BaseSource object that can be used to get cards.
 
     :param source: A link to the source.
-    :returns: A BaseSource object that can be used to get cards."""
+    :return: A BaseSource object that can be used to get cards."""
     if validators.url(source):
         domain_name = source[source.find('/') + 2:]
         domain_name = domain_name[:domain_name.find('/')]
@@ -128,10 +137,13 @@ def create_source_object(source: str) -> sources.BaseSource:
 default_source = sources.DefaultSource()
 
 
-def get_random_card() -> str:
-    """Get a random card from a source in the list of sources.
+async def get_random_source() -> sources.BaseSource:
+    """Get a random source from the list of sources.
 
-    :returns: A link to a random card.
+    :return: A random source.
+
+    :raise NoAnyUsedSources: If there are no sources in
+    the list of sources.
 
     .. note:: Sources are selected depending on their cards count.
     That is, the more cards a source has, the more often it will be selected
@@ -139,30 +151,117 @@ def get_random_card() -> str:
     But if the source returns an infinite number
     (that is, the number of cards in it is unlimited),
     then its weight is set as the average weight of all resources."""
-    if len(GameCondition._used_sources) >= 1:
+    if len(GameCondition._used_sources) == 0:
+        raise exceptions.NoAnyUsedSources('There are no sources to use.')
+    elif len(GameCondition._used_sources) == 1:
+        return GameCondition._used_sources[0]
+    else:
         weights = []
         for source in GameCondition._used_sources:
-            weight = source.cards_count
+            weight = await source.get_cards_count()
             if weight != float('inf'):
                 weights.append(weight)
             else:
-                weights_sum = sum(s.cards_count for s in GameCondition._used_sources)
+                weights_sum = sum(await s.get_cards_count() for s in GameCondition._used_sources)
                 weights_count = len(GameCondition._used_sources)
                 weights.append(weights_sum / weights_count)
 
-        source = choice(
-            population=GameCondition._used_sources,
-            weights=weights)
+        return choices(population=GameCondition._used_sources,
+                       weights=weights)[0]
 
-        try:
-            source.get_random_card()
-        except exceptions.InvalidSource:
-            GameCondition._used_sources.remove(source)
-            return get_random_card()
-    else:
-        # If there are no any valid sources,
-        # then use the default source.
-        return default_source.get_random_card()
+
+async def get_random_card(
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> str:
+    """Get a random card from a random source in the list of sources.
+
+    Try to get a random card from a random source in a certain amount of time,
+    but if it comes out, try to get a card as quickly as possible
+    from this random source or the default source.
+
+    :param timeout: The time in seconds for which the card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if the card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
+
+    :return: A link to a random card.
+    .. note:: The card will not necessarily be received before the timeout,
+    but after the timeout, attempts will begin to get some card
+    as soon as possible."""
+    try:
+        source = await get_random_source()
+    except exceptions.NoAnyUsedSources:
+        source = default_source
+
+    try:
+        if raise_timeout_error:
+            return await asyncio.wait_for(
+                asyncio.create_task(source.get_random_card()),
+                timeout=timeout)
+        # If we do not have to raise the "TimeoutError" exception,
+        # then just in case, run both tasks at the same time.
+        else:
+            source_task = asyncio.create_task(
+                source.get_random_card())
+            default_source_task = asyncio.create_task(
+                default_source.get_random_card())
+
+            done, _ = await asyncio.wait((source_task,), timeout=timeout)
+
+            # If the selected source has been waiting too long,
+            # then try to get the result as soon as possible from both sources.
+            if not done:
+                done, pending = await asyncio.wait(
+                    (source_task, default_source_task),
+                    return_when=asyncio.FIRST_COMPLETED)
+                for task in pending:
+                    task.cancel()
+
+            return done.pop().result()
+    except exceptions.InvalidSource:
+        return await get_random_card()
+
+
+async def async_generate_random_cards(
+        cards_count: int,
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> AsyncIterable[str]:
+    """Return an asynchronous iterator with random cards.
+
+    The iterator returns cards received by the get_random_card function.
+
+    :param cards_count: The count of cards that have to be received.
+    :param timeout: The time in seconds for which each card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if some card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
+
+    :return: An asynchronous iterator."""
+    tasks = [get_random_card(timeout=timeout,
+                             raise_timeout_error=raise_timeout_error)
+             for _ in range(cards_count)]
+    for future in asyncio.as_completed(tasks):
+        yield await future
+
+
+async def get_random_cards(
+        cards_count: int,
+        timeout: float | None = None,
+        raise_timeout_error: bool = False) -> list[str]:
+    """Get random cards from a random source in the list of sources.
+
+    :param cards_count: The count of cards that have to be received.
+    :param timeout: The time in seconds for which each card can be received.
+    If it is None, then the timeout is rules_setup.cards_receiving.timeout.
+    :param raise_timeout_error: If True, then if some card timeout is exceeded,
+    the asyncio.TimeoutError exception is raised.
+
+    :return: Links to random cards."""
+    return [f async for f in
+            async_generate_random_cards(
+                cards_count,
+                timeout=timeout,
+                raise_timeout_error=raise_timeout_error)]
 
 
 class GameCondition:
@@ -206,31 +305,31 @@ class GameCondition:
     _players: MutableSequence[Any] = []
 
 
-EmptyHook: TypeAlias = Callable[[], None]
+AsyncEmptyHook: TypeAlias = Callable[[], Awaitable[None]]
 
 
-def empty_hook() -> None:
+async def async_empty_hook() -> None:
     """Do nothing perfectly."""
     pass
 
 
 # This is already some kind of bullshit
-def start_game(
-        at_start_hook: EmptyHook = empty_hook,
-        at_circle_start_hook: EmptyHook = empty_hook,
-        at_round_start_hook: EmptyHook = empty_hook,
-        request_association_hook: EmptyHook = empty_hook,
-        show_association_hook: EmptyHook = empty_hook,
-        show_players_cards_hook: EmptyHook = empty_hook,
-        request_players_cards_2_hook: EmptyHook = empty_hook,
-        request_leader_card_hook: EmptyHook = empty_hook,
-        request_players_cards_hook: EmptyHook = empty_hook,
-        show_discarded_cards_hook: EmptyHook = empty_hook,
-        vote_for_target_card_2_hook: EmptyHook = empty_hook,
-        vote_for_target_card_hook: EmptyHook = empty_hook,
-        at_round_end_hook: EmptyHook = empty_hook,
-        at_circle_end_hook: EmptyHook = empty_hook,
-        at_end_hook: EmptyHook = empty_hook) -> None:
+async def start_game(
+        at_start_hook: AsyncEmptyHook = async_empty_hook,
+        at_circle_start_hook: AsyncEmptyHook = async_empty_hook,
+        at_round_start_hook: AsyncEmptyHook = async_empty_hook,
+        request_association_hook: AsyncEmptyHook = async_empty_hook,
+        show_association_hook: AsyncEmptyHook = async_empty_hook,
+        show_players_cards_hook: AsyncEmptyHook = async_empty_hook,
+        request_players_cards_2_hook: AsyncEmptyHook = async_empty_hook,
+        request_leader_card_hook: AsyncEmptyHook = async_empty_hook,
+        request_players_cards_hook: AsyncEmptyHook = async_empty_hook,
+        show_discarded_cards_hook: AsyncEmptyHook = async_empty_hook,
+        vote_for_target_card_2_hook: AsyncEmptyHook = async_empty_hook,
+        vote_for_target_card_hook: AsyncEmptyHook = async_empty_hook,
+        at_round_end_hook: AsyncEmptyHook = async_empty_hook,
+        at_circle_end_hook: AsyncEmptyHook = async_empty_hook,
+        at_end_hook: AsyncEmptyHook = async_empty_hook) -> None:
     """Call the function inside another module to start the game
     with following order and the module's own hooks.
 
@@ -277,7 +376,7 @@ def start_game(
         player.reset_state()
     GameCondition._game_started = True
 
-    at_start_hook()
+    await at_start_hook()
 
     GameCondition._circle_num = 0
     # Circle starts
@@ -288,13 +387,13 @@ def start_game(
         GameCondition._circle_num += 1
         # Hand out cards
         if GameCondition._players_count >= 3:
-            for player in GameCondition._players:
-                # We deal one less card than the player should have,
-                # since at the beginning of each round we add one additional card.
-                player.cards = [get_random_card() for
-                                _ in range(rules_setup.cards_one_player_has)]
+            cards = await get_random_cards(rules_setup.cards_per_player *
+                                           GameCondition._players_count)
+            for i, player in enumerate(GameCondition._players):
+                player.cards = cards[i * rules_setup.cards_per_player:
+                                     (i + 1) * rules_setup.cards_per_player]
 
-        at_circle_start_hook()
+        await at_circle_start_hook()
 
         GameCondition._round_num = 0
         # Round starts
@@ -308,56 +407,57 @@ def start_game(
             GameCondition._round_association = None
             # Refresh cards
             if GameCondition._players_count == 2:
-                for player in GameCondition._players:
-                    player.cards = [get_random_card()
-                                    for _ in range(rules_setup.cards_one_player_has)]
+                cards = await get_random_cards(rules_setup.cards_per_player *
+                                               GameCondition._players_count)
+                for i, player in enumerate(GameCondition._players):
+                    player.cards = cards[i * rules_setup.cards_per_player:
+                                         (i + 1) * rules_setup.cards_per_player]
 
-            at_round_start_hook()
+            await at_round_start_hook()
 
             # Each player discards cards to the common deck
             if GameCondition._players_count == 2:
                 # Discard the bot's card
-                GameCondition._discarded_cards.append((get_random_card(), None))
+                GameCondition._discarded_cards.append((await get_random_card(), None))
 
-                request_association_hook()
+                await request_association_hook()
 
-                show_association_hook()
+                await show_association_hook()
 
-                show_players_cards_hook()
+                await show_players_cards_hook()
 
-                request_players_cards_2_hook()
+                await request_players_cards_2_hook()
 
             else:
                 if GameCondition._players_count == 3:
-                    for i in range(2):
-                        GameCondition._discarded_cards.append((get_random_card(), None))
+                    for card in await get_random_cards(2):
+                        GameCondition._discarded_cards.append((card, None))
 
-                show_players_cards_hook()
+                await show_players_cards_hook()
 
-                request_leader_card_hook()
+                await request_leader_card_hook()
 
-                request_association_hook()
+                await request_association_hook()
 
-                show_association_hook()
+                await show_association_hook()
 
-                request_players_cards_hook()
+                await request_players_cards_hook()
 
             shuffle(GameCondition._discarded_cards)
 
-            show_discarded_cards_hook()
+            await show_discarded_cards_hook()
 
             # Each player votes for the target card
             if GameCondition._players_count == 2:
-
-                vote_for_target_card_2_hook()
+                await vote_for_target_card_2_hook()
 
             else:
-
-                vote_for_target_card_hook()
+                await vote_for_target_card_hook()
 
             # Scoring
             if GameCondition._players_count == 2:
                 # Count bot's score
+                # noinspection PyTypeChecker
                 match GameCondition._votes_for_card[None]:
                     case 0:
                         GameCondition._bot_score += 3
@@ -381,10 +481,12 @@ def start_game(
 
             # Add missed cards
             if GameCondition._players_count >= 3:
-                for player in GameCondition._players:
-                    player.cards.append(get_random_card())
+                for player, card in zip(
+                        GameCondition._players,
+                        await get_random_cards(GameCondition._players_count)):
+                    player.cards.append(card)
 
-            at_round_end_hook()
+            await at_round_end_hook()
 
         # Check for victory
         if GameCondition._players_count == 2:
@@ -396,11 +498,11 @@ def start_game(
                    for player in GameCondition._players):
                 GameCondition._game_started = False
 
-        at_circle_end_hook()
+        await at_circle_end_hook()
 
     GameCondition._game_took_time = time() - GameCondition._game_started_at
 
-    at_end_hook()
+    await at_end_hook()
 
 
 def end_game() -> None:

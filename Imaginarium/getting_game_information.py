@@ -1,4 +1,8 @@
-from typing import MutableSequence, Iterable, Tuple
+from typing import (
+    MutableSequence,
+    Iterable,
+    Tuple
+)
 
 from Imaginarium.gameplay import GameCondition
 from . import exceptions
@@ -11,7 +15,7 @@ def get_players() -> MutableSequence[gameplay.Player]:
 
 
 def get_players_score() -> Iterable[Tuple[str, float]]:
-    """Returns a list of tuples with player name and score."""
+    """Return a list of tuples with player name and score."""
     if not GameCondition._game_started:
         raise exceptions.GameIsEnded()
 

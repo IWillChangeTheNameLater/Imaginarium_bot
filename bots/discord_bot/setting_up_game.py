@@ -1,5 +1,8 @@
 from pathlib import Path
-from typing import Callable, Coroutine
+from typing import (
+    Callable,
+    Coroutine
+)
 
 from discord.ext.commands import Context, Cog, command
 from chardet import detect
@@ -71,7 +74,7 @@ class SettingUpGame(Cog):
         async def move_source(source: str) -> None:
             if source:
                 try:
-                    Imaginarium.setting_up_game.add_used_source(source)
+                    await Imaginarium.setting_up_game.add_used_source(source)
                 except Imaginarium.exceptions.UnsupportedSource:
                     await ctx.send(mt.wrong_source(source))
 

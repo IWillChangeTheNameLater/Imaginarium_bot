@@ -1,19 +1,24 @@
 import asyncio
+from functools import wraps, partial
 from io import BytesIO
 from random import randrange, randint
-from functools import wraps, partial
-from typing import TypeAlias, Iterable, Callable, Any
+from typing import (
+    TypeAlias,
+    Iterable,
+    Callable,
+    Any
+)
 
-from aiohttp import ClientSession
 import discord
-from discord.ext import commands
 import discord_components
+from aiohttp import ClientSession
+from discord.ext import commands
 
 import Imaginarium
-from Imaginarium.gameplay import GameCondition
-import messages_text as mt
-from messages_text import users_languages as ul
 import messages_components as mc
+import messages_text as mt
+from Imaginarium.gameplay import GameCondition
+from messages_text import users_languages as ul
 
 
 class Player(Imaginarium.gameplay.Player, discord.abc.User):
@@ -65,9 +70,9 @@ class Player(Imaginarium.gameplay.Player, discord.abc.User):
     def language(self) -> None:
         self._preferred_language = None
 
-    async def send(self, *args, **kwargs) -> None:
+    async def send(self, *args, **kwargs) -> discord.Message:
         """Send a message to the member that is the player."""
-        await self._user.send(*args, **kwargs)
+        return await self._user.send(*args, **kwargs)
 
 
 DiscordReply: TypeAlias = (discord.Message |
@@ -76,7 +81,7 @@ DiscordReply: TypeAlias = (discord.Message |
 
 
 class Reply:
-    """represents the user's response that was given to the request
+    """Represents the user's response that was given to the request
     using some kind of interaction (message, reaction or button).
 
     :raises AttributeError: If the init argument
@@ -101,7 +106,7 @@ class Reply:
                 self.text = self.discord_reply.component.label
             case _:
                 raise AttributeError(
-                    f'The "reply" argument is an unknown type.'
+                    f'The "reply" argument is an unknown type. '
                     f'It must be one of the following: '
                     f'discord.Message, discord.Reaction, discord_components.Interaction')
 
@@ -135,7 +140,7 @@ ReactionAlias: TypeAlias = (discord.Reaction |
 
 async def wait_for_reply(
         recipient: discord.abc.Messageable | Player,
-        message: str = None,
+        message_text: str = None,
         reactions: Iterable[ReactionAlias] = (),
         buttons: Iterable[Iterable[discord_components.Button]] = None,
         message_check: Callable[[discord.Message], bool] = None,
@@ -149,7 +154,7 @@ async def wait_for_reply(
     with a message, reaction or button until time is up.
 
     :param recipient: Discord member or channel that will receive the message.
-    :param message: Text that will be sent to the recipient.
+    :param message_text: Text that will be sent to the recipient.
     :param reactions: Reactions that will be added to the message.
     :param buttons: Buttons that will be added to the message.
     :param message_check: Function that checks if the message is correct.
@@ -163,46 +168,65 @@ async def wait_for_reply(
     emoji of the reaction.
 
     :raise asyncio.TimeoutError: If the time is up and
-    no correct reply was received."""
+    no correct reply was received.
 
+    .. note:: This function waits for messages only in the recipient context.
+    That is, if the message was sent to the channel,
+    then only messages from the same channel will be expected,
+    and if the message was sent directly to the user,
+    then messages in a private channel with this user will be expected."""
     if bot is None:
         # noinspection PyUnresolvedReferences
         bot = wait_for_reply.bot
     if timeout is None:
         timeout = Imaginarium.rules_setup.step_timeout
 
-    reply = None
-
-    message = await recipient.send(message, components=buttons)
+    sent_message = await recipient.send(message_text, components=buttons)
     for r in reactions:
-        await message.add_reaction(r)
+        await sent_message.add_reaction(r)
+
+    def wrapped_message_check(message: discord.Message) -> bool:
+        return True if all((
+            sent_message.channel == message.channel,
+            message_check(message))) else False
+
+    def wrapped_reaction_check(reaction: discord.Reaction) -> bool:
+        return True if all((
+            sent_message.channel == reaction.message.channel,
+            reaction_check(reaction))) else False
+
+    def wrapped_button_check(button: discord_components.Interaction) -> bool:
+        return True if all((
+            sent_message.channel == button.message.channel,
+            button_check(button))) else False
 
     async def wait_for_message():
-        nonlocal reply
-        reply = await bot.wait_for('message', check=message_check)
+        return await bot.wait_for('message', check=wrapped_message_check)
 
     async def wait_for_reaction_add():
-        nonlocal reply
-        reply = (await bot.wait_for('reaction_add', check=reaction_check))[0]
+        return (await bot.wait_for('reaction_add', check=wrapped_reaction_check))[0]
 
     async def wait_for_button_click():
-        nonlocal reply
-        reply = await bot.wait_for('button_click', check=button_check)
+        return await bot.wait_for('button_click', check=wrapped_button_check)
 
-    pending_tasks = (wait_for_message(),
-                     wait_for_reaction_add(),
-                     wait_for_button_click())
-    pending_tasks = (await asyncio.wait(pending_tasks,
-                                        timeout=timeout,
-                                        return_when=asyncio.FIRST_COMPLETED))[1]
-    for task in pending_tasks:
+    tasks = (
+        wait_for_message(),
+        wait_for_reaction_add(),
+        wait_for_button_click())
+    tasks = [asyncio.create_task(c) for c in tasks]
+    done, pending = await asyncio.wait(
+        tasks,
+        timeout=timeout,
+        return_when=asyncio.FIRST_COMPLETED)
+    for task in pending:
         task.cancel()
 
-    if reply:
-        # noinspection PyTypeChecker
-        return Reply(reply)
+    if done:
+        return Reply(done.pop().result())
     else:
-        raise asyncio.TimeoutError()
+        raise asyncio.TimeoutError(
+            'Time is up and no correct reply was received.'
+        )
 
 
 async def discord_file_from_url(url: str) -> discord.File:
@@ -303,7 +327,7 @@ def in_range_of_cards_message_check_decorator(func: MessageCheck = None,
             step=step)
 
     if stop is None:
-        stop = Imaginarium.rules_setup.cards_one_player_has + 1
+        stop = Imaginarium.rules_setup.cards_per_player + 1
 
     @wraps(func)
     def inner(message):
@@ -330,7 +354,7 @@ def in_range_of_cards_button_check_decorator(func: ButtonCheck = None,
                                                                      step=step)
 
     if stop is None:
-        stop = Imaginarium.rules_setup.cards_one_player_has + 1
+        stop = Imaginarium.rules_setup.cards_per_player + 1
 
     @wraps(func)
     def inner(interaction):
@@ -444,18 +468,18 @@ def selected_card_button_check_decorator(func: ButtonCheck) -> ButtonCheck:
     return func
 
 
-def at_start_hook() -> None:
+async def at_start_hook():
     """Send a message to the channel that the game has started."""
-    asyncio.run(Gameplay.start.ctx.send(mt.game_has_started()))
+    await Gameplay.start.ctx.send(mt.game_has_started())
 
 
-def at_round_start_hook() -> None:
+async def at_round_start_hook():
     """Send a message to the channel that the round has started."""
-    asyncio.run(Gameplay.start.ctx.send(mt.round_has_started()))
+    await Gameplay.start.ctx.send(mt.round_has_started())
 
 
 # noinspection PyTypeChecker
-def request_association_hook() -> None:
+async def request_association_hook():
     """Do not continue the game until the association is specified."""
 
     @not_bot_message_check_decorator
@@ -465,38 +489,38 @@ def request_association_hook() -> None:
 
     @not_bot_button_check_decorator
     @leader_button_check_decorator
-    def button_check(message: discord.Message) -> bool:
+    def button_check(message: discord_components.Interaction) -> bool:
         return True
 
     try:
         association = \
-            asyncio.run(wait_for_reply(
+            await wait_for_reply(
                 recipient=GameCondition._leader,
-                message=mt.inform_association(message_language=ul[GameCondition._leader]),
+                message_text=mt.inform_association(message_language=ul[GameCondition._leader]),
                 buttons=mc.confirm_association(message_language=ul[GameCondition._leader]),
                 message_check=message_check,
-                button_check=button_check))
+                button_check=button_check)
         if isinstance(association.discord_reply, discord_components.Interaction):
-            association = '¯\_(ツ)_/¯'
+            association = r'¯\_(ツ)_/¯'
     except asyncio.TimeoutError:
-        association = '¯\_(ツ)_/¯'
+        association = r'¯\_(ツ)_/¯'
 
-        asyncio.run(GameCondition._leader.send(
+        await GameCondition._leader.send(
             mt.association_selected_automatically(
                 association=association,
                 message_language=ul[GameCondition._leader])
-        ))
+        )
 
     GameCondition._round_association = association
 
 
-def show_association_hook() -> None:
+async def show_association_hook():
     """Send the association to the channel."""
     if GameCondition._round_association:
-        asyncio.run(Gameplay.start.ctx.send(mt.round_association()))
+        await Gameplay.start.ctx.send(mt.round_association())
 
 
-def request_players_cards_2_hook() -> None:
+async def request_players_cards_2_hook():
     """Request each player to choose 2 cards to discard in two-player mode
     or choose the cards automatically if the player's time is up."""
     # Remember discarded card to not allow the player to choose it again.
@@ -520,7 +544,9 @@ def request_players_cards_2_hook() -> None:
             return True
         return False
 
-    for player in GameCondition._players:
+    async def request_card_from_one_player(player):
+        nonlocal discarded_card
+
         for message in (
                 mt.choose_first_card(
                     player.cards,
@@ -529,24 +555,24 @@ def request_players_cards_2_hook() -> None:
                     player.cards,
                     message_language=ul[player])):
             try:
-                card = int(asyncio.run(wait_for_reply(
+                card = int(await wait_for_reply(
                     recipient=player,
-                    message=message,
+                    message_text=message,
                     message_check=message_check,
                     button_check=button_check,
-                    buttons=mc.players_cards())))
+                    buttons=mc.players_cards()))
             except asyncio.TimeoutError:
                 card = try_until(
-                    partial(randrange, Imaginarium.rules_setup.cards_one_player_has),
+                    partial(randrange, Imaginarium.rules_setup.cards_per_player),
                     lambda num: num != discarded_card)
-                asyncio.run(player.send(
+                await player.send(
                     mt.card_selected_automatically(
                         player.cards[card - 1],
-                        message_language=ul[player])))
+                        message_language=ul[player]))
             else:
-                asyncio.run(player.send(mt.your_chosen_card(
+                await player.send(mt.your_chosen_card(
                     player.cards[card - 1],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
 
             GameCondition._discarded_cards.append((player.cards[card - 1],
                                                    player.id))
@@ -554,8 +580,14 @@ def request_players_cards_2_hook() -> None:
             # Set the first discarded card
             discarded_card = card
 
+    tasks = []
+    for player in GameCondition._players:
+        tasks.append(request_card_from_one_player(player))
 
-def request_leader_card_hook() -> None:
+    await asyncio.gather(*tasks)
+
+
+async def request_leader_card_hook():
     """Request the leader to choose a card to discard."""
 
     @selected_card_message_check_decorator
@@ -569,30 +601,30 @@ def request_leader_card_hook() -> None:
         return True
 
     try:
-        card = int(asyncio.run(wait_for_reply(
+        card = int(await wait_for_reply(
             recipient=GameCondition._leader,
-            message=mt.choose_your_leaders_card(
+            message_text=mt.choose_your_leaders_card(
                 message_language=ul[GameCondition._leader]),
             message_check=message_check,
             button_check=button_check,
-            buttons=mc.players_cards())))
+            buttons=mc.players_cards()))
     except asyncio.TimeoutError:
-        card = randrange(Imaginarium.rules_setup.cards_one_player_has)
-        asyncio.run(GameCondition._leader.send(
+        card = randrange(Imaginarium.rules_setup.cards_per_player)
+        await GameCondition._leader.send(
             mt.card_selected_automatically(
                 GameCondition._leader.cards[card - 1],
-                message_language=ul[GameCondition._leader])))
+                message_language=ul[GameCondition._leader]))
     else:
-        asyncio.run(GameCondition._leader.send(mt.your_chosen_card(
+        await GameCondition._leader.send(mt.your_chosen_card(
             GameCondition._leader.cards[card - 1],
-            message_language=ul[GameCondition._leader])))
+            message_language=ul[GameCondition._leader]))
 
     GameCondition._discarded_cards.append(
         (GameCondition._leader.cards.pop(card - 1),
          GameCondition._leader.id))
 
 
-def request_players_cards_hook() -> None:
+async def request_players_cards_hook():
     """Request each player except the leader to choose a card to discard
     or choose the card automatically if the player's time is up."""
 
@@ -606,30 +638,36 @@ def request_players_cards_hook() -> None:
     def button_check(message: discord.Message) -> bool:
         return True
 
+    async def request_cards_from_one_player(player):
+        try:
+            card = int(await wait_for_reply(
+                recipient=player,
+                message_text=mt.choose_card(
+                    player.cards,
+                    message_language=ul[player]),
+                message_check=message_check,
+                button_check=button_check,
+                buttons=mc.players_cards()))
+        except asyncio.TimeoutError:
+            card = randrange(Imaginarium.rules_setup.cards_per_player)
+            await player.send(
+                mt.card_selected_automatically(
+                    player.cards[card - 1],
+                    message_language=ul[player]))
+        else:
+            await player.send(mt.your_chosen_card(
+                player.cards[card - 1],
+                message_language=ul[player]))
+
+        GameCondition._discarded_cards.append((player.cards.pop(card - 1),
+                                               player.id))
+
+    tasks = []
     for player in GameCondition._players:
         if player != GameCondition._leader:
-            try:
-                card = int(asyncio.run(wait_for_reply(
-                    recipient=player,
-                    message=mt.choose_card(
-                        player.cards,
-                        message_language=ul[player]),
-                    message_check=message_check,
-                    button_check=button_check,
-                    buttons=mc.players_cards())))
-            except asyncio.TimeoutError:
-                card = randrange(Imaginarium.rules_setup.cards_one_player_has)
-                asyncio.run(player.send(
-                    mt.card_selected_automatically(
-                        player.cards[card - 1],
-                        message_language=ul[player])))
-            else:
-                asyncio.run(player.send(mt.your_chosen_card(
-                    player.cards[card - 1],
-                    message_language=ul[player])))
+            tasks.append(request_cards_from_one_player(player))
 
-            GameCondition._discarded_cards.append((player.cards.pop(card - 1),
-                                                   player.id))
+    await asyncio.gather(*tasks)
 
 
 def select_target_card_automatically(player: Player) -> int:
@@ -640,7 +678,7 @@ def select_target_card_automatically(player: Player) -> int:
 
 
 # noinspection DuplicatedCode
-def vote_for_target_card_2_hook() -> None:
+async def vote_for_target_card_2_hook():
     """Request each player to vote for the bot's card in two-player mode."""
 
     @selected_card_message_check_decorator
@@ -657,35 +695,41 @@ def vote_for_target_card_2_hook() -> None:
             return True
         return False
 
-    for player in GameCondition._players:
+    async def one_player_vote_for_target_card(player):
         try:
             card = int(
-                asyncio.run(wait_for_reply(
+                await wait_for_reply(
                     recipient=player,
-                    message=mt.choose_enemy_card(
+                    message_text=mt.choose_enemy_card(
                         message_language=ul[player]),
                     message_check=message_check,
                     button_check=button_check,
-                    buttons=mc.discarded_cards())))
+                    buttons=mc.discarded_cards()))
         except asyncio.TimeoutError:
             card = select_target_card_automatically(player)
-            asyncio.run(player.send(
+            await player.send(
                 mt.card_selected_automatically(
                     GameCondition._discarded_cards[card - 1][0],
-                    message_language=ul[player])))
+                    message_language=ul[player]))
         else:
-            asyncio.run(player.send(mt.your_chosen_card(
+            await player.send(mt.your_chosen_card(
                 GameCondition._discarded_cards[card - 1][0],
-                message_language=ul[player])))
+                message_language=ul[player]))
 
         GameCondition._votes_for_card[
             GameCondition._discarded_cards[card - 1][1]] += 1
 
         player.chosen_card = card
 
+    tasks = []
+    for player in GameCondition._players:
+        tasks.append(one_player_vote_for_target_card(player))
+
+    await asyncio.gather(*tasks)
+
 
 # noinspection DuplicatedCode
-def vote_for_target_card_hook() -> None:
+async def vote_for_target_card_hook():
     """Request each player to vote for the leader's card."""
 
     @selected_card_message_check_decorator
@@ -704,47 +748,52 @@ def vote_for_target_card_hook() -> None:
             return True
         return False
 
+    async def one_player_vote_for_target_card(player):
+        try:
+            card = int(await wait_for_reply(
+                recipient=player,
+                message_text=mt.choose_enemy_card(
+                    message_language=ul[player]),
+                message_check=message_check,
+                button_check=button_check,
+                buttons=mc.discarded_cards()))
+        except asyncio.TimeoutError:
+            card = select_target_card_automatically(player)
+            await player.send(
+                mt.card_selected_automatically(
+                    GameCondition._discarded_cards[card - 1][0],
+                    message_language=ul[player]))
+        else:
+            await player.send(mt.your_chosen_card(
+                GameCondition._discarded_cards[card - 1][0],
+                message_language=ul[player]))
+
+        GameCondition._votes_for_card[
+            GameCondition._discarded_cards[card - 1][1]] += 1
+
+        player.chosen_card = card
+
+    tasks = []
     for player in GameCondition._players:
         if player != GameCondition._leader:
-            try:
-                card = int(
-                    asyncio.run(wait_for_reply(
-                        recipient=player,
-                        message=mt.choose_enemy_card(
-                            message_language=ul[player]),
-                        message_check=message_check,
-                        button_check=button_check,
-                        buttons=mc.discarded_cards())))
-            except asyncio.TimeoutError:
-                card = select_target_card_automatically(player)
-                asyncio.run(player.send(
-                    mt.card_selected_automatically(
-                        GameCondition._discarded_cards[card - 1][0],
-                        message_language=ul[player])))
-            else:
-                asyncio.run(player.send(mt.your_chosen_card(
-                    GameCondition._discarded_cards[card - 1][0],
-                    message_language=ul[player])))
+            tasks.append(one_player_vote_for_target_card(player))
 
-            GameCondition._votes_for_card[
-                GameCondition._discarded_cards[card - 1][1]] += 1
-
-            player.chosen_card = card
+    await asyncio.gather(*tasks)
 
 
-def at_end_hook() -> None:
+async def at_end_hook():
     """Announce the results of the game."""
-    asyncio.run(Gameplay.start.ctx.send(mt.game_took_time()))
+    await Gameplay.start.ctx.send(mt.game_took_time())
 
     if GameCondition._players_count == 2:
         if GameCondition._bot_score > GameCondition._players_score:
-            asyncio.run(Gameplay.start.ctx.send(mt.loss_score()))
+            await Gameplay.start.ctx.send(mt.loss_score())
         elif GameCondition._bot_score < GameCondition._players_score:
-            asyncio.run(Gameplay.start.ctx.send(mt.win_score()))
+            await Gameplay.start.ctx.send(mt.win_score())
         else:
-            asyncio.run(Gameplay.start.ctx.send(mt.draw_score()))
+            await Gameplay.start.ctx.send(mt.draw_score())
     else:
-        asyncio.run(Gameplay.start.ctx.send(mt.winning_rating()))
+        await Gameplay.start.ctx.send(mt.winning_rating())
 
 
 class Gameplay(commands.Cog):
@@ -785,7 +834,7 @@ class Gameplay(commands.Cog):
         Gameplay.start.ctx = ctx
 
         try:
-            Imaginarium.gameplay.start_game(
+            await Imaginarium.gameplay.start_game(
                 at_start_hook=at_start_hook,
                 at_round_start_hook=at_round_start_hook,
                 request_association_hook=request_association_hook,
