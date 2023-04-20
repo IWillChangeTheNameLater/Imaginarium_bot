@@ -182,8 +182,8 @@ async def wait_for_reply(
         timeout = Imaginarium.rules_setup.step_timeout
 
     sent_message = await recipient.send(message_text, components=buttons)
-    for r in reactions:
-        await sent_message.add_reaction(r)
+    for reaction in reactions:
+        await sent_message.add_reaction(reaction)
 
     def wrapped_message_check(message: discord.Message) -> bool:
         return True if all((
@@ -201,13 +201,16 @@ async def wait_for_reply(
             button_check(button))) else False
 
     async def wait_for_message():
-        return await bot.wait_for('message', check=wrapped_message_check)
+        return await bot.wait_for(event='message',
+                                  check=wrapped_message_check)
 
     async def wait_for_reaction_add():
-        return (await bot.wait_for('reaction_add', check=wrapped_reaction_check))[0]
+        return (await bot.wait_for(event='reaction_add',
+                                   check=wrapped_reaction_check))[0]
 
     async def wait_for_button_click():
-        return await bot.wait_for('button_click', check=wrapped_button_check)
+        return await bot.wait_for(event='button_click',
+                                  check=wrapped_button_check)
 
     tasks = (
         wait_for_message(),
@@ -866,4 +869,4 @@ class Gameplay(commands.Cog):
 def setup(bot):
     wait_for_reply.bot = bot
 
-    bot.add_cog(Gameplay(bot))
+    bot.add_cog(cog=Gameplay(bot))

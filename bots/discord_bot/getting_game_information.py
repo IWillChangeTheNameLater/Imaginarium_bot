@@ -67,4 +67,4 @@ class GettingGameInformation(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(GettingGameInformation(bot))
+    bot.add_cog(cog=GettingGameInformation(bot))
