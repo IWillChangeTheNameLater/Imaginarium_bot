@@ -22,10 +22,18 @@ class InvalidSource(ImaginariumException):
 class NoAnyCards(InvalidSource, LookupError):
     """Exception raised when there are no cards in the source."""
 
-    def __init__(self):
-        super().__init__(
-            'This source does not contain any cards that can be received.'
-        )
+    def __init__(self, source=None):
+        self.source = source
+
+        if source:
+            message = (f'The "{source}" source does not contain any cards '
+                       f'that can be received.')
+        else:
+            message = 'This source does not contain any cards that can be received.'
+
+        self.message = message
+
+        super().__init__(message)
 
 
 class UnsupportedSource(InvalidSource, ValueError):
