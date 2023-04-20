@@ -32,10 +32,14 @@ class UnsupportedSource(InvalidSource, ValueError):
     """Exception raised when the source is not supported."""
 
     def __init__(self, source=None):
+        self.source = source
+
         if source:
             message = f'The "{source}" source is unsupported.'
         else:
             message = 'The source is unsupported.'
+
+        self.message = message
 
         super().__init__(message)
 
@@ -85,10 +89,14 @@ class PlayerAlreadyJoined(ImaginariumException, ValueError):
     """Exception raised when the player is already joined the game."""
 
     def __init__(self, player=None):
+        self.player = player
+
         if player:
             message = f'The "{player}" player has already joined.'
         else:
             message = 'The player has already joined.'
+
+        self.message = message
 
         super().__init__(message)
 
@@ -97,9 +105,13 @@ class PlayerAlreadyLeft(ImaginariumException, ValueError):
     """Exception raised when the player is already left the game."""
 
     def __init__(self, player=None):
+        self.player = player
+
         if player:
             message = f'The "{player}" player has already left.'
         else:
             message = 'The player has already left.'
+
+        self.message = message
 
         super().__init__(message)
