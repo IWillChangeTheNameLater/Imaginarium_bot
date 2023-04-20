@@ -12,11 +12,8 @@ class Listeners(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         # Do not handle command errors if the command has its own
-        try:
-            _ = ctx.command.on_error
+        if not hasattr(ctx.command, 'on_error'):
             return
-        except AttributeError:
-            pass
 
         match error:
             case commands.CommandNotFound():
