@@ -130,8 +130,7 @@ def create_source_object(source: str) -> sources.BaseSource:
     elif validators.email(source):
         pass
 
-    raise exceptions.UnsupportedSource(
-        'The specified source is unsupported.')
+    raise exceptions.UnsupportedSource(source)
 
 
 default_source = sources.DefaultSource()
@@ -152,7 +151,7 @@ async def get_random_source() -> sources.BaseSource:
     (that is, the number of cards in it is unlimited),
     then its weight is set as the average weight of all resources."""
     if len(GameCondition._used_sources) == 0:
-        raise exceptions.NoAnyUsedSources('There are no sources to use.')
+        raise exceptions.NoAnyUsedSources
     elif len(GameCondition._used_sources) == 1:
         return GameCondition._used_sources[0]
     else:
@@ -369,7 +368,7 @@ async def start_game(
     """
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
-            'The game is already started.')
+            'The game cannot start until it is over.')
     GameCondition._players_count = len(GameCondition._players)
     if GameCondition._players_count < 2:
         raise exceptions.NotEnoughPlayers(
@@ -516,15 +515,14 @@ def end_game() -> None:
     if GameCondition._game_started:
         GameCondition._game_started = False
     else:
-        raise exceptions.GameIsEnded(
-            'The game is already ended.')
+        raise exceptions.GameIsEnded
 
 
 def join(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted
     elif player in GameCondition._players:
-        raise exceptions.PlayerAlreadyJoined
+        raise exceptions.PlayerAlreadyJoined(player)
     else:
         GameCondition._players.append(player)
 
@@ -533,6 +531,6 @@ def leave(player: Player) -> None:
     if GameCondition._game_started:
         raise exceptions.GameIsStarted
     elif player not in GameCondition._players:
-        raise exceptions.PlayerAlreadyLeft
+        raise exceptions.PlayerAlreadyLeft(player)
     else:
         GameCondition._players.remove(player)

@@ -16,7 +16,7 @@ from aiovk2.exceptions import VkException
 from aiovk2.api import Request
 
 from . import BaseSource
-from ..exceptions import InvalidSource, NoAnyPosts
+from ..exceptions import InvalidSource, NoAnyCards
 
 load_dotenv()
 
@@ -128,12 +128,12 @@ class Vk(BaseSource):
         :return: True if the source is valid, False otherwise.
 
         :raises InvalidSource: If the source is invalid for some reason.
-        :raises NoAnyPosts: If the source is invalid due to
+        :raises NoAnyCards: If the source is invalid due to
         the lack of single card.
 
         .. note:: The source is invalid if it does not exist or is closed."""
         if await self.get_cards_count() == 0:
-            raise NoAnyPosts
+            raise NoAnyCards
 
         return True
 
@@ -143,7 +143,7 @@ class Vk(BaseSource):
 
         :return: Link to the attachment.
 
-        :raises NoAnyPosts: If there are no posts in the specified group.
+        :raises NoAnyCards: If there are no posts in the specified group.
 
         .. note:: The source tries to find the card until it succeeds,
         so it can do it forever.
@@ -181,7 +181,7 @@ class Vk(BaseSource):
                     return (await vk_api.video.get(video_id=video_id))['items'][0]['player']
 
         if await self.get_cards_count() == 0:
-            raise NoAnyPosts
+            raise NoAnyCards
 
         # Get a random post from the specified group
         post = await vk_api.wall.get(domain=self._domain,
