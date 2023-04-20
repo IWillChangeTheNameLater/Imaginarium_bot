@@ -17,9 +17,10 @@ class BaseSource(abc.ABC):
         """Initialize the source.
 
         :param link: Link to the source.
-        :param included_types: Types of cards that will be received from the source.
-        :param excluded_types: Types of cards that will not be received from the source.
-        """
+        :param included_types: Types of cards that will be
+        received from the source.
+        :param excluded_types: Types of cards that will not be
+        received from the source."""
         self._link: str = link
         self._included_types: Collection = included_types
         self._excluded_types: Collection = excluded_types

@@ -364,8 +364,7 @@ async def start_game(
     to require a vote for a target card.
     :param at_round_end_hook: A hook that is called when a round ends.
     :param at_circle_end_hook: A hook that is called when a circle ends.
-    :param at_end_hook: A hook that is called when the game ends.
-    """
+    :param at_end_hook: A hook that is called when the game ends."""
     if GameCondition._game_started:
         raise exceptions.GameIsStarted(
             'The game cannot start until it is over.')

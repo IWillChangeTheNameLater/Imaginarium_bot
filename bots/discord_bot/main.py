@@ -39,8 +39,7 @@ bot.remove_command('help')
 def get_extensions(cogs_dir: Path | str = None) -> Generator[str, None, None]:
     """Get the names of all available the extensions in the directory.
 
-    :param cogs_dir: The directory with cogs.
-    """
+    :param cogs_dir: The directory with cogs."""
     if cogs_dir is None:
         cogs_dir = environ['PATH_TO_DISCORD_COGS_DIRECTORY']
     cogs_dir = Path(cogs_dir)

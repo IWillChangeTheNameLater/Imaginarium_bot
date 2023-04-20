@@ -146,8 +146,7 @@ class Vk(BaseSource):
         :raises NoAnyCards: If there are no posts in the specified group.
 
         .. note:: The source tries to find the card until it succeeds,
-        so it can do it forever.
-        """
+        so it can do it forever."""
 
         def extract_attachments_from_post(post: Mapping) -> MutableSequence:
             """Extract attachments from the post.

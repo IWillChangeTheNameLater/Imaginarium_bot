@@ -91,8 +91,7 @@ class Reply:
     for each reply type:
     message — content,
     reaction — emoji,
-    discord components interaction — the component's label.
-    """
+    discord components interaction — the component's label."""
 
     def __init__(self, discord_reply: DiscordReply) -> None:
         self.discord_reply: DiscordReply = discord_reply
