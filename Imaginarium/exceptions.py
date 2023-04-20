@@ -2,9 +2,9 @@ class ImaginariumException(Exception):
     """Base exception class for Imaginarium package
     raised when errors related to Imaginarium game occurred."""
 
-    def __init__(self, msg=None):
+    def __init__(self, message=None):
         super().__init__(
-            msg or
+            message or
             'An error occurred during the game.'
         )
 
@@ -12,9 +12,9 @@ class ImaginariumException(Exception):
 class InvalidSource(ImaginariumException):
     """Exception raised when the source does not work."""
 
-    def __init__(self, msg=None):
+    def __init__(self, message=None):
         super().__init__(
-            msg or
+            message or
             'The source is currently unavailable.'
         )
 
@@ -33,20 +33,20 @@ class UnsupportedSource(InvalidSource, ValueError):
 
     def __init__(self, source=None):
         if source:
-            msg = f'The "{source}" source is unsupported.'
+            message = f'The "{source}" source is unsupported.'
         else:
-            msg = 'The source is unsupported.'
+            message = 'The source is unsupported.'
 
-        super().__init__(msg)
+        super().__init__(message)
 
 
 class GameIsStarted(ImaginariumException):
     """Exception raised when trying to do something
     that cannot be changed during the game."""
 
-    def __init__(self, msg=None):
+    def __init__(self, message=None):
         super().__init__(
-            msg or
+            message or
             'You cannot perform this action if the game has started.'
         )
 
@@ -55,9 +55,9 @@ class GameIsEnded(ImaginariumException):
     """Exception raised when trying to do something
     that cannot be done after the game."""
 
-    def __init__(self, msg=None):
+    def __init__(self, message=None):
         super().__init__(
-            msg or
+            message or
             'You cannot perform this action if the game has ended.'
         )
 
@@ -74,9 +74,9 @@ class NoAnyUsedSources(ImaginariumException):
 class NotEnoughPlayers(ImaginariumException, TypeError):
     """Exception raised when there are not enough players to perform an action."""
 
-    def __init__(self, msg=None):
+    def __init__(self, message=None):
         super().__init__(
-            msg or
+            message or
             'There are not enough players to perform the action.'
         )
 
@@ -86,11 +86,11 @@ class PlayerAlreadyJoined(ImaginariumException, ValueError):
 
     def __init__(self, player=None):
         if player:
-            msg = f'The "{player}" player has already joined.'
+            message = f'The "{player}" player has already joined.'
         else:
-            msg = 'The player has already joined.'
+            message = 'The player has already joined.'
 
-        super().__init__(msg)
+        super().__init__(message)
 
 
 class PlayerAlreadyLeft(ImaginariumException, ValueError):
@@ -98,8 +98,8 @@ class PlayerAlreadyLeft(ImaginariumException, ValueError):
 
     def __init__(self, player=None):
         if player:
-            msg = f'The "{player}" player has already left.'
+            message = f'The "{player}" player has already left.'
         else:
-            msg = 'The player has already left.'
+            message = 'The player has already left.'
 
-        super().__init__(msg)
+        super().__init__(message)

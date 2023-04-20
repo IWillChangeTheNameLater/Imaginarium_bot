@@ -57,11 +57,11 @@ def rerun_bot(bot) -> bool:
 class Commands:
     @staticmethod
     def help():
-        msg = ('Try to run one of the following functions to perform an action: \n' +
-               ', '.join([c for c in dir(Commands)
-                          if not any((c.startswith('__'), c.endswith('__')))]))
+        message = ('Try to run one of the following functions to perform an action: \n' +
+                   ', '.join([c for c in dir(Commands)
+                              if not any((c.startswith('__'), c.endswith('__')))]))
 
-        print(msg)
+        print(message)
 
     @staticmethod
     def run_bot() -> None:
