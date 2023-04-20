@@ -7,6 +7,11 @@ from typing import (
     Callable
 )
 
+from discord import Intents
+from discord.ext import commands
+from discord_components import DiscordComponents
+from dotenv import load_dotenv
+
 # Make the script available both as a script and as a module.
 if __name__ == '__main__':
     # Iterate up the directory until the "Imaginarium_bot" folder is found.
@@ -16,17 +21,6 @@ if __name__ == '__main__':
             break
 else:
     sys.path.append(str(Path(__file__).parent.resolve()))
-
-import nest_asyncio
-
-# The "next_asyncio.apply()" have to be called before "discord" import
-# to fix "RuntimeError: This event loop is already running".
-nest_asyncio.apply()
-
-from discord import Intents
-from discord.ext import commands
-from discord_components import DiscordComponents
-from dotenv import load_dotenv
 
 import configuration as config
 import messages_text as mt
